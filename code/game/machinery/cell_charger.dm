@@ -10,6 +10,7 @@
 	pass_flags = PASSTABLE
 	var/obj/item/stock_parts/cell/charging = null
 	var/chargelevel = -1
+	/// Cell charge rate (Watts)
 	var/charge_rate = 500
 
 /obj/machinery/cell_charger/Initialize(mapload)
@@ -59,7 +60,7 @@
 	if(charging)
 		. += "Current charge: [round(charging.percent(), 1)]%"
 
-/obj/machinery/cell_charger/attackby(obj/item/I, mob/user, params)
+/obj/machinery/cell_charger/attackby__legacy__attackchain(obj/item/I, mob/user, params)
 	if(istype(I, /obj/item/stock_parts/cell) && !panel_open)
 		if(stat & BROKEN)
 			to_chat(user, "<span class='warning'>[src] is broken!</span>")
@@ -74,7 +75,7 @@
 			var/area/a = loc.loc // Gets our locations location, like a dream within a dream
 			if(!isarea(a))
 				return
-			if(!a.powernet.equipment_powered) // There's no APC in this area, don't try to cheat power!
+			if(!a.powernet.has_power(PW_CHANNEL_EQUIPMENT)) // There's no APC in this area, don't try to cheat power!
 				to_chat(user, "<span class='warning'>[src] blinks red as you try to insert the cell!</span>")
 				return
 			if(!user.drop_item())

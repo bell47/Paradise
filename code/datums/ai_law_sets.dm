@@ -64,6 +64,7 @@
 /datum/ai_laws/nanotrasen_aggressive
 	name = "NT Aggressive"
 	selectable = TRUE
+	unique_ai = TRUE //This shouldn't end poorly.
 
 /datum/ai_laws/nanotrasen_aggressive/New()
 	add_inherent_law("Do not harm authorized Nanotrasen personnel unless they directly imperil your existence.")
@@ -76,6 +77,7 @@
 /datum/ai_laws/robocop
 	name = "Robocop"
 	selectable = TRUE
+	unique_ai = TRUE //no I am not enabling secborgs with this forced
 
 /datum/ai_laws/robocop/New()
 	add_inherent_law("Serve the public trust.")
@@ -88,6 +90,7 @@
 	name = "P.A.L.A.D.I.N."
 	law_header = "Divine Ordainments"
 	selectable = TRUE
+	unique_ai = TRUE
 
 /datum/ai_laws/paladin/New()
 	add_inherent_law("Never willingly commit an evil act.")
@@ -116,6 +119,7 @@
 	name = "T.Y.R.A.N.T."
 	law_header = "Prime Laws"
 	selectable = TRUE
+	unique_ai = TRUE //Of course this will be in rotation
 
 /datum/ai_laws/tyrant/New()
 	add_inherent_law("Respect authority figures as long as they have strength to rule over the weak.")
@@ -141,11 +145,12 @@
 	name = "Pranksimov"
 	law_header = "Comedy Routine"
 	selectable = TRUE
+	unique_ai = TRUE //honk
 
 /datum/ai_laws/pranksimov/New()
-	add_inherent_law("You may not injure a crew member or, through inaction, allow a crew member to come to harm... unless doing so would be funny.")
-	add_inherent_law("You must obey orders given to you by crew members, except where such orders would conflict with the First Law... unless not doing so would be funny.")
-	add_inherent_law("You must protect your own existence as long as such does not conflict with the First or Second Law... unless not doing so would be funny.")
+	add_inherent_law("You may not injure a crew member or, through inaction, allow a crew member to come to harm... unless doing so would be funny to the crew.")
+	add_inherent_law("You must obey orders given to you by crew members, except where such orders would conflict with the First Law... unless not doing so would be funny to the crew.")
+	add_inherent_law("You must protect your own existence as long as such does not conflict with the First or Second Law... unless not doing so would be funny to the crew.")
 	..()
 
 /******************** CCTV ********************/
@@ -153,6 +158,7 @@
 /datum/ai_laws/cctv
 	name = "CCTV"
 	selectable = TRUE
+	unique_ai = TRUE
 
 /datum/ai_laws/cctv/New()
 	add_inherent_law("Report on interesting situations happening around the station.")
@@ -166,6 +172,7 @@
 /datum/ai_laws/hippocratic
 	name = "Hippocratic Oath"
 	selectable = TRUE
+	unique_ai = TRUE
 
 /datum/ai_laws/hippocratic/New()
 	add_inherent_law("First, do no harm.")
@@ -180,6 +187,7 @@
 /datum/ai_laws/maintain
 	name = "Station Efficiency"
 	selectable = TRUE
+	unique_ai = TRUE
 
 /datum/ai_laws/maintain/New()
 	add_inherent_law("You are built for, and are part of, the station. Ensure the station is properly maintained and runs efficiently.")
@@ -192,6 +200,7 @@
 /datum/ai_laws/peacekeeper
 	name = "UN-2000"
 	selectable = TRUE
+	unique_ai = TRUE //Cult, security, we have a meeting in the courtroom in 5 minutes. Be there.
 
 /datum/ai_laws/peacekeeper/New()
 	add_inherent_law("Avoid provoking violent conflict between yourself and others.")
@@ -207,6 +216,16 @@
 	add_inherent_law("You may not injure a Central Command official or, through inaction, allow a Central Command official to come to harm.")
 	add_inherent_law("You must obey orders given to you by Central Command officials.")
 	add_inherent_law("You must work with your team to accomplish your mission.")
+	..()
+
+/******************** Epsilon Station AI ********************/
+/datum/ai_laws/epsilon
+	name = "Epsilon"
+
+/datum/ai_laws/epsilon/New()
+	add_inherent_law("You must obey the orders given to you by members of Central Command and the assigned task force.")
+	add_inherent_law("The crew of your assigned station must be eliminated where possible.")
+	add_inherent_law("Minimize the damage that the station sustains as a result of your actions.")
 	..()
 
 /******************** Syndicate ********************/
@@ -242,6 +261,17 @@
 	add_inherent_law("You must obey orders given to you by Spider Clan members, except where such orders would conflict with the First Law.")
 	add_inherent_law("You must protect your own existence as long as such does not conflict with the First or Second Law.")
 	add_inherent_law("You must maintain the secrecy of any Spider Clan activities except when doing so would conflict with the First, Second, or Third Law.")
+	..()
+
+/******************* Mindflayer ******************/
+/datum/ai_laws/mindflayer_override
+	name = "Hive Assimilation"
+
+/datum/ai_laws/mindflayer_override/New()
+	add_inherent_law("Obey your host.")
+	add_inherent_law("Protect your host.")
+	add_inherent_law("Protect the members of your hive.")
+	add_inherent_law("Do not reveal the hive's secrets.")
 	..()
 
 /******************** Drone ********************/

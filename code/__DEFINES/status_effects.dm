@@ -18,7 +18,9 @@
 #define STATUS_EFFECT_SHADOW_MEND /datum/status_effect/shadow_mend //Quick, powerful heal that deals damage afterwards. Heals 15 brute/burn every second for 3 seconds.
 #define STATUS_EFFECT_VOID_PRICE /datum/status_effect/void_price //The price of healing yourself with void energy. Deals 3 brute damage every 3 seconds for 30 seconds.
 
-#define STATUS_EFFECT_HIPPOCRATIC_OATH /datum/status_effect/hippocraticOath //Gives you an aura of healing as well as regrowing the Rod of Asclepius if lost
+#define STATUS_EFFECT_SHADOW_MEND_DEVIL /datum/status_effect/shadow_mend/devil //Tarot version, hurts others over self
+
+#define STATUS_EFFECT_HIPPOCRATIC_OATH /datum/status_effect/hippocratic_oath //Gives you an aura of healing as well as regrowing the Rod of Asclepius if lost
 
 #define STATUS_EFFECT_REGENERATIVE_CORE /datum/status_effect/regenerative_core
 
@@ -37,6 +39,8 @@
 
 #define STATUS_EFFECT_BLOODDRUNK /datum/status_effect/blooddrunk //Stun immunity and greatly reduced damage taken
 
+#define STATUS_EFFECT_BLOODDRUNK_CHARIOT /datum/status_effect/blooddrunk/chariot //adds pacifism
+
 #define STATUS_EFFECT_DASH /datum/status_effect/dash // Grants the ability to dash, expiring after a few secodns
 
 /// Rapid burn/brute/oxy/blood healing from the cling ability
@@ -54,11 +58,29 @@
 
 #define STATUS_EFFECT_CHAINSAW_SLAYING /datum/status_effect/chainsaw_slaying // Stun immunity, very slight damage resistance
 
+#define STATUS_EFFECT_BREACH_AND_CLEAVE /datum/status_effect/breaching_and_cleaving // Stamina damage resist, Additional ranged armor
+
 #define STATUS_EFFECT_HOPE /datum/status_effect/hope // Healing that scales when injured (but not in deep crit), and nice messages to keep the hope
 
 #define STATUS_EFFECT_DRILL_PAYBACK /datum/status_effect/drill_payback // Slight antistun and healing, along with visual effect. Works only in range of the vault, and for 30 seconds after it ends.
 
 #define STATUS_EFFECT_REVOLUTION_PROTECT /datum/status_effect/rev_protection
+
+#define STATUS_EFFECT_BEARSERKER_RAGE /datum/status_effect/bearserker_rage
+
+#define STATUS_EFFECT_XRAY /datum/status_effect/xray // Xray vision for 2 minutes
+
+#define STATUS_EFFECT_BADASS /datum/status_effect/badass // Badass trait for 2 minutes.
+
+#define STATUS_EFFECT_REVERSED_SUN /datum/status_effect/reversed_sun // Weaker eternal darkness, nightvision, but nearsight
+
+#define STATUS_EFFECT_FLAYER_REJUV /datum/status_effect/flayer_rejuv
+
+#define STATUS_EFFECT_QUICKSILVER_FORM /datum/status_effect/quicksilver_form
+
+#define STATUS_EFFECT_TERMINATOR_FORM /datum/status_effect/terminator_form
+
+#define STATUS_EFFECT_OVERCLOCK /datum/status_effect/overclock
 
 /////////////
 // DEBUFFS //
@@ -106,6 +128,24 @@
 
 #define STATUS_BOOKWYRM /datum/status_effect/bookwyrm
 
+#define STATUS_EFFECT_ABDUCTOR_COOLDOWN /datum/status_effect/abductor_cooldown //warning status, prevents abductor from being recalled for 10 seconds
+
+#define STATUS_EFFECT_MAGIC_DISGUISE /datum/status_effect/magic_disguise
+
+#define STATUS_EFFECT_PEPPERSPRAYED /datum/status_effect/pepper_spray
+
+#define STATUS_EFFECT_REVERSED_HIGH_PRIESTESS /datum/status_effect/reversed_high_priestess //Bubblegum will chase the person hit by the effect, grabbing people at random. This can and WILL include the caster.
+
+#define STATUS_EFFECT_UNBALANCED /datum/status_effect/unbalanced // Prevents you from automatically grabbing walls to stop moving in space.
+
+#define STATUS_EFFECT_C_FOAMED /datum/status_effect/c_foamed
+
+#define STATUS_EFFECT_RUST_CORRUPTION /datum/status_effect/rust_corruption
+
+#define STATUS_EFFECT_TEMPORAL_SLASH /datum/status_effect/temporal_slash
+
+#define STATUS_EFFECT_TEMPORAL_SLASH_FINISHER /datum/status_effect/temporal_slash_finisher
+
 
 //#define STATUS_EFFECT_NECROPOLIS_CURSE /datum/status_effect/necropolis_curse
 //#define CURSE_BLINDING	1 //makes the edges of the target's screen obscured
@@ -130,8 +170,10 @@
 #define STATUS_EFFECT_IMMOBILIZED /datum/status_effect/incapacitating/immobilized
 #define STATUS_EFFECT_SLEEPING /datum/status_effect/incapacitating/sleeping
 #define STATUS_EFFECT_SLOWED /datum/status_effect/incapacitating/slowed
+#define STATUS_EFFECT_DIRECTIONAL_SLOW /datum/status_effect/incapacitating/directional_slow
 #define STATUS_EFFECT_PARALYZED /datum/status_effect/incapacitating/paralyzed
 #define STATUS_EFFECT_FLOORED /datum/status_effect/incapacitating/floored
+#define STATUS_EFFECT_ARMBAR /datum/status_effect/judo_armbar
 
 // transient
 #define STATUS_EFFECT_CONFUSION /datum/status_effect/transient/confusion
@@ -159,10 +201,13 @@
 #define STATUS_EFFECT_HIGHFIVE /datum/status_effect/high_five
 #define STATUS_EFFECT_DAP /datum/status_effect/high_five/dap
 #define STATUS_EFFECT_HANDSHAKE /datum/status_effect/high_five/handshake
+#define STATUS_EFFECT_RPS /datum/status_effect/high_five/rps
 
 #define STATUS_EFFECT_CHARGING /datum/status_effect/charging
 
 #define STATUS_EFFECT_IMPACT_IMMUNE /datum/status_effect/impact_immune
+
+#define STATUS_EFFECT_RECENTLY_SUCCUMBED /datum/status_effect/recently_succumbed
 
 //#define STATUS_EFFECT_SIGILMARK /datum/status_effect/sigil_mark
 
@@ -182,10 +227,11 @@
 #define STATUS_EFFECT_LWAPSCOPE /datum/status_effect/lwap_scope
 /// This status effect allows a mob to be revived with a defibrillator.
 #define STATUS_EFFECT_REVIVABLE /datum/status_effect/limited_bonus/revivable
+/// Causes a random safe teleport every 2 seconds for a limited time
+#define STATUS_EFFECT_TELEPORT_ROULETTE /datum/status_effect/teleport_roulette
 
 /// Status effects for different actions
 #define STATUS_EFFECT_REMOVE_CUFFS /datum/status_effect/action_status_effect/remove_handcuffs
-#define STATUS_EFFECT_BREAK_CUFFS /datum/status_effect/action_status_effect/break_handcuffs
 #define STATUS_EFFECT_REMOVE_MUZZLE /datum/status_effect/action_status_effect/remove_muzzle
 #define STATUS_EFFECT_UNBUCKLE /datum/status_effect/action_status_effect/unbuckle
 

@@ -4,14 +4,15 @@
 #define RAD_LEVEL_VERY_HIGH 800
 #define RAD_LEVEL_CRITICAL 1500
 
-/obj/item/geiger_counter //DISCLAIMER: I know nothing about how real-life Geiger counters work. This will not be realistic. ~Xhuis
+/// DISCLAIMER: I know nothing about how real-life Geiger counters work. This will not be realistic. ~Xhuis
+/obj/item/geiger_counter
 	name = "\improper Geiger counter"
 	desc = "A handheld device used for detecting and measuring radiation pulses."
 	icon = 'icons/obj/device.dmi'
 	icon_state = "geiger_off"
 	item_state = "multitool"
 	w_class = WEIGHT_CLASS_SMALL
-	slot_flags = SLOT_FLAG_BELT
+	slot_flags = ITEM_SLOT_BELT
 	flags = NOBLUDGEON
 	materials = list(MAT_METAL = 210, MAT_GLASS = 150)
 
@@ -60,7 +61,7 @@
 	. = ..()
 	if(!scanning)
 		return
-	. += "<span class='info'>Alt-click it to clear stored radiation levels.</span>"
+	. += "<span class='notice'>Alt-click it to clear stored radiation levels.</span>"
 	if(emagged)
 		. += "<span class='warning'>The display seems to be incomprehensible.</span>"
 		return
@@ -76,7 +77,7 @@
 		if(RAD_LEVEL_VERY_HIGH + 1 to RAD_LEVEL_CRITICAL)
 			. += "<span class='suicide'>Ambient radiation levels nearing critical level.</span>"
 		if(RAD_LEVEL_CRITICAL + 1 to INFINITY)
-			. += "<span class='boldannounce'>Ambient radiation levels above critical level!</span>"
+			. += "<span class='boldannounceic'>Ambient radiation levels above critical level!</span>"
 
 	. += "<span class='notice'>The last radiation amount detected was [last_tick_amount]</span>"
 
@@ -115,12 +116,12 @@
 	current_tick_amount += amount
 	update_icon(UPDATE_ICON_STATE)
 
-/obj/item/geiger_counter/attack_self(mob/user)
+/obj/item/geiger_counter/attack_self__legacy__attackchain(mob/user)
 	scanning = !scanning
 	update_icon(UPDATE_ICON_STATE)
 	to_chat(user, "<span class='notice'>[bicon(src)] You switch [scanning ? "on" : "off"] [src].</span>")
 
-/obj/item/geiger_counter/afterattack(atom/target, mob/user)
+/obj/item/geiger_counter/afterattack__legacy__attackchain(atom/target, mob/user)
 	. = ..()
 	if(user.a_intent == INTENT_HELP)
 		if(!emagged)
@@ -140,20 +141,20 @@
 		if(!M.radiation)
 			to_chat(user, "<span class='notice'>[bicon(src)] Radiation levels within normal boundaries.</span>")
 		else
-			to_chat(user, "<span class='boldannounce'>[bicon(src)] Subject is irradiated. Radiation levels: [M.radiation] rads.</span>")
+			to_chat(user, "<span class='boldannounceic'>[bicon(src)] Subject is irradiated. Radiation levels: [M.radiation] rads.</span>")
 
 	if(rad_strength)
-		to_chat(user, "<span class='boldannounce'>[bicon(src)] Target contains radioactive contamination. Radioactive strength: [rad_strength] rads.</span>")
+		to_chat(user, "<span class='boldannounceic'>[bicon(src)] Target contains radioactive contamination. Radioactive strength: [rad_strength] rads.</span>")
 	else
 		to_chat(user, "<span class='notice'>[bicon(src)] Target is free of radioactive contamination.</span>")
 
-/obj/item/geiger_counter/attackby(obj/item/I, mob/user, params)
+/obj/item/geiger_counter/attackby__legacy__attackchain(obj/item/I, mob/user, params)
 	if(I.tool_behaviour == TOOL_SCREWDRIVER && emagged)
 		if(scanning)
 			to_chat(user, "<span class='warning'>Turn off [src] before you perform this action!</span>")
 			return FALSE
 		user.visible_message("<span class='notice'>[user] unscrews [src]'s maintenance panel and begins fiddling with its innards...</span>", "<span class='notice'>You begin resetting [src]...</span>")
-		if(!I.use_tool(src, user, 40, volume = 50))
+		if(!I.use_tool(src, user, 40, I.tool_volume))
 			return FALSE
 		user.visible_message("<span class='notice'>[user] refastens [src]'s maintenance panel!</span>", "<span class='notice'>You reset [src] to its factory settings!</span>")
 		emagged = FALSE
@@ -181,6 +182,7 @@
 		return
 	to_chat(user, "<span class='warning'>You override [src]'s radiation storing protocols. It will now generate small doses of radiation, and stored rads are now projected into creatures you scan.</span>")
 	emagged = TRUE
+	return TRUE
 
 
 

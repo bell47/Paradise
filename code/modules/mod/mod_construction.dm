@@ -1,23 +1,25 @@
 /obj/item/mod/construction
 	desc = "A part used in MOD construction. You could insert it into a MOD shell."
 	icon = 'icons/obj/clothing/modsuit/mod_construction.dmi'
-	icon_state = "rack_parts"
 
 /obj/item/mod/construction/helmet
 	name = "MOD helmet"
-	desc = "You could insert it into a MOD shell."
+	desc = "A standardized helmet frame for use in constructing MOD suits. Useless without a MOD shell."
 	icon_state = "helmet"
 
 /obj/item/mod/construction/chestplate
 	name = "MOD chestplate"
+	desc = "A heavy metal chestpiece for use in constructing MOD suits. Useless without a MOD shell."
 	icon_state = "chestplate"
 
 /obj/item/mod/construction/gauntlets
 	name = "MOD gauntlets"
+	desc = "Bare powered gauntlets for use in constructing MOD suits. Useless without a MOD shell."
 	icon_state = "gauntlets"
 
 /obj/item/mod/construction/boots
 	name = "MOD boots"
+	desc = "Powered boots for use in MOD suit construction. Useless without a MOD shell."
 	icon_state = "boots"
 
 /obj/item/mod/construction/broken_core
@@ -63,16 +65,20 @@
 /obj/item/mod/construction/plating/cosmohonk
 	theme = /datum/mod_theme/cosmohonk
 
-/obj/item/mod/construction/plating/rescue //I want to add a way to get the rarer modsuit types, that is limited. A low chance for traders to have plating for it seems interesting
+/// I want to add a way to get the rarer modsuit types, that is limited. A low chance for traders to have plating for it seems interesting
+/obj/item/mod/construction/plating/rescue
 	theme = /datum/mod_theme/rescue
 
-/obj/item/mod/construction/plating/safeguard //Continued from above, none of these are steal objectives, and only the CE or RD one comes pre-installed with modules. You are getting the protection / speed / looks of these hardsuits, but no special modules.
+/// Continued from above, none of these are steal objectives, and only the CE or RD one comes pre-installed with modules. You are getting the protection / speed / looks of these hardsuits, but no special modules.
+/obj/item/mod/construction/plating/safeguard
 	theme = /datum/mod_theme/safeguard
 
-/obj/item/mod/construction/plating/advanced //This may be a bad idea. I think this is an interesting idea. And you still need robotics to build it, and traders can charge as much for it as they want. Also with ones like the CE modsuit, it is the flagship mod. That means it is sold a lot.
+/// This may be a bad idea. I think this is an interesting idea. And you still need robotics to build it, and traders can charge as much for it as they want. Also with ones like the CE modsuit, it is the flagship mod. That means it is sold a lot.
+/obj/item/mod/construction/plating/advanced
 	theme = /datum/mod_theme/advanced
 
-/obj/item/mod/construction/plating/research //Don't think people will want the RD one though, it is as slow as shit. Anyway, here it is. Surely this will not end poorly.
+/// Don't think people will want the RD one though, it is as slow as shit. Anyway, here it is. Surely this will not end poorly.
+/obj/item/mod/construction/plating/research
 	theme = /datum/mod_theme/research
 
 #define START_STEP "start"
@@ -87,7 +93,7 @@
 
 /obj/item/mod/construction/shell
 	name = "MOD shell"
-	desc = "A MOD shell."
+	desc = "The core housing and support structure for a MOD suit, with numerous plugs and connectors for attaching additional components."
 	icon_state = "mod-construction_start"
 	var/obj/item/core
 	var/obj/item/helmet
@@ -120,7 +126,7 @@
 			display_text = "All it's missing is <b>external plating</b>..."
 	. += "<span class='notice'>[display_text]</span>"
 
-/obj/item/mod/construction/shell/attackby(obj/item/part, mob/user, params)
+/obj/item/mod/construction/shell/attackby__legacy__attackchain(obj/item/part, mob/user, params)
 	. = ..()
 	switch(construction_step)
 		if(START_STEP)
@@ -243,7 +249,7 @@
 				if(part.use_tool(src, user, 0, volume = 30))
 					to_chat(user, "<span class='notice'>Assembly unscrewed.</span>")
 					construction_step = SCREWED_ASSEMBLY_STEP
-	update_icon_state()
+	update_icon(UPDATE_ICON_STATE)
 
 /obj/item/mod/construction/shell/update_icon_state()
 	. = ..()

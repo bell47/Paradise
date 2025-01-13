@@ -21,7 +21,7 @@
 		'sound/effects/pageturn3.ogg'
 	)
 
-/obj/item/book/granter/attack_self(mob/living/user)
+/obj/item/book/granter/attack_self__legacy__attackchain(mob/living/user)
 	if(reading)
 		to_chat(user, "<span class='warning'>You're already reading this!</span>")
 		return FALSE
@@ -108,7 +108,7 @@
 // Generic action giver
 /obj/item/book/granter/spell
 	/// The typepath of spell that is given
-	var/obj/effect/proc_holder/spell/granted_spell
+	var/datum/spell/granted_spell
 	/// The name of the spell, formatted in a more text-friendly way
 	var/spell_name = ""
 

@@ -16,10 +16,6 @@
 	name = "Curious Antennae"
 	icon_state = "curious"
 
-/datum/sprite_accessory/head_accessory/kidan/mopey_antennae
-	name = "Mopey Antennae"
-	icon_state = "mopey"
-
 /datum/sprite_accessory/head_accessory/kidan/crescent_antennae
 	name = "Crescent Antennae"
 	icon_state = "crescent"
@@ -42,11 +38,11 @@
 
 // Sprites by Travelling Merchant
 
-/datum/sprite_accessory/head_accessory/kidan/kidan_Mantie_Long
+/datum/sprite_accessory/head_accessory/kidan/kidan_mantie_long
 	name = "Mantie Long"
 	icon_state = "Mantie_Long"
 
-/datum/sprite_accessory/head_accessory/kidan/kidan_Mantie_Curled
+/datum/sprite_accessory/head_accessory/kidan/kidan_mantie_curled
 	name = "Mantie Curled"
 	icon_state = "Mantie_Curled"
 

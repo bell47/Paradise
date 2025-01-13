@@ -15,9 +15,14 @@
 		/obj/item/stack/medical,
 		/obj/item/toy/crayon,
 		/obj/item/coin,
+		/obj/item/food/candy/chocolate_coin,
+		/obj/item/food/candy/coin,
+		/obj/item/food/candy/cash,
+		/obj/item/food/customizable/candy/coin,
+		/obj/item/food/customizable/candy/cash,
 		/obj/item/dice,
 		/obj/item/disk,
-		/obj/item/implanter,
+		/obj/item/bio_chip_implanter,
 		/obj/item/lighter,
 		/obj/item/match,
 		/obj/item/paper,
@@ -29,7 +34,7 @@
 	cant_hold = list(
 		/obj/item/screwdriver/power
 	)
-	slot_flags = SLOT_FLAG_ID
+	slot_flags = ITEM_SLOT_ID
 
 	var/obj/item/card/id/front_id = null
 
@@ -43,7 +48,7 @@
 	if(. && istype(I, /obj/item/card/id))
 		refresh_ID()
 
-/obj/item/storage/wallet/handle_item_insertion(obj/item/I, prevent_warning = FALSE)
+/obj/item/storage/wallet/handle_item_insertion(obj/item/I, mob/user, prevent_warning = FALSE)
 	. = ..()
 	if(. && istype(I, /obj/item/card/id))
 		refresh_ID()

@@ -2,6 +2,7 @@
 	name = "gun cabinet"
 	req_access = list(ACCESS_ARMORY)
 	icon = 'icons/obj/guncabinet.dmi'
+	door_anim_time = 0
 	icon_state = "base"
 	anchored = TRUE
 
@@ -19,6 +20,7 @@
 		locked = FALSE
 		to_chat(user, "<span class='notice'>You break the lock on [src].</span>")
 		update_icon()
+		return TRUE
 
 /obj/structure/closet/secure_closet/guncabinet/update_overlays()
 	. = list()
@@ -44,9 +46,9 @@
 
 				gun.pixel_x = i*4
 				. += gun
-
-		. += "door"
 		if(broken)
 			. += "off"
-		else if(locked)
-			. += "locked"
+	. += ..() // Parent call at the end instead of the beginning because we need the gun overlays to be drawn first, then the door.
+
+/obj/structure/closet/secure_closet/guncabinet/cc
+	req_access = list(ACCESS_CENT_SPECOPS_COMMANDER)

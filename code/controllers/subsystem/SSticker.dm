@@ -13,8 +13,6 @@ SUBSYSTEM_DEF(ticker)
 	var/round_start_time = 0
 	/// Time that the round started
 	var/time_game_started = 0
-	/// Default timeout for if world.Reboot() doesnt have a time specified
-	var/const/restart_timeout = 75 SECONDS
 	/// Current status of the game. See code\__DEFINES\game.dm
 	var/current_state = GAME_STATE_STARTUP
 	/// Do we want to force-start as soon as we can
@@ -37,8 +35,8 @@ SUBSYSTEM_DEF(ticker)
 	var/Bible_name
 	/// Name of the bible deity
 	var/Bible_deity_name
-	/// Cult data. Here instead of cult for adminbus purposes
-	var/datum/cult_info/cultdat = null
+	/// Cult static info, used for things like sprites. Someone should refactor the sprites out of it someday and just use SEPERATE ICONS DEPNDING ON THE TYPE OF CULT... like a sane person
+	var/datum/cult_info/cult_data
 	/// If set to nonzero, ALL players who latejoin or declare-ready join will have random appearances/genders
 	var/random_players = FALSE
 	/// Did we broadcast the tip of the round yet?
@@ -54,7 +52,7 @@ SUBSYSTEM_DEF(ticker)
 	/// Holder for inital autotransfer vote timer
 	var/next_autotransfer = 0
 	/// Used for station explosion cinematic
-	var/obj/screen/cinematic = null
+	var/atom/movable/screen/cinematic = null
 	/// Spam Prevention. Announce round end only once.
 	var/round_end_announced = FALSE
 	/// Is the ticker currently processing? If FALSE, roundstart is delayed
@@ -69,6 +67,9 @@ SUBSYSTEM_DEF(ticker)
 	var/datum/scoreboard/score = null
 	/// List of ckeys who had antag rolling issues flagged
 	var/list/flagged_antag_rollers = list()
+	/// List of biohazards keyed to the last time their population was sampled.
+	var/list/biohazard_pop_times = list()
+	var/list/biohazard_included_admin_spawns = list()
 
 /datum/controller/subsystem/ticker/Initialize()
 	login_music = pick(\
@@ -83,7 +84,8 @@ SUBSYSTEM_DEF(ticker)
 	switch(current_state)
 		if(GAME_STATE_STARTUP)
 			// This is ran as soon as the MC starts firing, and should only run ONCE, unless startup fails
-			round_start_time = world.time + (GLOB.configuration.general.lobby_time SECONDS)
+			pregame_timeleft = GLOB.configuration.general.lobby_time SECONDS
+			round_start_time = world.time + pregame_timeleft
 			to_chat(world, "<B><span class='darkmblue'>Welcome to the pre-game lobby!</span></B>")
 			to_chat(world, "Please, setup your character and select ready. Game will start in [GLOB.configuration.general.lobby_time] seconds")
 			current_state = GAME_STATE_PREGAME
@@ -96,12 +98,9 @@ SUBSYSTEM_DEF(ticker)
 				return
 
 			// This is so we dont have sleeps in controllers, because that is a bad, bad thing
-			if(!delay_end)
-				pregame_timeleft = max(0, round_start_time - world.time) // Normal lobby countdown when roundstart was not delayed
-			else
-				pregame_timeleft = max(0, pregame_timeleft - wait) // If roundstart was delayed, we should resume the countdown where it left off
+			pregame_timeleft = max(0, round_start_time - world.time)
 
-			if(pregame_timeleft <= 600 && !tipped) // 60 seconds
+			if(pregame_timeleft <= 1 MINUTES && !tipped)
 				send_tip_of_the_round()
 				tipped = TRUE
 
@@ -116,6 +115,10 @@ SUBSYSTEM_DEF(ticker)
 			delay_end = FALSE // reset this in case round start was delayed
 			mode.process()
 
+			for(var/biohazard in biohazard_pop_times)
+				if(world.time - biohazard_pop_times[biohazard] > BIOHAZARD_POP_INTERVAL)
+					sample_biohazard_population(biohazard)
+
 			if(world.time > next_autotransfer)
 				SSvote.start_vote(new /datum/vote/crew_transfer)
 				next_autotransfer = world.time + GLOB.configuration.vote.autotransfer_interval_time
@@ -128,6 +131,8 @@ SUBSYSTEM_DEF(ticker)
 			if(game_finished || force_ending)
 				current_state = GAME_STATE_FINISHED
 		if(GAME_STATE_FINISHED)
+			if(SSshuttle.emergency.mode >= SHUTTLE_ENDGAME && !mode.station_was_nuked)
+				record_biohazard_results()
 			current_state = GAME_STATE_FINISHED
 			Master.SetRunLevel(RUNLEVEL_POSTGAME) // This shouldnt process more than once, but you never know
 			auto_toggle_ooc(TRUE) // Turn it on
@@ -136,6 +141,9 @@ SUBSYSTEM_DEF(ticker)
 			// Start a map vote IF
 			// - Map rotate doesnt have a mode for today and map voting is enabled
 			// - Map rotate has a mode for the day and it ISNT full random
+			if(SSmaprotate.setup_done && (SSmaprotate.rotation_mode == MAPROTATION_MODE_HYBRID_FPTP_NO_DUPLICATES))
+				SSmaprotate.decide_next_map()
+				return
 			if(((!SSmaprotate.setup_done) && GLOB.configuration.vote.enable_map_voting) || (SSmaprotate.setup_done && (SSmaprotate.rotation_mode != MAPROTATION_MODE_FULL_RANDOM)))
 				SSvote.start_vote(new /datum/vote/map)
 			else
@@ -143,6 +151,8 @@ SUBSYSTEM_DEF(ticker)
 				var/list/pickable_types = list()
 				for(var/x in subtypesof(/datum/map))
 					var/datum/map/M = x
+					if(istype(SSmapping.map_datum, M)) // Random will never choose the same map twice in a row.
+						continue
 					if(initial(M.voteable) && length(GLOB.clients) >= initial(M.min_players_random))
 						pickable_types += M
 
@@ -157,7 +167,8 @@ SUBSYSTEM_DEF(ticker)
 		reboot_helper("Round ended.", "proper completion")
 
 /datum/controller/subsystem/ticker/proc/setup()
-	cultdat = setupcult()
+	var/random_cult = pick(typesof(/datum/cult_info))
+	cult_data = new random_cult()
 	score = new()
 
 	// Create and announce mode
@@ -224,7 +235,7 @@ SUBSYSTEM_DEF(ticker)
 			P.ready = FALSE
 
 	//Configure mode and assign player to special mode stuff
-	mode.pre_pre_setup()
+
 	var/can_continue = FALSE
 	can_continue = mode.pre_setup() //Setup special modes. This also does the antag fishing checks.
 
@@ -250,7 +261,7 @@ SUBSYSTEM_DEF(ticker)
 	SSjobs.DivideOccupations() //Distribute jobs
 
 	if(hide_mode)
-		var/list/modes = new
+		var/list/modes = list()
 		for(var/datum/game_mode/M in runnable_modes)
 			modes += M.name
 		modes = sortList(modes)
@@ -276,16 +287,23 @@ SUBSYSTEM_DEF(ticker)
 	watch = start_watch()
 	GLOB.data_core.manifest() // Create the manifest
 	log_debug("Manifest creation took [stop_watch(watch)]s")
+	SEND_SIGNAL(src, COMSIG_TICKER_ROUND_STARTING, world.time)
 
 	// Update the MC and state to game playing
 	current_state = GAME_STATE_PLAYING
 	Master.SetRunLevel(RUNLEVEL_GAME)
 
 	// Generate the list of empty playable AI cores in the world
+	if(HAS_TRAIT(SSstation, STATION_TRAIT_TRIAI))
+		for(var/obj/effect/landmark/tripai in GLOB.landmarks_list)
+			if(tripai.name == "tripai")
+				if(locate(/mob/living) in get_turf(tripai))
+					continue
+				GLOB.empty_playable_ai_cores += new /obj/structure/ai_core/deactivated(get_turf(tripai))
 	for(var/obj/effect/landmark/start/ai/A in GLOB.landmarks_list)
 		if(locate(/mob/living) in get_turf(A))
 			continue
-		GLOB.empty_playable_ai_cores += new /obj/structure/AIcore/deactivated(get_turf(A))
+		GLOB.empty_playable_ai_cores += new /obj/structure/ai_core/deactivated(get_turf(A))
 
 
 	// Setup pregenerated newsfeeds
@@ -293,9 +311,25 @@ SUBSYSTEM_DEF(ticker)
 
 	// Generate code phrases and responses
 	if(!GLOB.syndicate_code_phrase)
-		GLOB.syndicate_code_phrase = generate_code_phrase()
+		var/temp_syndicate_code_phrase = generate_code_phrase(return_list = TRUE)
+
+		var/codewords = jointext(temp_syndicate_code_phrase, "|")
+		var/regex/codeword_match = new("([codewords])", "ig")
+
+		GLOB.syndicate_code_phrase_regex = codeword_match
+		temp_syndicate_code_phrase = jointext(temp_syndicate_code_phrase, ", ")
+		GLOB.syndicate_code_phrase = temp_syndicate_code_phrase
+
+
 	if(!GLOB.syndicate_code_response)
-		GLOB.syndicate_code_response = generate_code_phrase()
+		var/temp_syndicate_code_response = generate_code_phrase(return_list = TRUE)
+
+		var/codewords = jointext(temp_syndicate_code_response, "|")
+		var/regex/codeword_match = new("([codewords])", "ig")
+
+		GLOB.syndicate_code_response_regex = codeword_match
+		temp_syndicate_code_response = jointext(temp_syndicate_code_response, ", ")
+		GLOB.syndicate_code_response = temp_syndicate_code_response
 
 	// Run post setup stuff
 	mode.post_setup()
@@ -307,7 +341,7 @@ SUBSYSTEM_DEF(ticker)
 
 	SSdbcore.SetRoundStart()
 	to_chat(world, "<span class='darkmblue'><B>Enjoy the game!</B></span>")
-	SEND_SOUND(world, sound('sound/AI/welcome.ogg'))
+	SEND_SOUND(world, sound(SSmapping.map_datum.welcome_sound))
 
 	if(SSholiday.holidays)
 		to_chat(world, "<span class='darkmblue'>and...</span>")
@@ -326,9 +360,10 @@ SUBSYSTEM_DEF(ticker)
 		if(N.client)
 			N.new_player_panel_proc()
 
-	SSnightshift.check_nightshift(TRUE)
+	if(GLOB.configuration.general.enable_night_shifts)
+		SSnightshift.check_nightshift(TRUE)
 
-	#ifdef UNIT_TESTS
+	#ifdef GAME_TESTS
 	// Run map tests first in case unit tests futz with map state
 	GLOB.test_runner.RunMap()
 	GLOB.test_runner.Run()
@@ -345,7 +380,7 @@ SUBSYSTEM_DEF(ticker)
 
 	auto_toggle_ooc(TRUE) // Turn it on
 	//initialise our cinematic screen object
-	cinematic = new /obj/screen(src)
+	cinematic = new /atom/movable/screen(src)
 	cinematic.icon = 'icons/effects/station_explosion.dmi'
 	cinematic.icon_state = "station_intact"
 	cinematic.layer = 21
@@ -510,9 +545,9 @@ SUBSYSTEM_DEF(ticker)
 	else
 		var/list/randomtips = file2list("strings/tips.txt")
 		var/list/memetips = file2list("strings/sillytips.txt")
-		if(randomtips.len && prob(95))
+		if(length(randomtips) && prob(95))
 			m = pick(randomtips)
-		else if(memetips.len)
+		else if(length(memetips))
 			m = pick(memetips)
 
 	if(m)
@@ -520,6 +555,7 @@ SUBSYSTEM_DEF(ticker)
 
 /datum/controller/subsystem/ticker/proc/declare_completion()
 	GLOB.nologevent = TRUE //end of round murder and shenanigans are legal; there's no need to jam up attack logs past this point.
+	GLOB.disable_explosions = TRUE // that said, if people want to be """FUNNY""" and bomb at EORG, they can fuck themselves up
 	set_observer_default_invisibility(0) //spooks things up
 	//Round statistics report
 	var/datum/station_state/ending_station_state = new /datum/station_state()
@@ -532,7 +568,7 @@ SUBSYSTEM_DEF(ticker)
 	end_of_round_info += "<BR>"
 
 	//Silicon laws report
-	for(var/mob/living/silicon/ai/aiPlayer in GLOB.mob_list)
+	for(var/mob/living/silicon/ai/aiPlayer in GLOB.ai_list)
 		var/ai_ckey = safe_get_ckey(aiPlayer)
 
 		if(aiPlayer.stat != DEAD)
@@ -655,11 +691,18 @@ SUBSYSTEM_DEF(ticker)
 
 /datum/controller/subsystem/ticker/proc/setup_news_feeds()
 	var/datum/feed_channel/newChannel = new /datum/feed_channel
-	newChannel.channel_name = "Public Station Announcements"
+	newChannel.channel_name = "Station Announcements Log"
 	newChannel.author = "Automated Announcement Listing"
 	newChannel.icon = "bullhorn"
 	newChannel.frozen = TRUE
 	newChannel.admin_locked = TRUE
+	GLOB.news_network.channels += newChannel
+
+	newChannel = new /datum/feed_channel
+	newChannel.channel_name = "Public Station Announcements"
+	newChannel.author = "Automated Announcement Listing"
+	newChannel.icon = "users"
+	newChannel.is_public = TRUE
 	GLOB.news_network.channels += newChannel
 
 	newChannel = new /datum/feed_channel
@@ -680,40 +723,46 @@ SUBSYSTEM_DEF(ticker)
 
 	for(var/loc_type in subtypesof(/datum/trade_destination))
 		var/datum/trade_destination/D = new loc_type
-		GLOB.weighted_randomevent_locations[D] = D.viable_random_events.len
-		GLOB.weighted_mundaneevent_locations[D] = D.viable_mundane_events.len
+		GLOB.weighted_randomevent_locations[D] = length(D.viable_random_events)
+		GLOB.weighted_mundaneevent_locations[D] = length(D.viable_mundane_events)
 
 // Easy handler to make rebooting the world not a massive sleep in world/Reboot()
 /datum/controller/subsystem/ticker/proc/reboot_helper(reason, end_string, delay)
 	// Admins delayed round end. Just alert and dont bother with anything else.
 	if(delay_end)
-		to_chat(world, "<span class='boldannounce'>An admin has delayed the round end.</span>")
+		to_chat(world, "<span class='boldannounceooc'>An admin has delayed the round end.</span>")
 		return
+	if(delay)
+		INVOKE_ASYNC(src, TYPE_PROC_REF(/datum/controller/subsystem/ticker, show_server_restart_blurb), reason)
 
 	if(!isnull(delay))
 		// Delay time was present. Use that.
 		delay = max(0, delay)
 	else
 		// Use default restart timeout
-		delay = restart_timeout
+		delay = max(0, GLOB.configuration.general.restart_timeout SECONDS)
 
-	to_chat(world, "<span class='boldannounce'>Rebooting world in [delay/10] [delay > 10 ? "seconds" : "second"]. [reason]</span>")
+	to_chat(world, "<span class='boldannounceooc'>Rebooting world in [delay/10] [delay > 10 ? "seconds" : "second"]. [reason]</span>")
 
 	real_reboot_time = world.time + delay
 	UNTIL(world.time > real_reboot_time) // Hold it here
 
 	// And if we re-delayed, bail again
 	if(delay_end)
-		to_chat(world, "<span class='boldannounce'>Reboot was cancelled by an admin.</span>")
+		to_chat(world, "<span class='boldannounceooc'>Reboot was cancelled by an admin.</span>")
 		return
 
 	if(end_string)
 		end_state = end_string
 
-	// Play a haha funny noise
+	// Play a haha funny noise for those who want to hear it :)
 	var/round_end_sound = pick(GLOB.round_end_sounds)
 	var/sound_length = GLOB.round_end_sounds[round_end_sound]
-	SEND_SOUND(world, sound(round_end_sound))
+
+	for(var/mob/M in GLOB.player_list)
+		if(!(M.client.prefs.sound & SOUND_MUTE_END_OF_ROUND))
+			SEND_SOUND(M, round_end_sound)
+
 	sleep(sound_length)
 
 	world.Reboot()
@@ -754,7 +803,7 @@ SUBSYSTEM_DEF(ticker)
 		AR.handle_data(load_queries[ckey])
 		save_queries[ckey] = AR.get_save_query()
 
-		log_text += "<small>- <a href='?priv_msg=[ckey]'>[ckey]</a>: [AR.infraction_count]</small>"
+		log_text += "<small>- <a href='byond://?priv_msg=[ckey]'>[ckey]</a>: [AR.infraction_count]</small>"
 
 	log_text += "Investigation advised if there are a high number of infractions"
 
@@ -767,3 +816,92 @@ SUBSYSTEM_DEF(ticker)
 	QDEL_LIST_ASSOC_VAL(load_queries)
 	records.Cut()
 	flagged_antag_rollers.Cut()
+
+/// This proc is for recording biohazard events, and blackboxing if they lived,
+/// died, or ended the round. This currently applies to: Terror spiders,
+/// Xenomorphs, and Blob.
+///
+/// This code is predicated on the assumption that multiple midrounds
+/// of the same type are either extremely rare or impossible. We don't want to get
+/// into the insanity of trying to record if the first xeno biohazard was defeated
+/// but the second xeno biohazard was nuked.
+/datum/controller/subsystem/ticker/proc/record_biohazard_results()
+	for(var/biohazard in SSevents.biohazards_this_round)
+		if(biohazard_active_threat(biohazard))
+			SSblackbox.record_feedback("nested tally", "biohazards", 1, list("survived", biohazard))
+		else
+			SSblackbox.record_feedback("nested tally", "biohazards", 1, list("defeated", biohazard))
+
+	for(var/biohazard in SSticker.biohazard_included_admin_spawns)
+		SSblackbox.record_feedback("nested tally", "biohazards", 1, list("included_admin_spawns", biohazard))
+
+/datum/controller/subsystem/ticker/proc/count_xenomorps()
+	. = 0
+	for(var/datum/mind/xeno_mind in SSticker.mode.xenos)
+		if(xeno_mind.current?.stat == DEAD)
+			continue
+		.++
+
+/datum/controller/subsystem/ticker/proc/sample_biohazard_population(biohazard)
+	SSblackbox.record_feedback("ledger", "biohazard_pop_[BIOHAZARD_POP_INTERVAL_STR]_interval", biohazard_count(biohazard), biohazard)
+	if(any_admin_spawned_mobs(biohazard) && !(biohazard in biohazard_included_admin_spawns))
+		biohazard_included_admin_spawns[biohazard] = TRUE
+
+	biohazard_pop_times[biohazard] = world.time
+
+/// Record the initial time that a biohazard spawned.
+/datum/controller/subsystem/ticker/proc/record_biohazard_start(biohazard)
+	SSblackbox.record_feedback("associative", "biohazard_starts", 1, list("type" = biohazard, "time_ds" = world.time - time_game_started))
+	sample_biohazard_population(biohazard)
+
+/// Returns whether the given biohazard includes mobs that were admin spawned.
+/// Only returns TRUE or FALSE, does not attempt to track which mobs were
+/// admin-spawned and which ones weren't.
+/datum/controller/subsystem/ticker/proc/any_admin_spawned_mobs(biohazard)
+	switch(biohazard)
+		if(TS_INFESTATION_GREEN_SPIDER, TS_INFESTATION_WHITE_SPIDER, TS_INFESTATION_PRINCESS_SPIDER, TS_INFESTATION_QUEEN_SPIDER, TS_INFESTATION_PRINCE_SPIDER)
+			for(var/mob/living/simple_animal/hostile/poison/terror_spider/S in GLOB.ts_spiderlist)
+				if(S.admin_spawned)
+					return TRUE
+		if(BIOHAZARD_XENO)
+			for(var/datum/mind/xeno_mind in SSticker.mode.xenos)
+				if(xeno_mind.current?.admin_spawned)
+					return TRUE
+		if(BIOHAZARD_BLOB)
+			for(var/atom/blob_overmind in SSticker.mode.blob_overminds)
+				if(blob_overmind.admin_spawned)
+					return TRUE
+
+/datum/controller/subsystem/ticker/proc/biohazard_count(biohazard)
+	switch(biohazard)
+		if(TS_INFESTATION_GREEN_SPIDER, TS_INFESTATION_WHITE_SPIDER, TS_INFESTATION_PRINCESS_SPIDER, TS_INFESTATION_QUEEN_SPIDER)
+			var/spiders = 0
+			for(var/mob/living/simple_animal/hostile/poison/terror_spider/S in GLOB.ts_spiderlist)
+				if(S.ckey)
+					spiders++
+			return spiders
+		if(TS_INFESTATION_PRINCE_SPIDER)
+			return length(GLOB.ts_spiderlist)
+		if(BIOHAZARD_XENO)
+			return count_xenomorps()
+		if(BIOHAZARD_BLOB)
+			return length(SSticker.mode.blob_overminds)
+
+	CRASH("biohazard_count got unexpected [biohazard]")
+
+/// Return whether or not a given biohazard is an active threat.
+/// For blobs, this is simply if there are any overminds left. For terrors and
+/// xenomorphs, this is whether they have overwhelming numbers.
+/datum/controller/subsystem/ticker/proc/biohazard_active_threat(biohazard)
+	var/count = biohazard_count(biohazard)
+	switch(biohazard)
+		if(TS_INFESTATION_GREEN_SPIDER, TS_INFESTATION_WHITE_SPIDER, TS_INFESTATION_PRINCESS_SPIDER, TS_INFESTATION_QUEEN_SPIDER)
+			return count >= 5
+		if(TS_INFESTATION_PRINCE_SPIDER)
+			return count > 0
+		if(BIOHAZARD_XENO)
+			return count > 5
+		if(BIOHAZARD_BLOB)
+			return count > 0
+
+	return FALSE

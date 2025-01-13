@@ -24,6 +24,8 @@
 	icon_state = "cmof"
 	item_color = "cmof"
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|ARMS
+	dyeable = TRUE
+	dyeing_key = DYE_REGISTRY_JUMPSKIRT
 
 /obj/item/clothing/under/rank/medical/doctor
 	name = "medical doctor's jumpsuit"
@@ -149,7 +151,8 @@
 	item_state = "psychturtle"
 	item_color = "psychturtle"
 
-/obj/item/clothing/under/rank/medical/gown //Seems like it should be here for organisational purposes
+/// Seems like it should be here for organisational purposes
+/obj/item/clothing/under/rank/medical/gown
 	name = "medical gown"
 	desc = "a flimsy examination gown, the back ties never close."
 	icon_state = "medicalgown"

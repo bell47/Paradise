@@ -14,9 +14,8 @@
 	icon_state = ""
 	var/list/icons = list()
 
-/turf/simulated/floor/mineral/Initialize(mapload)
-	. = ..()
-	broken_states = list("[initial(icon_state)]_dam")
+/turf/simulated/floor/mineral/get_broken_states()
+	return list("[initial(icon_state)]_dam")
 
 /turf/simulated/floor/mineral/update_icon_state()
 	if(!broken && !burnt)
@@ -35,14 +34,16 @@
 	if(exposed_temperature > 300)
 		PlasmaBurn()
 
-/turf/simulated/floor/mineral/plasma/attackby(obj/item/W, mob/user, params)
-	if(W.get_heat() > 300)//If the temperature of the object is over 300, then ignite
-		message_admins("Plasma flooring was ignited by [key_name_admin(user)]([ADMIN_QUE(user,"?")]) ([ADMIN_FLW(user,"FLW")]) in ([x],[y],[z] - <a href='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
+/turf/simulated/floor/mineral/plasma/attack_by(obj/item/attacking, mob/user, params)
+	if(..())
+		return FINISH_ATTACK
+
+	if(attacking.get_heat() > 300)//If the temperature of the object is over 300, then ignite
+		message_admins("Plasma flooring was ignited by [key_name_admin(user)]([ADMIN_QUE(user,"?")]) ([ADMIN_FLW(user,"FLW")]) in ([x],[y],[z] - <a href='byond://?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
 		log_game("Plasma flooring was <b>ignited by [key_name(user)] in ([x],[y],[z])")
 		investigate_log("was <font color='red'><b>ignited</b></font> by [key_name(user)]","atmos")
-		ignite(W.get_heat())
-		return
-	..()
+		ignite(attacking.get_heat())
+		return FINISH_ATTACK
 
 /turf/simulated/floor/mineral/plasma/welder_act(mob/user, obj/item/I)
 	if(I.use_tool(src, user, volume = I.tool_volume))
@@ -50,7 +51,7 @@
 						"<span class='danger'>[src] disintegrates into a cloud of plasma!</span>",\
 						"<span class='warning'>You hear a 'whoompf' and a roar.</span>")
 		ignite(2500) //Big enough to ignite
-		message_admins("Plasma wall ignited by [key_name_admin(user)] in ([x], [y], [z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
+		message_admins("Plasma wall ignited by [key_name_admin(user)] in ([x], [y], [z] - <A href='byond://?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
 		log_game("Plasma wall ignited by [key_name(user)] in ([x], [y], [z])")
 		investigate_log("was <font color='red'><b>ignited</b></font> by [key_name(user)]","atmos")
 
@@ -81,6 +82,13 @@
 	floor_tile = /obj/item/stack/tile/mineral/silver
 	icons = list("silver","silver_dam")
 
+/turf/simulated/floor/mineral/silver/lavaland_air
+	oxygen = LAVALAND_OXYGEN
+	nitrogen = LAVALAND_NITROGEN
+	temperature = LAVALAND_TEMPERATURE
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
+
 /turf/simulated/floor/mineral/silver/fancy
 	icon_state = "silverfancy"
 	floor_tile = /obj/item/stack/tile/mineral/silver/fancy
@@ -95,7 +103,9 @@
 	name = "shuttle floor"
 	icon_state = "titanium"
 	floor_tile = /obj/item/stack/tile/mineral/titanium
-	broken_states = list("titanium_dam1","titanium_dam2","titanium_dam3","titanium_dam4","titanium_dam5")
+
+/turf/simulated/floor/mineral/titanium/get_broken_states()
+	return list("titanium_dam1", "titanium_dam2", "titanium_dam3", "titanium_dam4", "titanium_dam5")
 
 /turf/simulated/floor/mineral/titanium/airless
 	oxygen = 0
@@ -132,7 +142,9 @@
 	name = "shuttle floor"
 	icon_state = "plastitanium"
 	floor_tile = /obj/item/stack/tile/mineral/plastitanium
-	broken_states = list("plastitanium_dam1","plastitanium_dam2","plastitanium_dam3","plastitanium_dam4","plastitanium_dam5")
+
+/turf/simulated/floor/mineral/plastitanium/get_broken_states()
+	return list("plastitanium_dam1", "plastitanium_dam2", "plastitanium_dam3", "plastitanium_dam4", "plastitanium_dam5")
 
 /turf/simulated/floor/mineral/plastitanium/red
 	icon_state = "plastitanium_red"
@@ -164,10 +176,11 @@
 		if(istype(M))
 			squeek()
 
-/turf/simulated/floor/mineral/bananium/attackby(obj/item/W, mob/user, params)
-	.=..()
-	if(!.)
-		honk()
+/turf/simulated/floor/mineral/bananium/attack_by(obj/item/attacking, mob/user, params)
+	if(..())
+		return FINISH_ATTACK
+
+	honk()
 
 /turf/simulated/floor/mineral/bananium/attack_hand(mob/user)
 	.=..()
@@ -201,6 +214,13 @@
 		H.slip("the floor", 10 SECONDS, tilesSlipped = 4, walkSafely = 0, slipAny = 1)
 	return
 
+/turf/simulated/floor/mineral/bananium/lubed/lavaland_air
+	oxygen = LAVALAND_OXYGEN
+	nitrogen = LAVALAND_NITROGEN
+	temperature = LAVALAND_TEMPERATURE
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
+
 //TRANQUILLITE
 /turf/simulated/floor/mineral/tranquillite
 	name = "silent floor"
@@ -233,10 +253,11 @@
 		if(istype(AM))
 			radiate()
 
-/turf/simulated/floor/mineral/uranium/attackby(obj/item/W, mob/user, params)
-	.=..()
-	if(!.)
-		radiate()
+/turf/simulated/floor/mineral/uranium/attack_by(obj/item/attacking, mob/user, params)
+	if(..())
+		return FINISH_ATTACK
+
+	radiate()
 
 /turf/simulated/floor/mineral/uranium/attack_hand(mob/user)
 	.=..()
@@ -284,6 +305,8 @@
 	return //unburnable
 
 /turf/simulated/floor/plating/abductor/lavaland_air
-	temperature = 300
-	oxygen = 14
-	nitrogen = 23
+	oxygen = LAVALAND_OXYGEN
+	nitrogen = LAVALAND_NITROGEN
+	temperature = LAVALAND_TEMPERATURE
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND

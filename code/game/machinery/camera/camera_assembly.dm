@@ -36,7 +36,7 @@
 			. += "<span class='notice'>The camera assembly is <b>wired</b>, but the maintenence panel needs to be <i>screwed shut</i>.</span>"
 			. += "<span class='notice'>Upgrades can be added to the camera assembly, and removed with a crowbar.</span>"
 
-/obj/item/camera_assembly/attackby(obj/item/I, mob/living/user, params)
+/obj/item/camera_assembly/attackby__legacy__attackchain(obj/item/I, mob/living/user, params)
 	if(state == ASSEMBLY_WELDED && iscoil(I))
 		var/obj/item/stack/cable_coil/C = I
 		if(C.use(2))
@@ -49,7 +49,7 @@
 
 	// Upgrades!
 	else if(is_type_in_list(I, possible_upgrades) && !is_type_in_list(I, upgrades)) // Is a possible upgrade and isn't in the camera already.
-		if(!user.unEquip(I))
+		if(!user.drop_item_to_ground(I))
 			to_chat(user, "<span class='warning'>[I] is stuck!</span>")
 			return
 		to_chat(user, "<span class='notice'>You attach [I] into the assembly inner circuits.</span>")
@@ -61,7 +61,7 @@
 		return ..()
 
 /obj/item/camera_assembly/crowbar_act(mob/user, obj/item/I)
-	if(!upgrades.len)
+	if(!length(upgrades))
 		return
 	. = TRUE
 	if(!I.use_tool(src, user, 0, volume = I.tool_volume))
@@ -87,7 +87,7 @@
 		return
 
 	var/list/tempnetwork = splittext(input, ",")
-	if(tempnetwork.len < 1)
+	if(length(tempnetwork) < 1)
 		state = ASSEMBLY_WIRED
 		to_chat(usr, "<span class='warning'>No network found please hang up and try your call again.</span>")
 		return
@@ -113,7 +113,7 @@
 		if(direct != "LEAVE IT")
 			C.dir = text2dir(direct)
 		if(i != 0)
-			var/confirm = alert(user, "Is this what you want? Chances Remaining: [i]", "Confirmation", "Yes", "No")
+			var/confirm = tgui_alert(user, "Is this what you want? Chances Remaining: [i]", "Confirmation", list("Yes", "No"))
 			if(confirm == "Yes")
 				break
 

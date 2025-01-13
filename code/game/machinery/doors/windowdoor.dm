@@ -1,6 +1,6 @@
 /obj/machinery/door/window
 	name = "interior door"
-	desc = "A strong door."
+	desc = "A door that's also a window, isn't that amazing?"
 	icon = 'icons/obj/doors/windoor.dmi'
 	icon_state = "left"
 	layer = ABOVE_WINDOW_LAYER
@@ -12,6 +12,7 @@
 	integrity_failure = 0
 	armor = list(MELEE = 20, BULLET = 50, LASER = 50, ENERGY = 50, BOMB = 10, RAD = 100, FIRE = 70, ACID = 100)
 	glass = TRUE // Used by polarized helpers. Windoors are always glass.
+	superconductivity = WINDOW_HEAT_TRANSFER_COEFFICIENT
 	var/obj/item/airlock_electronics/electronics
 	var/base_state = "left"
 	var/reinf = FALSE
@@ -28,8 +29,14 @@
 
 /obj/machinery/door/window/Initialize(mapload)
 	. = ..()
-	if(req_access && req_access.len)
+	if(req_access && length(req_access))
 		base_state = icon_state
+
+	var/static/list/loc_connections = list(
+		COMSIG_ATOM_EXIT = PROC_REF(on_atom_exit),
+	)
+
+	AddElement(/datum/element/connect_loc, loc_connections)
 
 	if(name != initial(name))
 		return
@@ -135,18 +142,18 @@
 /obj/machinery/door/window/unrestricted_side(mob/M)
 	var/mob_dir = get_dir(src, M)
 	if(mob_dir == 0) // If the mob is inside the tile
-		mob_dir = GetOppositeDir(dir) // Set it to the inside direction of the windoor
+		mob_dir = REVERSE_DIR(dir) // Set it to the inside direction of the windoor
 
 	return mob_dir & unres_sides
 
-/obj/machinery/door/window/CanPass(atom/movable/mover, turf/target, height=0)
+/obj/machinery/door/window/CanPass(atom/movable/mover, border_dir)
 	if(istype(mover) && mover.checkpass(PASSGLASS))
 		return TRUE
 	if(isliving(mover))
 		var/mob/living/living_mover = mover
 		if(HAS_TRAIT(living_mover, TRAIT_CONTORTED_BODY) && IS_HORIZONTAL(living_mover))
 			return TRUE
-	if(get_dir(loc, target) == dir) //Make sure looking at appropriate border
+	if(border_dir == dir) //Make sure looking at appropriate border
 		return !density
 	if(istype(mover, /obj/structure/window))
 		var/obj/structure/window/W = mover
@@ -159,29 +166,32 @@
 	else if(istype(mover, /obj/machinery/door/window) && !valid_window_location(loc, mover.dir))
 		return FALSE
 	else
-		return 1
+		return TRUE
 
-/obj/machinery/door/window/CanAtmosPass(turf/T)
-	if(get_dir(loc, T) == dir)
+/obj/machinery/door/window/CanAtmosPass(direction)
+	if(direction == dir)
 		return !density
 	else
-		return 1
+		return TRUE
 
 //used in the AStar algorithm to determinate if the turf the door is on is passable
-/obj/machinery/door/window/CanPathfindPass(obj/item/card/id/ID, to_dir, no_id = FALSE)
-	return !density || (dir != to_dir) || (check_access(ID) && hasPower())
+/obj/machinery/door/window/CanPathfindPass(to_dir, datum/can_pass_info/pass_info)
+	return !density || (dir != to_dir) || (check_access_list(pass_info.access) && hasPower())
 
-/obj/machinery/door/window/CheckExit(atom/movable/mover, turf/target)
-	if(istype(mover) && mover.checkpass(PASSGLASS))
-		return TRUE
-	if(isliving(mover))
-		var/mob/living/living_mover = mover
+/obj/machinery/door/window/proc/on_atom_exit(datum/source, atom/movable/leaving, direction)
+	SIGNAL_HANDLER // COMSIG_ATOM_EXIT
+
+	if(istype(leaving) && leaving.checkpass(PASSGLASS))
+		return
+
+	if(isliving(leaving))
+		var/mob/living/living_mover = leaving
 		if(HAS_TRAIT(living_mover, TRAIT_CONTORTED_BODY) && IS_HORIZONTAL(living_mover))
-			return TRUE
-	if(get_dir(loc, target) == dir)
-		return !density
-	else
-		return 1
+			return
+
+	if(direction == dir && density)
+		leaving.Bump(src)
+		return COMPONENT_ATOM_BLOCK_EXIT
 
 /obj/machinery/door/window/open(forced=0)
 	if(operating) //doors can still open when emag-disabled
@@ -194,20 +204,20 @@
 			return 0
 	if(!operating) //in case of emag
 		operating = DOOR_OPENING
+	recalculate_atmos_connectivity()
 	do_animate("opening")
 	set_opacity(FALSE)
 	playsound(loc, 'sound/machines/windowdoor.ogg', 100, 1)
 	icon_state ="[base_state]open"
-	sleep(10)
+	addtimer(CALLBACK(src, PROC_REF(finish_open)), 8)
 
+/obj/machinery/door/window/proc/finish_open()
 	density = FALSE
-//	sd_set_opacity(0)	//TODO: why is this here? Opaque windoors? ~Carn
-	air_update_turf(1)
+	recalculate_atmos_connectivity()
 	update_freelook_sight()
 
 	if(operating) //emag again
 		operating = NONE
-	return 1
 
 /obj/machinery/door/window/close(forced=0)
 	if(operating)
@@ -226,11 +236,11 @@
 	density = TRUE
 	if(polarized_on)
 		set_opacity(TRUE)
-	air_update_turf(1)
 	update_freelook_sight()
 	sleep(10)
 
 	operating = NONE
+	recalculate_atmos_connectivity()
 	return 1
 
 /obj/machinery/door/window/play_attack_sound(damage_amount, damage_type = BRUTE, damage_flag = 0)
@@ -290,11 +300,11 @@
 		sleep(6)
 		operating = NONE
 		open(2)
-		return 1
+		return TRUE
 
 /obj/machinery/door/window/cmag_act(mob/user, obj/weapon)
 	if(operating || !density || HAS_TRAIT(src, TRAIT_CMAGGED))
-		return
+		return FALSE
 	ADD_TRAIT(src, TRAIT_CMAGGED, CLOWN_EMAG)
 	operating = DOOR_MALF
 	flick("[base_state]spark", src)
@@ -303,7 +313,7 @@
 	operating = NONE
 	return TRUE
 
-/obj/machinery/door/window/attackby(obj/item/I, mob/living/user, params)
+/obj/machinery/door/window/attackby__legacy__attackchain(obj/item/I, mob/living/user, params)
 	//If it's in the process of opening/closing, ignore the click
 	if(operating)
 		return
@@ -367,15 +377,16 @@
 					ae = new/obj/item/airlock_electronics(loc)
 					if(!req_access)
 						check_access()
-					if(req_access.len)
+					if(length(req_access))
 						ae.selected_accesses = req_access
-					else if(req_one_access.len)
+					else if(length(req_one_access))
 						ae.selected_accesses = req_one_access
 						ae.one_access = 1
 				else
 					ae = electronics
 					electronics = null
 					ae.forceMove(loc)
+				ae.is_installed = FALSE
 
 				qdel(src)
 	else
@@ -401,6 +412,7 @@
 
 /obj/machinery/door/window/reinforced
 	name = "Branch, do not add stuff here"
+	desc = "A stronger version of the common windoor, often used by authority figures denying assistants their rightful access."
 	icon_state = "leftsecure"
 	base_state = "leftsecure"
 	max_integrity = 300 //Stronger doors for prison (regular window door health is 200)
@@ -435,8 +447,8 @@
 	base_state = "right"
 
 /obj/machinery/door/window/antitheft
-	desc = "Better do not try to steal, pal, lube off."
 	name = "Branch, do not add stuff here"
+	desc = "Better do not try to steal, pal, lube off."
 
 /obj/machinery/door/window/antitheft/normal
 	name = ".custom placement"
@@ -448,6 +460,7 @@
 
 /obj/machinery/door/window/brigdoor
 	name = "Do not make stuff here, its needed for code to not collapse"
+	desc = "A stronger version of the common windoor, often used by authority figures denying assistants their rightful access."
 	icon_state = "leftsecure"
 	base_state = "leftsecure"
 	max_integrity = 300 //Stronger doors for prison (regular window door health is 200)

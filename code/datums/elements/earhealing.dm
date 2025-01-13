@@ -1,5 +1,5 @@
 /datum/element/earhealing
-	element_flags = ELEMENT_DETACH
+	element_flags = ELEMENT_DETACH_ON_HOST_DESTROY
 	var/list/user_by_item = list()
 
 /datum/element/earhealing/New()
@@ -20,7 +20,7 @@
 /datum/element/earhealing/proc/equippedChanged(datum/source, mob/living/carbon/user, slot)
 	SIGNAL_HANDLER
 
-	if(((slot == SLOT_HUD_LEFT_EAR) || (slot == SLOT_HUD_RIGHT_EAR)) && istype(user))
+	if((slot & ITEM_SLOT_BOTH_EARS) && istype(user))
 		user_by_item[source] = user
 	else
 		user_by_item -= source

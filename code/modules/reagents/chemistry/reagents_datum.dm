@@ -38,6 +38,20 @@
 	/// how quickly the addiction threshold var decays
 	var/addiction_decay_rate = 0.01
 
+	// Which department's (if any) reagent goals this is eligible for.
+	// Must match the values used by request consoles.
+	var/goal_department = "Unknown"
+	// How difficult is this chemical for the department to make?
+	// Affects the quantity of the reagent that is requested by CC.
+	var/goal_difficulty = REAGENT_GOAL_SKIP
+
+	/// At what temperature does this reagent burn? Currently only used for chemical flamethrowers
+	var/burn_temperature = T0C
+	/// How long would a fire burn using this reagent? Currently only used for chemical flamethrowers
+	var/burn_duration = 30 SECONDS
+	/// How many firestacks will the reagent apply when it is burning? Currently only used for chemical flamethrowers
+	var/fire_stack_applications = 1
+
 /datum/reagent/Destroy()
 	. = ..()
 	holder = null
@@ -78,7 +92,8 @@
 		if(id == "blood" && !(data?["blood_type"] in get_safe_blood(C.dna?.blood_type)) || C.dna?.species.name != data?["species"] && (data?["species_only"] || C.dna?.species.own_species_blood))
 			C.reagents.add_reagent("toxin", volume * 0.5)
 		else
-			C.blood_volume = min(C.blood_volume + round(volume, 0.1), BLOOD_VOLUME_NORMAL)
+			if(data?["blood_type"] != BLOOD_TYPE_FAKE_BLOOD)
+				C.blood_volume = min(C.blood_volume + round(volume, 0.1), BLOOD_VOLUME_NORMAL)
 		// This does not absorb the blood we are getting in *this* reagent transfer operation,
 		// (because the actual transfer has not happened yet. Because reasons) but it does process
 		// the blood already in the mob.
@@ -202,6 +217,9 @@
 	return list(effect, update_flags)
 
 /datum/reagent/proc/overdose_start(mob/living/M)
+	return
+
+/datum/reagent/proc/overdose_end(mob/living/M)
 	return
 
 /datum/reagent/proc/addiction_act_stage1(mob/living/M)

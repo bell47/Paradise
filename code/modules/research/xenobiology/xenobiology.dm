@@ -18,7 +18,7 @@
 	/// The mob who last injected the extract with plasma, water or blood. Used for logging.
 	var/mob/living/injector_mob
 
-/obj/item/slime_extract/attackby(obj/item/O, mob/user)
+/obj/item/slime_extract/attackby__legacy__attackchain(obj/item/O, mob/user)
 	if(istype(O, /obj/item/slimepotion/enhancer))
 		if(Uses >= 5)
 			to_chat(user, "<span class='warning'>You cannot enhance this extract further!</span>")
@@ -133,7 +133,7 @@
 	origin_tech = "biotech=4"
 	var/being_used = FALSE
 
-/obj/item/slimepotion/attack(mob/living/simple_animal/slime/M, mob/user)
+/obj/item/slimepotion/attack__legacy__attackchain(mob/living/simple_animal/slime/M, mob/user)
 	if(!isslime(M))
 		to_chat(user, "<span class='warning'>[src] only works on slimes!</span>")
 		return FALSE
@@ -145,7 +145,7 @@
 		return FALSE
 	return TRUE
 
-/obj/item/slimepotion/afterattack(obj/item/reagent_containers/target, mob/user, proximity_flag)
+/obj/item/slimepotion/afterattack__legacy__attackchain(obj/item/reagent_containers/target, mob/user, proximity_flag)
 	if(!proximity_flag)
 		return
 	if(istype(target))
@@ -157,7 +157,7 @@
 	desc = "A potent chemical mix that nullifies a slime's hunger, causing it to become docile and tame."
 	icon_state = "bottle19"
 
-/obj/item/slimepotion/slime/docility/attack(mob/living/simple_animal/slime/M, mob/user)
+/obj/item/slimepotion/slime/docility/attack__legacy__attackchain(mob/living/simple_animal/slime/M, mob/user)
 	. = ..()
 	if(!.)
 		return
@@ -173,8 +173,7 @@
 	to_chat(M, "<span class='warning'>You absorb the potion and feel your intense desire to feed melt away.</span>")
 	to_chat(user, "<span class='notice'>You feed the slime the potion, removing its hunger and calming it.</span>")
 	being_used = TRUE
-	var/newname = sanitize(copytext(input(user, "Would you like to give the slime a name?", "Name your new pet", "pet slime") as null|text,1,MAX_NAME_LEN))
-
+	var/newname = tgui_input_text(user, "Would you like to give the slime a name?", "Name your new pet", "pet slime", MAX_NAME_LEN, 1)
 	if(!newname)
 		newname = "pet slime"
 	M.name = newname
@@ -201,10 +200,10 @@
 		if(2)
 			. += "<span class='warning'>The vial is scalding hot! Is it really a good idea to use this..?</span>"
 
-/obj/item/slimepotion/sentience/attack()
+/obj/item/slimepotion/sentience/attack__legacy__attackchain()
 	return
 
-/obj/item/slimepotion/sentience/afterattack(mob/living/M, mob/user, proximity_flag)
+/obj/item/slimepotion/sentience/afterattack__legacy__attackchain(mob/living/M, mob/user, proximity_flag)
 	if(!proximity_flag)
 		return
 	if(being_used || !ismob(M))
@@ -228,7 +227,9 @@
 			explosion(T, -1, -1, 2, 3)
 		qdel(src)
 		return
-	var/reason_text = input(user, "Enter reason for giving sentience", "Reason for sentience potion", "") as null|text
+	var/reason_text = tgui_input_text(user, "Enter reason for giving sentience", "Reason for sentience potion")
+	if(!reason_text)
+		return
 	to_chat(user, "<span class='notice'>You offer [src] sentience potion to [SM]...</span>")
 	being_used = TRUE
 
@@ -238,7 +239,7 @@
 	if(QDELETED(src) || QDELETED(SM))
 		return
 
-	if(candidates.len)
+	if(length(candidates))
 		var/mob/C = pick(candidates)
 		SM.key = C.key
 		dust_if_respawnable(C)
@@ -246,7 +247,7 @@
 		SM.faction = user.faction
 		SM.master_commander = user
 		SM.sentience_act()
-		SM.can_collar = TRUE
+		SM.set_can_collar(TRUE)
 		to_chat(SM, "<span class='warning'>All at once it makes sense: you know what you are and who you are! Self awareness is yours!</span>")
 		to_chat(SM, "<span class='userdanger'>You are grateful to be self aware and owe [user] a great debt. Serve [user], and assist [user.p_them()] in completing [user.p_their()] goals at any cost.</span>")
 		if(SM.flags_2 & HOLOGRAM_2) //Check to see if it's a holodeck creature
@@ -284,7 +285,7 @@
 	var/prompted = FALSE
 	var/animal_type = SENTIENCE_ORGANIC
 
-/obj/item/slimepotion/transference/afterattack(mob/living/M, mob/user, proximity_flag)
+/obj/item/slimepotion/transference/afterattack__legacy__attackchain(mob/living/M, mob/user, proximity_flag)
 	if(!proximity_flag)
 		return
 	if(prompted || !ismob(M))
@@ -304,7 +305,7 @@
 		return
 
 	prompted = TRUE
-	if(alert("This will permanently transfer your consciousness to [SM]. Are you sure you want to do this?",,"Yes","No")=="No")
+	if(tgui_alert(user, "This will permanently transfer your consciousness to [SM]. Are you sure you want to do this?", "Consciousness Transfer", list("Yes", "No")) != "Yes")
 		prompted = FALSE
 		return
 
@@ -313,7 +314,7 @@
 	SM.universal_speak = TRUE
 	SM.faction = user.faction
 	SM.sentience_act() //Same deal here as with sentience
-	SM.can_collar = TRUE
+	SM.set_can_collar(TRUE)
 	user.death()
 	to_chat(SM, "<span class='notice'>In a quick flash, you feel your consciousness flow into [SM]!</span>")
 	to_chat(SM, "<span class='warning'>You are now [SM]. Your allegiances, alliances, and roles are still the same as they were prior to consciousness transfer!</span>")
@@ -325,7 +326,7 @@
 	desc = "A potent chemical mix that will cause a baby slime to generate more extract."
 	icon_state = "bottle16"
 
-/obj/item/slimepotion/slime/steroid/attack(mob/living/simple_animal/slime/M, mob/user)
+/obj/item/slimepotion/slime/steroid/attack__legacy__attackchain(mob/living/simple_animal/slime/M, mob/user)
 	. = ..()
 	if(!.)
 		return
@@ -351,7 +352,7 @@
 	desc = "A potent chemical mix that will reduce the chance of a slime mutating."
 	icon_state = "bottle15"
 
-/obj/item/slimepotion/slime/stabilizer/attack(mob/living/simple_animal/slime/M, mob/user)
+/obj/item/slimepotion/slime/stabilizer/attack__legacy__attackchain(mob/living/simple_animal/slime/M, mob/user)
 	. = ..()
 	if(!.)
 		return
@@ -369,7 +370,7 @@
 	desc = "A potent chemical mix that will increase the chance of a slime mutating."
 	icon_state = "bottle3"
 
-/obj/item/slimepotion/slime/mutator/attack(mob/living/simple_animal/slime/M, mob/user)
+/obj/item/slimepotion/slime/mutator/attack__legacy__attackchain(mob/living/simple_animal/slime/M, mob/user)
 	. = ..()
 	if(!.)
 		return
@@ -393,7 +394,7 @@
 	desc = "A monkey-shaped treat that heats up your little slime friend!"
 	icon_state = "slime_treat"
 
-/obj/item/slimepotion/speed/attack(mob/living/simple_animal/slime/M, mob/user)
+/obj/item/slimepotion/speed/attack__legacy__attackchain(mob/living/simple_animal/slime/M, mob/user)
 	. = ..()
 	if(!.)
 		return
@@ -420,7 +421,7 @@
 	resistance_flags = FIRE_PROOF
 	var/uses = 3
 
-/obj/item/slimepotion/fireproof/afterattack(obj/item/clothing/C, mob/user, proximity_flag)
+/obj/item/slimepotion/fireproof/afterattack__legacy__attackchain(obj/item/clothing/C, mob/user, proximity_flag)
 	..()
 	if(!proximity_flag)
 		return
@@ -447,7 +448,7 @@
 	if(usr.incapacitated())
 		return
 	if(loc == usr && loc.Adjacent(over_object))
-		afterattack(over_object, usr, TRUE)
+		afterattack__legacy__attackchain(over_object, usr, TRUE)
 
 /obj/item/slimepotion/oil_slick
 	name = "slime oil potion"
@@ -456,10 +457,12 @@
 	icon_state = "bottle4"
 	origin_tech = "biotech=5"
 
-/obj/item/slimepotion/oil_slick/afterattack(obj/O, mob/user, proximity_flag)
+/obj/item/slimepotion/oil_slick/afterattack__legacy__attackchain(obj/O, mob/user, proximity_flag)
 	if(!proximity_flag)
 		return
 	..()
+	if(SEND_SIGNAL(O, COMSIG_SPEED_POTION_APPLIED, src, user) & SPEED_POTION_STOP)
+		return
 	if(!isitem(O))
 		if(!istype(O, /obj/structure/table))
 			to_chat(user, "<span class='warning'>The potion can only be used on items!</span>")
@@ -498,12 +501,12 @@
 	if(usr.incapacitated())
 		return
 	if(loc == usr && loc.Adjacent(over_object))
-		afterattack(over_object, usr, TRUE)
+		afterattack__legacy__attackchain(over_object, usr, TRUE)
 
 /obj/effect/timestop
 	anchored = TRUE
 	name = "chronofield"
-	desc = "ZA WARUDO"
+	desc = "ZA WARUDO!"
 	icon = 'icons/effects/160x160.dmi'
 	icon_state = "time"
 	layer = FLY_LAYER
@@ -520,12 +523,11 @@
 /obj/effect/timestop/New()
 	..()
 	for(var/mob/living/M in GLOB.player_list)
-		for(var/obj/effect/proc_holder/spell/aoe/conjure/timestop/T in M.mind.spell_list) //People who can stop time are immune to timestop
+		for(var/datum/spell/aoe/conjure/timestop/T in M.mind.spell_list) //People who can stop time are immune to timestop
 			immune |= M
 
-
 /obj/effect/timestop/proc/timestop()
-	playsound(get_turf(src), 'sound/magic/timeparadox2.ogg', 100, 1, -1)
+	playsound(get_turf(src), 'sound/magic/timeparadox2.ogg', 100, TRUE, -1)
 	for(var/i in 1 to duration-1)
 		for(var/A in orange (freezerange, loc))
 			if(isliving(A))
@@ -539,7 +541,7 @@
 					H.AIStatus = AI_OFF
 					H.LoseTarget()
 				stopped_atoms |= M
-			else if(istype(A, /obj/item/projectile))
+			else if(isprojectile(A))
 				var/obj/item/projectile/P = A
 				P.paused = TRUE
 				stopped_atoms |= P

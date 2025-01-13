@@ -27,6 +27,10 @@
 	//The list of directions to block a projectile from
 	var/list/directional_list = list()
 
+/obj/structure/barricade/Initialize(mapload)
+	. = ..()
+	AddComponent(/datum/component/debris, DEBRIS_WOOD, -20, 10)
+
 /obj/structure/barricade/deconstruct(disassembled = TRUE)
 	if(!(flags & NODECONSTRUCT))
 		make_debris()
@@ -53,10 +57,12 @@
 		update_icon()
 	return TRUE
 
-/obj/structure/barricade/CanPass(atom/movable/mover, turf/target)//So bullets will fly over and stuff.
+/obj/structure/barricade/CanPass(atom/movable/mover, border_dir)//So bullets will fly over and stuff.
 	if(locate(/obj/structure/barricade) in get_turf(mover))
 		return TRUE
-	else if(istype(mover, /obj/item/projectile))
+	else if(istype(mover) && mover.checkpass(PASSBARRICADE))
+		return TRUE
+	else if(isprojectile(mover))
 		if(!anchored)
 			return TRUE
 		var/obj/item/projectile/proj = mover
@@ -88,7 +94,7 @@
 	stacktype = /obj/item/stack/sheet/wood
 
 
-/obj/structure/barricade/wooden/attackby(obj/item/I, mob/user)
+/obj/structure/barricade/wooden/attackby__legacy__attackchain(obj/item/I, mob/user)
 	if(istype(I,/obj/item/stack/sheet/wood))
 		var/obj/item/stack/sheet/wood/W = I
 		if(W.get_amount() < 5)
@@ -104,6 +110,16 @@
 				qdel(src)
 			return //return is need to prevent people from exploiting zero-hit cooldowns with the do_after here
 	return ..()
+
+/obj/structure/barricade/wooden/crowbar_act(mob/living/user, obj/item/I)
+	. = TRUE
+	if(!I.tool_use_check(user, 0))
+		return
+	user.visible_message("<span class='notice'>[user] starts ripping [src] down!</span>", "<span class='notice'>You struggle to pull [src] apart...</span>", "<span class='warning'>You hear wood splintering...</span>")
+	if(!I.use_tool(src, user, 6 SECONDS, volume = I.tool_volume))
+		return
+	new /obj/item/stack/sheet/wood(get_turf(src), 5)
+	qdel(src)
 
 /obj/structure/barricade/wooden/crude
 	name = "crude plank barricade"
@@ -126,7 +142,7 @@
 	base_icon_state = "sandbags"
 	max_integrity = 280
 	proj_pass_rate = 20
-	pass_flags = LETPASSTHROW
+	pass_flags_self = LETPASSTHROW | PASSTAKE
 	bar_material = SAND
 	climbable = TRUE
 	smoothing_flags = SMOOTH_BITMASK
@@ -247,7 +263,7 @@
 	directional_list += dir_1
 	directional_list += dir_2
 	if(dir_2)
-		icon_state = "[dir2text(dir_1 + dir_2)]"
+		icon_state = "[dir2text(dir_1)][dir2text(dir_1 + dir_2)]"
 	else
 		icon_state = "[dir2text(dir_1)]"
 
@@ -275,6 +291,7 @@
 	icon_state = "dropwall"
 	item_state = "grenade"
 	mode = AUTO
+	var/generator_type = /obj/structure/dropwall_generator
 	var/uptime = DROPWALL_UPTIME
 	/// If this is true we do not arm again, due to the sleep
 	var/deployed = FALSE
@@ -296,7 +313,7 @@
 
 	to_chat(user, "[src] is now in [mode == AUTO ? mode : dir2text(mode)] mode.")
 
-/obj/item/grenade/barrier/dropwall/attack_self(mob/user)
+/obj/item/grenade/barrier/dropwall/attack_self__legacy__attackchain(mob/user)
 	. = ..()
 	armer = user
 
@@ -310,7 +327,7 @@
 		return
 	if(mode == AUTO)
 		mode = angle2dir_cardinal(get_angle(armer, get_turf(src)))
-	new /obj/structure/dropwall_generator(get_turf(loc), mode, uptime)
+	new generator_type(get_turf(loc), mode, uptime)
 	deployed = TRUE
 	armer = null
 	qdel(src)
@@ -326,6 +343,8 @@
 	var/protected = FALSE
 	///The core shield that protects the generator
 	var/obj/structure/barricade/dropwall/core_shield = null
+	/// The type of dropwall
+	var/barricade_type = /obj/structure/barricade/dropwall
 
 /obj/structure/dropwall_generator/Initialize(mapload, direction, uptime)
 	. = ..()
@@ -341,23 +360,23 @@
 	anchored = TRUE
 	protected = TRUE
 	addtimer(CALLBACK(src, PROC_REF(power_out)), uptime)
-	timer_overlay_proc(uptime/10)
+	timer_overlay_proc(1)
 
-	connected_shields += new /obj/structure/barricade/dropwall(get_turf(loc), src, TRUE, direction)
+	connected_shields += new barricade_type(get_turf(loc), src, TRUE, direction)
 	core_shield = connected_shields[1]
 
 	var/dir_left = turn(direction, -90)
 	var/dir_right = turn(direction, 90)
 	var/target_turf = get_step(src, dir_left)
 	if(!is_blocked_turf(target_turf))
-		connected_shields += new /obj/structure/barricade/dropwall(target_turf, src, FALSE, direction, dir_left)
+		connected_shields += new barricade_type(target_turf, src, FALSE, direction, dir_left)
 
 	var/target_turf2 = get_step(src, dir_right)
 	if(!is_blocked_turf(target_turf2))
-		connected_shields += new /obj/structure/barricade/dropwall(target_turf2, src, FALSE, direction, dir_right)
+		connected_shields += new barricade_type(target_turf2, src, FALSE, direction, dir_right)
 
 
-/obj/structure/dropwall_generator/attacked_by(obj/item/I, mob/living/user) //No, you can not just go up to the generator and whack it. Central shield needs to go down first.
+/obj/structure/dropwall_generator/attacked_by__legacy__attackchain(obj/item/I, mob/living/user) //No, you can not just go up to the generator and whack it. Central shield needs to go down first.
 	if(protected)
 		visible_message("<span class='warning'>[src]'s shield absorbs the blow!</span>")
 		core_shield.take_damage(I.force, I.damtype, MELEE, TRUE)
@@ -380,7 +399,7 @@
 		qdel(src)
 
 /obj/structure/dropwall_generator/ex_act(severity)
-	if(protected && severity > 1) //We would throw the explosion at the shield, but it is already getting hit
+	if(protected && severity > EXPLODE_DEVASTATE) //We would throw the explosion at the shield, but it is already getting hit
 		return
 	qdel(src)
 
@@ -389,13 +408,12 @@
 	new /obj/item/used_dropwall(get_turf(src))
 	qdel(src)
 
-/obj/structure/dropwall_generator/proc/timer_overlay_proc(uptime) // This proc will make the timer on the generator tick down like a clock, over 12 equally sized portions (12 times over 12 seconds, every second by default)
-	var/cycle = DROPWALL_UPTIME + 1 - uptime
-	add_overlay("[cycle]")
-	if(cycle != 1)
-		cut_overlay("[(cycle - 1)]")
-	if(cycle < 12)
-		addtimer(CALLBACK(src, PROC_REF(timer_overlay_proc), uptime - 1), DROPWALL_UPTIME / 12 SECONDS)
+/obj/structure/dropwall_generator/proc/timer_overlay_proc(loops) // This proc will make the timer on the generator tick down like a clock, over 12 equally sized portions (12 times over 60 seconds, every 5 seconds by default)
+	add_overlay("[loops]")
+	if(loops != 1)
+		cut_overlay("[(loops - 1)]")
+	if(loops < 12)
+		addtimer(CALLBACK(src, PROC_REF(timer_overlay_proc), loops + 1), DROPWALL_UPTIME / 12)
 
 
 /obj/item/used_dropwall
@@ -406,13 +424,86 @@
 	item_state = "grenade"
 	materials = list(MAT_METAL = 500, MAT_GLASS = 300) //plasma burned up for power or something, plus not that much to reclaim
 
-
 /obj/item/storage/box/syndie_kit/dropwall
 	name = "dropwall generator box"
 
 /obj/item/storage/box/syndie_kit/dropwall/populate_contents()
 	for(var/I in 1 to 5)
 		new /obj/item/grenade/barrier/dropwall(src)
+
+/obj/item/grenade/barrier/dropwall/firewall
+	name = "firewall shield generator"
+	generator_type = /obj/structure/dropwall_generator/firewall
+
+/obj/structure/dropwall_generator/firewall
+	name = "deployed firewall shield generator"
+	barricade_type = /obj/structure/barricade/dropwall/firewall
+
+/obj/structure/barricade/dropwall/firewall
+
+/obj/structure/barricade/dropwall/firewall/Initialize(mapload, owner, core, dir_1, dir_2)
+	. = ..()
+	var/target_matrix = list(
+		2, 0, 0, 0,
+		0, 1, 0, 0,
+		2, 0, 0, 0,
+		0, 0, 0, 1
+	)
+	color = target_matrix
+	var/static/list/loc_connections = list(
+		COMSIG_ATOM_ENTERED = PROC_REF(on_atom_entered),
+	)
+	AddElement(/datum/element/connect_loc, loc_connections)
+
+/obj/structure/barricade/dropwall/firewall/proc/on_atom_entered(datum/source, atom/movable/entered)
+	if(!isprojectile(entered))
+		return
+	var/obj/item/projectile/P = entered
+	P.immolate ++
+
+/obj/item/grenade/turret
+	name = "Pop-Up Turret grenade"
+	desc = "Inflates into a Pop-Up turret, shoots everyone on sight who wasn't the primer."
+	icon = 'icons/obj/grenade.dmi'
+	icon_state = "wallbang"
+	item_state = "flashbang"
+	var/owner_uid
+
+/obj/item/grenade/turret/attack_self__legacy__attackchain(mob/user)
+	owner_uid = user.UID()
+	return ..()
+
+/obj/item/grenade/turret/prime()
+	var/obj/machinery/porta_turret/inflatable_turret/turret = new(get_turf(loc))
+	turret.owner_uid = owner_uid
+	qdel(src)
+
+/obj/structure/barricade/foam
+	name = "foam blockage"
+	desc = "This foam blocks the airlock from being opened."
+	icon = 'icons/obj/foam_blobs.dmi'
+	icon_state = "foamed_1"
+	layer = DOOR_HELPER_LAYER
+	// The integrity goes up with 25 per level, with an extra 25 when going from 4 to 5
+	obj_integrity = 25
+	max_integrity = 25
+	/// What level is the foam at?
+	var/foam_level = 1
+
+/obj/structure/barricade/foam/Destroy()
+	for(var/obj/machinery/door/airlock in loc.contents)
+		airlock.foam_level = 0
+	return ..()
+
+/obj/structure/barricade/foam/examine(mob/user)
+	. = ..()
+	. += "It would need [(5 - foam_level)] more blobs of foam to fully block the airlock."
+
+/obj/structure/barricade/foam/CanPass(atom/movable/mover, border_dir)
+	return istype(mover, /obj/item/projectile/c_foam) // Only c_foam blobs hit the airlock underneat/pass through the foam. The rest is hitting the barricade
+
+/obj/structure/barricade/foam/welder_act(mob/user, obj/item/I)
+	return FALSE
 
 #undef SINGLE
 #undef VERTICAL

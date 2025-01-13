@@ -40,6 +40,8 @@
 	var/last_pain_message
 	/// When can we get the next pain message?
 	var/next_pain_time
+	/// What level of upgrades are needed to detect this. Level 0 is default. 1 is hidden from health analysers. 2 is hidden from cyborg analysers, and the body scanner at level 1. 4 is the highest level the body scanner can reach.
+	var/stealth_level = 0
 
 /obj/item/organ/Destroy()
 	STOP_PROCESSING(SSobj, src)
@@ -69,7 +71,7 @@
 		if(species_override)
 			dna.species = new species_override
 
-/obj/item/organ/attackby(obj/item/I, mob/user, params)
+/obj/item/organ/attackby__legacy__attackchain(obj/item/I, mob/user, params)
 	if(is_robotic() && istype(I, /obj/item/stack/nanopaste))
 		var/obj/item/stack/nanopaste/nano = I
 		nano.use(1)
@@ -87,7 +89,7 @@
 			blood_DNA = list()
 		blood_DNA[dna.unique_enzymes] = dna.blood_type
 
-/obj/item/organ/proc/necrotize(update_sprite = TRUE)
+/obj/item/organ/proc/necrotize(update_sprite = TRUE, ignore_vital_death = FALSE)
 	damage = max_damage
 	status |= ORGAN_DEAD
 	STOP_PROCESSING(SSobj, src)
@@ -136,6 +138,8 @@
 	if(is_found_within(/obj/structure/closet/crate/freezer))
 		return TRUE
 	if(is_found_within(/obj/machinery/clonepod))
+		return TRUE
+	if(is_found_within(/obj/item/organ_extractor))
 		return TRUE
 	if(isturf(loc))
 		if(world.time - last_freezer_update_time > freezer_update_period)
@@ -217,6 +221,7 @@
 	if(tough)
 		return
 	damage = clamp(damage + amount, 0, max_damage)
+	damage = round_health(damage)
 
 	//only show this if the organ is not robotic
 	if(owner && parent_organ && amount > 0)
@@ -257,7 +262,14 @@
 	var/obj/item/organ/external/affected = owner.get_organ(parent_organ)
 	if(affected) affected.internal_organs -= src
 
-	forceMove(get_turf(owner))
+	// In-game, organs will be moved to their parent turf.
+	// During ghost-mob creation, we toss the organs
+	// after we're done generating the sprite with them,
+	// so to nullspace they go.
+	if(get_turf(owner))
+		forceMove(get_turf(owner))
+	else
+		moveToNullspace()
 	START_PROCESSING(SSobj, src)
 
 	if(owner && vital && is_primary_organ()) // I'd do another check for species or whatever so that you couldn't "kill" an IPC by removing a human head from them, but it doesn't matter since they'll come right back from the dead

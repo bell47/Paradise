@@ -38,7 +38,7 @@
   * Returns TRUE if a robot will show up in the console
   * Returns FALSE if a robot will not show up in the console
   * Arguments:
-  * * R - The [mob/living/silicon/robot] to be checked
+  * * R - The [/mob/living/silicon/robot] to be checked
   */
 /obj/machinery/computer/robotics/proc/console_shows(mob/living/silicon/robot/R)
 	if(!istype(R))
@@ -57,8 +57,8 @@
   * Returns TRUE if a user can send the command (does not guarantee it will work)
   * Returns FALSE if a user cannot
   * Arguments:
-  * * user - The [mob/user] to be checked
-  * * R - The [mob/living/silicon/robot] to be checked
+  * * user - The [/mob] to be checked
+  * * R - The [/mob/living/silicon/robot] to be checked
   * * telluserwhy - Bool of whether the user should be sent a to_chat message if they don't have access
   */
 /obj/machinery/computer/robotics/proc/can_control(mob/user, mob/living/silicon/robot/R, telluserwhy = FALSE)
@@ -100,7 +100,7 @@
   * Returns TRUE if a user is a traitor AI, or aghost
   * Returns FALSE otherwise
   * Arguments:
-  * * user - The [mob/user] to be checked
+  * * user - The [/mob] to be checked
   */
 /obj/machinery/computer/robotics/proc/can_hack_any(mob/user)
 	if(!istype(user))
@@ -117,8 +117,8 @@
   * Returns TRUE if a user can hack the specific cyborg
   * Returns FALSE if a user cannot
   * Arguments:
-  * * user - The [mob/user] to be checked
-  * * R - The [mob/living/silicon/robot] to be checked
+  * * user - The [/mob] to be checked
+  * * R - The [/mob/living/silicon/robot] to be checked
   */
 /obj/machinery/computer/robotics/proc/can_hack(mob/user, mob/living/silicon/robot/R)
 	if(!can_hack_any(user))
@@ -131,10 +131,13 @@
 		return FALSE
 	return TRUE
 
-/obj/machinery/computer/robotics/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = TRUE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/machinery/computer/robotics/ui_state(mob/user)
+	return GLOB.default_state
+
+/obj/machinery/computer/robotics/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "RoboticsControlConsole",  name, 500, 460, master_ui, state)
+		ui = new(user, src, "RoboticsControlConsole", name)
 		ui.open()
 
 /obj/machinery/computer/robotics/ui_data(mob/user)
@@ -214,9 +217,9 @@
 			var/mob/living/silicon/robot/R = locateUID(params["uid"])
 			if(!can_detonate(usr, R, TRUE))
 				return
-			if(R.mind && R.mind.special_role && R.emagged)
-				to_chat(R, "<span class='userdanger'>Extreme danger!  Termination codes detected.  Scrambling security codes and automatic AI unlink triggered.</span>")
-				R.ResetSecurityCodes()
+			if(R.mind && R.mmi.syndiemmi && !R.emagged) // Emagging removes your syndie MMI protections.
+				to_chat(R, "<span class='danger'>Detonation code received. Self destructing... HARDWARE_OVERRIDE_SYNDICATE: Detonation aborted. Connection to NT systems severed.</span>")
+				R.UnlinkSelf()
 				. = TRUE
 				return
 			var/turf/T = get_turf(R)
@@ -240,13 +243,13 @@
 			R.SetLockdown(!R.lockcharge)
 			to_chat(R, "[!R.lockcharge ? "<span class='notice'>Your lockdown has been lifted!" : "<span class='alert'>You have been locked down!"]</span>")
 			if(R.connected_ai)
-				to_chat(R.connected_ai, "[!R.lockcharge ? "<span class='notice'>NOTICE - Cyborg lockdown lifted</span>" : "<span class='alert'>ALERT - Cyborg lockdown detected</span>"]: <a href='?src=[R.connected_ai.UID()];track=[html_encode(R.name)]'>[R.name]</a></span><br>")
+				to_chat(R.connected_ai, "[!R.lockcharge ? "<span class='notice'>NOTICE - Cyborg lockdown lifted</span>" : "<span class='alert'>ALERT - Cyborg lockdown detected</span>"]: <a href='byond://?src=[R.connected_ai.UID()];track=[html_encode(R.name)]'>[R.name]</a></span><br>")
 			. = TRUE
 		if("hackbot") // AIs hacking/emagging a borg
 			var/mob/living/silicon/robot/R = locateUID(params["uid"])
 			if(!can_hack(usr, R))
 				return
-			var/choice = input("Really hack [R.name]? This cannot be undone.") in list("Yes", "No")
+			var/choice = alert(usr, "Really hack [R.name]? This cannot be undone.", "Do you want to hack this borg?", "Yes", "No")
 			if(choice != "Yes")
 				return
 			log_game("[key_name(usr)] emagged [key_name(R)] using robotic console!")

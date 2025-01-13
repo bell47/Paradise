@@ -1,7 +1,7 @@
 /mob/new_player/Login()
 	update_Login_details()	//handles setting lastKnownIP and computer_id for use by the ban systems as well as checking for multikeying
 	if(GLOB.join_motd)
-		to_chat(src, "<div class=\"motd\">[GLOB.join_motd]</div>")
+		to_chat(src, "<div class='motd'>[GLOB.join_motd]</div>")
 
 	if(!mind)
 		mind = new /datum/mind(key)
@@ -23,11 +23,12 @@
 
 	sight |= SEE_TURFS
 	GLOB.player_list |= src
+	GLOB.new_player_mobs |= src
 
 	new_player_panel()
 
 	if((ckey in GLOB.de_admins) || (ckey in GLOB.de_mentors))
-		client.verbs += /client/proc/readmin
+		add_verb(client, /client/proc/readmin)
 
 	client.playtitlemusic()
 	client.update_active_keybindings()

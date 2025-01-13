@@ -6,7 +6,7 @@
 /datum/action/changeling/evolution_menu
 	name = "Evolution Menu"
 	desc = "Choose our method of subjugation."
-	button_icon_state = "changelingsting"
+	button_overlay_icon_state = "changelingsting"
 	power_type = CHANGELING_INNATE_POWER
 	/// Which UI view will be displayed. Compact mode will show only power names, and will leave out their descriptions and helptext.
 	var/view_mode = EXPANDED_MODE
@@ -18,10 +18,13 @@
 /datum/action/changeling/evolution_menu/try_to_sting(mob/user, mob/target)
 	ui_interact(user)
 
-/datum/action/changeling/evolution_menu/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = FALSE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.always_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/datum/action/changeling/evolution_menu/ui_state(mob/user)
+	return GLOB.always_state
+
+/datum/action/changeling/evolution_menu/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "EvolutionMenu", "Evolution Menu", 480, 574, master_ui, state)
+		ui = new(user, src, "EvolutionMenu", "Evolution Menu")
 		ui.set_autoupdate(FALSE)
 		ui.open()
 
@@ -85,6 +88,7 @@
 		return FALSE
 
 	cling.give_power(new power_type)
+	SSblackbox.record_feedback("nested tally", "changeling_powers_purchased", 1, list("[initial(power.name)]"))
 	return TRUE
 
 /datum/action/changeling/evolution_menu/proc/get_ability_tabs()
@@ -138,3 +142,6 @@
 		))
 
 	return abilities_by_category_name
+
+#undef COMPACT_MODE
+#undef EXPANDED_MODE

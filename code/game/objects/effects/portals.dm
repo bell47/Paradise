@@ -24,7 +24,8 @@
 	var/effect_cooldown = 0
 	///Whether or not portal use will cause sparks
 	var/create_sparks = TRUE
-	
+	var/teleports_this_cycle = 0
+
 /obj/effect/portal/New(loc, turf/_target, obj/creation_object = null, lifespan = 300, mob/creation_mob = null, create_sparks = TRUE)
 	..()
 
@@ -36,6 +37,12 @@
 	else
 		creation_obj_data = list(null, null)
 	creation_mob_ckey = creation_mob?.ckey
+	START_PROCESSING(SSobj, src)
+
+	var/static/list/loc_connections = list(
+		COMSIG_ATOM_ENTERED = PROC_REF(on_atom_entered),
+	)
+	AddElement(/datum/element/connect_loc, loc_connections)
 
 	if(lifespan > 0)
 		QDEL_IN(src, lifespan)
@@ -48,7 +55,11 @@
 	target = null
 	if(create_sparks)
 		do_sparks(5, 0, loc)
+	STOP_PROCESSING(SSobj, src)
 	return ..()
+
+/obj/effect/portal/process()
+	teleports_this_cycle = 0
 
 /obj/effect/portal/singularity_pull()
 	return
@@ -56,15 +67,15 @@
 /obj/effect/portal/singularity_act()
 	return
 
-/obj/effect/portal/Crossed(atom/movable/AM, oldloc)
-	if(isobserver(AM))
-		return ..()
+/obj/effect/portal/proc/on_atom_entered(datum/source, atom/movable/entered, old_loc)
+	if(isobserver(entered))
+		return
 
-	if(target && (get_turf(oldloc) == get_turf(target)))
-		return ..()
+	if(target && (get_turf(old_loc) == get_turf(target)))
+		return
 
-	if(!teleport(AM))
-		return ..()
+	if(teleport(entered))
+		return TRUE
 
 /obj/effect/portal/attack_tk(mob/user)
 	return
@@ -80,7 +91,7 @@
 
 /obj/effect/portal/attack_ghost(mob/dead/observer/O)
 	if(target)
-		O.forceMove(target)
+		O.forceMove(get_turf(target))
 
 /obj/effect/portal/multitool_act(mob/user, obj/item/I)
 	. = TRUE
@@ -132,6 +143,8 @@
 	return TRUE
 
 /obj/effect/portal/proc/attempt_teleport(atom/movable/victim, turf/destination, variance = 0, force_teleport = TRUE)
+	if(teleports_this_cycle >= MAX_ALLOWED_TELEPORTS_PER_PROCESS)
+		return
 	var/use_effects = world.time >= effect_cooldown
 	var/effect = null // Will result in the default effect being used
 	if(!use_effects)
@@ -141,6 +154,7 @@
 		invalid_teleport()
 		return FALSE
 	effect_cooldown = world.time + EFFECT_COOLDOWN
+	teleports_this_cycle++
 	return TRUE
 
 /obj/effect/portal/proc/invalid_teleport()
@@ -187,8 +201,8 @@
 
 #undef UNSTABLE_TIME_DELAY
 
-/obj/effect/portal/redspace
-	name = "redspace portal"
+/obj/effect/portal/advanced
+	name = "advanced portal"
 	desc = "A portal capable of bypassing bluespace interference."
 	icon_state = "portal1"
 	failchance = 0

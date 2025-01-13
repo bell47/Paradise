@@ -1,12 +1,12 @@
-/datum/action/changeling/absorbDNA
+/datum/action/changeling/absorb_dna
 	name = "Absorb DNA"
 	desc = "Absorb the DNA of our victim. Requires us to strangle them."
-	button_icon_state = "absorb_dna"
+	button_overlay_icon_state = "absorb_dna"
 	chemical_cost = 0
 	power_type = CHANGELING_INNATE_POWER
 	req_human = TRUE
 
-/datum/action/changeling/absorbDNA/can_sting(mob/living/carbon/user)
+/datum/action/changeling/absorb_dna/can_sting(mob/living/carbon/user)
 	if(!..())
 		return FALSE
 
@@ -24,7 +24,7 @@
 
 	return cling.can_absorb_dna(G.affecting)
 
-/datum/action/changeling/absorbDNA/sting_action(mob/user)
+/datum/action/changeling/absorb_dna/sting_action(mob/user)
 	var/obj/item/grab/G = user.get_active_hand()
 	var/mob/living/carbon/human/target = G.affecting
 	cling.is_absorbing = TRUE
@@ -64,8 +64,8 @@
 		//Recent as opposed to all because rounds tend to have a LOT of text.
 		var/list/recent_speech = list()
 
-		if(target.say_log.len > LING_ABSORB_RECENT_SPEECH)
-			recent_speech = target.say_log.Copy(target.say_log.len-LING_ABSORB_RECENT_SPEECH+1,0) //0 so len-LING_ARS+1 to end of list
+		if(length(target.say_log) > CHANGELING_ABSORB_RECENT_SPEECH)
+			recent_speech = target.say_log.Copy(length(target.say_log)-CHANGELING_ABSORB_RECENT_SPEECH+1,0) //0 so len-LING_ARS+1 to end of list
 		else
 			recent_speech = target.say_log.Copy()
 
@@ -97,4 +97,4 @@
 	target.Drain()
 	return TRUE
 
-#undef LING_ABSORB_RECENT_SPEECH
+#undef CHANGELING_ABSORB_RECENT_SPEECH

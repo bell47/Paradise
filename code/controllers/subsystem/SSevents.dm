@@ -11,11 +11,11 @@ SUBSYSTEM_DEF(events)
 	// UI vars
 	var/window_x = 700
 	var/window_y = 600
-	var/table_options = " align='center'"
-	var/head_options = " style='font-weight:bold;'"
-	var/row_options1 = " width='85px'"
-	var/row_options2 = " width='260px'"
-	var/row_options3 = " width='150px'"
+	var/table_options = "align='center'"
+	var/head_options = "style='font-weight:bold;'"
+	var/row_options1 = "width='85px'"
+	var/row_options2 = "width='260px'"
+	var/row_options3 = "width='150px'"
 
 	// Event vars
 	var/datum/event_container/selected_event_container = null
@@ -29,6 +29,8 @@ SUBSYSTEM_DEF(events)
 		)
 
 	var/datum/event_meta/new_event = new
+
+	var/list/biohazards_this_round = list()
 
 /datum/controller/subsystem/events/Initialize()
 	allEvents = subtypesof(/datum/event)
@@ -99,50 +101,50 @@ SUBSYSTEM_DEF(events)
 		to_chat(world, message)
 
 /datum/controller/subsystem/events/proc/GetInteractWindow()
-	var/html = "<A align='right' href='?src=[UID()];refresh=1'>Refresh</A>"
+	var/html = "<A align='right' href='byond://?src=[UID()];refresh=1'>Refresh</A>"
 
 	if(selected_event_container)
 		var/event_time = max(0, selected_event_container.next_event_time - world.time)
-		html += "<A align='right' href='?src=[UID()];back=1'>Back</A><br>"
+		html += "<A align='right' href='byond://?src=[UID()];back=1'>Back</A><br>"
 		html += "Time till start: [round(event_time / 600, 0.1)]<br>"
 		html += "<div class='block'>"
 		html += "<h2>Available [GLOB.severity_to_string[selected_event_container.severity]] Events (queued & running events will not be displayed)</h2>"
-		html += "<table[table_options]>"
-		html += "<tr[head_options]><td[row_options2]>Name </td><td>Weight </td><td>MinWeight </td><td>MaxWeight </td><td>OneShot </td><td>Enabled </td><td><span class='alert'>CurrWeight </span></td><td>Remove</td></tr>"
+		html += "<table [table_options]>"
+		html += "<tr [head_options]><td [row_options2]>Name </td><td>Weight </td><td>MinWeight </td><td>MaxWeight </td><td>OneShot </td><td>Enabled </td><td><span class='alert'>CurrWeight </span></td><td>Remove</td></tr>"
 		for(var/datum/event_meta/EM in selected_event_container.available_events)
 			html += "<tr>"
 			html += "<td>[EM.name]</td>"
-			html += "<td><A align='right' href='?src=[UID()];set_weight=\ref[EM]'>[EM.weight]</A></td>"
+			html += "<td><A align='right' href='byond://?src=[UID()];set_weight=\ref[EM]'>[EM.weight]</A></td>"
 			html += "<td>[EM.min_weight]</td>"
 			html += "<td>[EM.max_weight == INFINITY ? "No max" : EM.max_weight]</td>"
-			html += "<td><A align='right' href='?src=[UID()];toggle_oneshot=\ref[EM]'>[EM.one_shot]</A></td>"
-			html += "<td><A align='right' href='?src=[UID()];toggle_enabled=\ref[EM]'>[EM.enabled]</A></td>"
+			html += "<td><A align='right' href='byond://?src=[UID()];toggle_oneshot=\ref[EM]'>[EM.one_shot]</A></td>"
+			html += "<td><A align='right' href='byond://?src=[UID()];toggle_enabled=\ref[EM]'>[EM.enabled]</A></td>"
 			html += "<td><span class='alert'>[EM.get_weight(number_active_with_role())]</span></td>"
-			html += "<td><A align='right' href='?src=[UID()];remove=\ref[EM];EC=\ref[selected_event_container]'>Remove</A></td>"
+			html += "<td><A align='right' href='byond://?src=[UID()];remove=\ref[EM];EC=\ref[selected_event_container]'>Remove</A></td>"
 			html += "</tr>"
 		html += "</table>"
 		html += "</div>"
 
 		html += "<div class='block'>"
 		html += "<h2>Add Event</h2>"
-		html += "<table[table_options]>"
-		html += "<tr [head_options]><td[row_options2]>Name</td><td[row_options2]>Type</td><td[row_options1]>Weight</td><td[row_options1]>OneShot</td></tr>"
+		html += "<table [table_options]>"
+		html += "<tr [head_options]><td [row_options2]>Name</td><td [row_options2]>Type</td><td [row_options1]>Weight</td><td [row_options1]>OneShot</td></tr>"
 		html += "<tr>"
-		html += "<td><A align='right' href='?src=[UID()];set_name=\ref[new_event]'>[new_event.name ? new_event.name : "Enter Event"]</A></td>"
-		html += "<td><A align='right' href='?src=[UID()];set_type=\ref[new_event]'>[new_event.event_type ? new_event.event_type : "Select Type"]</A></td>"
-		html += "<td><A align='right' href='?src=[UID()];set_weight=\ref[new_event]'>[new_event.weight ? new_event.weight : 0]</A></td>"
-		html += "<td><A align='right' href='?src=[UID()];toggle_oneshot=\ref[new_event]'>[new_event.one_shot]</A></td>"
+		html += "<td><A align='right' href='byond://?src=[UID()];set_name=\ref[new_event]'>[new_event.name ? new_event.name : "Enter Event"]</A></td>"
+		html += "<td><A align='right' href='byond://?src=[UID()];set_type=\ref[new_event]'>[new_event.event_type ? new_event.event_type : "Select Type"]</A></td>"
+		html += "<td><A align='right' href='byond://?src=[UID()];set_weight=\ref[new_event]'>[new_event.weight ? new_event.weight : 0]</A></td>"
+		html += "<td><A align='right' href='byond://?src=[UID()];toggle_oneshot=\ref[new_event]'>[new_event.one_shot]</A></td>"
 		html += "</tr>"
 		html += "</table>"
-		html += "<A align='right' href='?src=[UID()];add=\ref[selected_event_container]'>Add</A><br>"
+		html += "<A align='right' href='byond://?src=[UID()];add=\ref[selected_event_container]'>Add</A><br>"
 		html += "</div>"
 	else
-		html += "<A align='right' href='?src=[UID()];toggle_report=1'>Round End Report: [report_at_round_end ? "On": "Off"]</A><br>"
+		html += "<A align='right' href='byond://?src=[UID()];toggle_report=1'>Round End Report: [report_at_round_end ? "On": "Off"]</A><br>"
 		html += "<div class='block'>"
 		html += "<h2>Event Start</h2>"
 
-		html += "<table[table_options]>"
-		html += "<tr[head_options]><td[row_options1]>Severity</td><td[row_options1]>Starts At</td><td[row_options1]>Starts In</td><td[row_options3]>Adjust Start</td><td[row_options1]>Pause</td><td[row_options1]>Interval Mod</td></tr>"
+		html += "<table [table_options]>"
+		html += "<tr [head_options]><td [row_options1]>Severity</td><td [row_options1]>Starts At</td><td [row_options1]>Starts In</td><td [row_options3]>Adjust Start</td><td [row_options1]>Pause</td><td [row_options1]>Interval Mod</td></tr>"
 		for(var/severity = EVENT_LEVEL_MUNDANE to EVENT_LEVEL_MAJOR)
 			var/datum/event_container/EC = event_containers[severity]
 			var/next_event_at = max(0, EC.next_event_time - world.time)
@@ -151,16 +153,16 @@ SUBSYSTEM_DEF(events)
 			html += "<td>[station_time_timestamp("hh:mm:ss", max(EC.next_event_time, world.time))]</td>"
 			html += "<td>[round(next_event_at / 600, 0.1)]</td>"
 			html += "<td>"
-			html +=   "<A align='right' href='?src=[UID()];dec_timer=2;event=\ref[EC]'>--</A>"
-			html +=   "<A align='right' href='?src=[UID()];dec_timer=1;event=\ref[EC]'>-</A>"
-			html +=   "<A align='right' href='?src=[UID()];inc_timer=1;event=\ref[EC]'>+</A>"
-			html +=   "<A align='right' href='?src=[UID()];inc_timer=2;event=\ref[EC]'>++</A>"
+			html +=   "<A align='right' href='byond://?src=[UID()];dec_timer=2;event=\ref[EC]'>--</A>"
+			html +=   "<A align='right' href='byond://?src=[UID()];dec_timer=1;event=\ref[EC]'>-</A>"
+			html +=   "<A align='right' href='byond://?src=[UID()];inc_timer=1;event=\ref[EC]'>+</A>"
+			html +=   "<A align='right' href='byond://?src=[UID()];inc_timer=2;event=\ref[EC]'>++</A>"
 			html += "</td>"
 			html += "<td>"
-			html +=   "<A align='right' href='?src=[UID()];pause=\ref[EC]'>[EC.delayed ? "Resume" : "Pause"]</A>"
+			html +=   "<A align='right' href='byond://?src=[UID()];pause=\ref[EC]'>[EC.delayed ? "Resume" : "Pause"]</A>"
 			html += "</td>"
 			html += "<td>"
-			html +=   "<A align='right' href='?src=[UID()];interval=\ref[EC]'>[EC.delay_modifier]</A>"
+			html +=   "<A align='right' href='byond://?src=[UID()];interval=\ref[EC]'>[EC.delay_modifier]</A>"
 			html += "</td>"
 			html += "</tr>"
 		html += "</table>"
@@ -168,16 +170,16 @@ SUBSYSTEM_DEF(events)
 
 		html += "<div class='block'>"
 		html += "<h2>Next Event</h2>"
-		html += "<table[table_options]>"
-		html += "<tr[head_options]><td[row_options1]>Severity</td><td[row_options2]>Name</td><td[row_options3]>Event Rotation</td><td>Clear</td></tr>"
+		html += "<table [table_options]>"
+		html += "<tr [head_options]><td [row_options1]>Severity</td><td [row_options2]>Name</td><td [row_options3]>Event Rotation</td><td>Clear</td></tr>"
 		for(var/severity = EVENT_LEVEL_MUNDANE to EVENT_LEVEL_MAJOR)
 			var/datum/event_container/EC = event_containers[severity]
 			var/datum/event_meta/EM = EC.next_event
 			html += "<tr>"
 			html += "<td>[GLOB.severity_to_string[severity]]</td>"
-			html += "<td><A align='right' href='?src=[UID()];select_event=\ref[EC]'>[EM ? EM.name : "Random"]</A></td>"
-			html += "<td><A align='right' href='?src=[UID()];view_events=\ref[EC]'>View</A></td>"
-			html += "<td><A align='right' href='?src=[UID()];clear=\ref[EC]'>Clear</A></td>"
+			html += "<td><A align='right' href='byond://?src=[UID()];select_event=\ref[EC]'>[EM ? EM.name : "Random"]</A></td>"
+			html += "<td><A align='right' href='byond://?src=[UID()];view_events=\ref[EC]'>View</A></td>"
+			html += "<td><A align='right' href='byond://?src=[UID()];clear=\ref[EC]'>Clear</A></td>"
 			html += "</tr>"
 		html += "</table>"
 		html += "</div>"
@@ -185,8 +187,8 @@ SUBSYSTEM_DEF(events)
 		html += "<div class='block'>"
 		html += "<h2>Running Events</h2>"
 		html += "Estimated times, affected by master controller delays."
-		html += "<table[table_options]>"
-		html += "<tr[head_options]><td[row_options1]>Severity</td><td[row_options2]>Name</td><td[row_options1]>Ends At</td><td[row_options1]>Ends In</td><td[row_options3]>Stop</td></tr>"
+		html += "<table [table_options]>"
+		html += "<tr [head_options]><td [row_options1]>Severity</td><td [row_options2]>Name</td><td [row_options1]>Ends At</td><td [row_options1]>Ends In</td><td [row_options3]>Stop</td></tr>"
 		for(var/datum/event/E in active_events)
 			if(!E.event_meta)
 				continue
@@ -199,7 +201,7 @@ SUBSYSTEM_DEF(events)
 			html += "<td>[EM.name]</td>"
 			html += "<td>[no_end ? "N/A" : station_time_timestamp("hh:mm:ss", ends_at)]</td>"
 			html += "<td>[no_end ? "N/A" : ends_in]</td>"
-			html += "<td><A align='right' href='?src=[UID()];stop=\ref[E]'>Stop</A></td>"
+			html += "<td><A align='right' href='byond://?src=[UID()];stop=\ref[E]'>Stop</A></td>"
 			html += "</tr>"
 		html += "</table>"
 		html += "</div>"
@@ -210,6 +212,8 @@ SUBSYSTEM_DEF(events)
 	if(..())
 		return
 
+	if(!check_rights(R_EVENT))
+		return
 
 	if(href_list["toggle_report"])
 		report_at_round_end = !report_at_round_end

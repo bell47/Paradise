@@ -1,14 +1,14 @@
 /obj/item/gun/magic/staff
 	lefthand_file = 'icons/mob/inhands/staves_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/staves_righthand.dmi'
-	slot_flags = SLOT_FLAG_BACK
+	slot_flags = ITEM_SLOT_BACK
 	ammo_type = /obj/item/ammo_casing/magic
 	flags_2 = NO_MAT_REDEMPTION_2
 	execution_speed = 3 SECONDS
 
 /obj/item/gun/magic/staff/change
 	name = "staff of change"
-	desc = "An artefact that spits bolts of coruscating energy which cause the target's very form to reshape itself"
+	desc = "An artefact that spits bolts of coruscating energy which cause the target's very form to reshape itself."
 	ammo_type = /obj/item/ammo_casing/magic/change
 	icon_state = "staffofchange"
 	item_state = "staffofchange"
@@ -35,13 +35,13 @@
 
 /obj/item/gun/magic/staff/chaos
 	name = "staff of chaos"
-	desc = "An artefact that spits bolts of chaotic magic that can potentially do anything."
+	desc = "Random bullshit go!"
 	ammo_type = /obj/item/ammo_casing/magic/chaos
 	icon_state = "staffofchaos"
 	item_state = "staffofchaos"
 	max_charges = 10
 	recharge_rate = 2
-	no_den_usage = 1
+	no_den_usage = TRUE
 	fire_sound = 'sound/magic/staff_chaos.ogg'
 
 /obj/item/gun/magic/staff/door

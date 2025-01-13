@@ -23,9 +23,7 @@
 			effect_in = effect
 		if(isnull(effect_out))
 			effect_out = effect
-	if(D.start(atom_to_teleport, destination, variance_range, force_teleport, effect_in, effect_out, sound_in, sound_out, bypass_area_flag, safe_turf_pick, do_effect))
-		return TRUE
-	return FALSE
+	return D.start(atom_to_teleport, destination, variance_range, force_teleport, effect_in, effect_out, sound_in, sound_out, bypass_area_flag, safe_turf_pick, do_effect)
 
 /datum/teleport
 	var/atom/movable/teleatom //atom to teleport
@@ -76,7 +74,7 @@
 
 //must succeed in most cases
 /datum/teleport/proc/setTeleatom(atom/movable/ateleatom)
-	if(iseffect(ateleatom) && !istype(ateleatom, /obj/effect/dummy/chameleon))
+	if(iseffect(ateleatom) && !HAS_TRAIT(ateleatom, TRAIT_EFFECT_CAN_TELEPORT))
 		qdel(ateleatom)
 		return FALSE
 	if(istype(ateleatom))
@@ -142,7 +140,7 @@
 		destturf = safepick(posturfs)
 	else
 		destturf = get_turf(destination)
-	
+
 	// Make sure the target tile does not contain a teleporter on it
 	for(var/teleporter_type in blacklisted)
 		var/teleporters = destturf.search_contents_for(teleporter_type)
@@ -151,6 +149,10 @@
 
 	if(!is_teleport_allowed(destturf.z) && !ignore_area_flag)
 		return FALSE
+	if(!ignore_area_flag) // Admin or contractor portal, let em through without running signals
+		if(SEND_SIGNAL(teleatom, COMSIG_MOVABLE_TELEPORTING, destination) & COMPONENT_BLOCK_TELEPORT)
+			return FALSE
+
 	// Only check the destination zlevel for is_teleport_allowed. Checking origin as well breaks ERT teleporters.
 
 	var/area/destarea = get_area(destturf)
@@ -166,19 +168,22 @@
 
 	playSpecials(curturf,effectin,soundin)
 
+	if(isliving(teleatom))
+		var/mob/living/target_mob = teleatom
+		if(target_mob.buckled)
+			target_mob.unbuckle(force = TRUE)
+		if(target_mob.has_buckled_mobs())
+			target_mob.unbuckle_all_mobs(force = TRUE)
+		if(ismachinery(target_mob.loc) || istype(target_mob.loc, /obj/item/mecha_parts/mecha_equipment/medical/sleeper))
+			var/obj/location = target_mob.loc
+			location.force_eject_occupant(target_mob)
+
 	if(force_teleport)
 		teleatom.forceMove(destturf)
 		playSpecials(destturf,effectout,soundout)
 	else
 		if(teleatom.Move(destturf))
 			playSpecials(destturf,effectout,soundout)
-
-	if(isliving(teleatom))
-		var/mob/living/L = teleatom
-		if(L.buckled)
-			L.buckled.unbuckle_mob(L, force = TRUE)
-		if(L.has_buckled_mobs())
-			L.unbuckle_all_mobs(force = TRUE)
 
 	destarea.Entered(teleatom)
 
@@ -205,7 +210,7 @@
 			precision = rand(1, 100)
 
 		var/list/bagholding = teleatom.search_contents_for(/obj/item/storage/backpack/holding)
-		if(bagholding.len)
+		if(length(bagholding))
 			if(safe_turf_first) //If this is true, this is already a random teleport. Make it unsafe but do not touch the precision.
 				safe_turf_first = FALSE
 			else

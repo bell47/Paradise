@@ -30,6 +30,7 @@
 	faction = list("malf_drone")
 	deathmessage = "suddenly breaks apart."
 	del_on_death = TRUE
+	advanced_bullet_dodge_chance = 25 // This will be adjusted when active, vs deactivated. Randomises on hit if it is zero.
 	var/passive_mode = TRUE // if true, don't target anything.
 
 /mob/living/simple_animal/hostile/malf_drone/Initialize(mapload)
@@ -69,6 +70,8 @@
 	do_sparks(3, 1, src)
 	passive_mode = FALSE
 	update_icons()
+	if(!advanced_bullet_dodge_chance)
+		advanced_bullet_dodge_chance = 25
 	. = ..() // this will handle finding a target if there is a valid one nearby
 
 /mob/living/simple_animal/hostile/malf_drone/Life(seconds, times_fired)
@@ -83,11 +86,32 @@
 		passive_mode = !passive_mode
 		if(passive_mode)
 			visible_message("<span class='notice'>[src] retracts several targetting vanes.</span>")
+			advanced_bullet_dodge_chance = 0
 			if(target)
 				LoseTarget()
 		else
 			visible_message("<span class='warning'>[src] suddenly lights up, and additional targetting vanes slide into place.</span>")
+			advanced_bullet_dodge_chance = 25
 		update_icons()
+
+/// We overide the basic effect, as malfunctioning drones are in space, and use jets to dodge. Also lets us do cool effects.
+/mob/living/simple_animal/hostile/malf_drone/advanced_bullet_dodge(mob/living/source, obj/item/projectile/hitting_projectile)
+	if(HAS_TRAIT(source, TRAIT_IMMOBILIZED))
+		return NONE
+	if(source.stat != CONSCIOUS)
+		return NONE
+	if(!prob(advanced_bullet_dodge_chance))
+		return NONE
+
+	source.visible_message(
+		"<span class='danger'>[source]'s jets [pick("boosts", "propels", "pulses", "flares up and moves", "shudders and pushes")] it out of '[hitting_projectile]'s way!</span>",
+		"<span class='userdanger'>You evade [hitting_projectile]!</span>",
+	)
+	playsound(source, pick('sound/weapons/bulletflyby.ogg', 'sound/weapons/bulletflyby2.ogg', 'sound/weapons/bulletflyby3.ogg', 'sound/effects/refill.ogg'), 75, TRUE)
+	if(prob(50))
+		addtimer(VARSET_CALLBACK(source, advanced_bullet_dodge_chance, advanced_bullet_dodge_chance), 0.25 SECONDS)
+		advanced_bullet_dodge_chance = 0
+	return ATOM_PREHIT_FAILURE
 
 /mob/living/simple_animal/hostile/malf_drone/emp_act(severity)
 	adjustHealth(100 / severity) // takes the same damage as a mining drone from emp
@@ -122,64 +146,61 @@
 	K.amount = pick(1, 2, 3, 4)
 	K.update_icon()
 
-	//also drop dummy circuit boards deconstructable for research (loot)
-	var/obj/item/circuitboard/C
-
-	//spawn 1-4 boards of a random type
-	var/spawnees = 0
+	// Spawn 1-4 boards of a random type
 	var/num_boards = rand(1, 4)
-	var/list/options = list(1, 2, 4, 8, 16, 32, 64, 128, 256, 512)
-	for(var/i=0, i<num_boards, i++)
-		var/chosen = pick(options)
-		options.Remove(options.Find(chosen))
-		spawnees |= chosen
+	var/list/options = subtypesof(/obj/item/circuitboard/random_tech_level)
+	for(var/i in 1 to num_boards)
+		var/obj/item/circuitboard/random_tech_level/board = pick_n_take(options)
+		new board(T)
 
-	if(spawnees & 1)
-		C = new(T)
-		C.name = "Drone CPU motherboard"
-		C.origin_tech = "programming=[rand(3, 6)]"
+// Becomes a board with a random level in the specified tech
+// It's done like this so we can have a random level because we can't do this in the type declaration
+/obj/item/circuitboard/random_tech_level
+	/// Lower bound of random tech level
+	var/lower_bound = 3
+	/// Upper bound of random tech level
+	var/upper_bound = 6
 
-	if(spawnees & 2)
-		C = new(T)
-		C.name = "Drone neural interface"
-		C.origin_tech = "biotech=[rand(3, 6)]"
+/obj/item/circuitboard/random_tech_level/Initialize(mapload)
+	. = ..()
+	origin_tech += "[rand(lower_bound, upper_bound)]"
 
-	if(spawnees & 4)
-		C = new(T)
-		C.name = "Drone suspension processor"
-		C.origin_tech = "magnets=[rand(3, 6)]"
+/obj/item/circuitboard/random_tech_level/motherboard
+	name = "Drone CPU motherboard"
+	origin_tech = "programming="
 
-	if(spawnees & 8)
-		C = new(T)
-		C.name = "Drone shielding controller"
-		C.origin_tech = "bluespace=[rand(3, 6)]"
+/obj/item/circuitboard/random_tech_level/interface
+	name = "Drone neural interface"
+	origin_tech = "biotech="
 
-	if(spawnees & 16)
-		C = new(T)
-		C.name = "Drone power capacitor"
-		C.origin_tech = "powerstorage=[rand(3, 6)]"
+/obj/item/circuitboard/random_tech_level/processor
+	name = "Drone suspension processor"
+	origin_tech = "magnets="
 
-	if(spawnees & 32)
-		C = new(T)
-		C.name = "Drone hull reinforcer"
-		C.origin_tech = "materials=[rand(3, 6)]"
+/obj/item/circuitboard/random_tech_level/controller
+	name = "Drone shielding controller"
+	origin_tech = "bluespace="
 
-	if(spawnees & 64)
-		C = new(T)
-		C.name = "Drone auto-repair system"
-		C.origin_tech = "engineering=[rand(3, 6)]"
+/obj/item/circuitboard/random_tech_level/capacitor
+	name = "Drone power capacitor"
+	origin_tech = "powerstorage="
 
-	if(spawnees & 128)
-		C = new(T)
-		C.name = "Drone plasma overcharge counter"
-		C.origin_tech = "plasmatech=[rand(3, 6)]"
+/obj/item/circuitboard/random_tech_level/reinforcer
+	name = "Drone hull reinforcer"
+	origin_tech = "materials="
 
-	if(spawnees & 256)
-		C = new(T)
-		C.name = "Drone targetting circuitboard"
-		C.origin_tech = "combat=[rand(3, 6)]"
+/obj/item/circuitboard/random_tech_level/autorepair
+	name = "Drone auto-repair system"
+	origin_tech = "engineering="
 
-	if(spawnees & 512)
-		C = new(T)
-		C.name = "Corrupted drone morality core"
-		C.origin_tech = "syndicate=[rand(3, 6)]"
+/obj/item/circuitboard/random_tech_level/counter
+	name = "Drone plasma overcharge counter"
+	origin_tech = "plasmatech="
+
+/obj/item/circuitboard/random_tech_level/targeting
+	name = "Drone targeting circuitboard"
+	origin_tech = "combat="
+
+/obj/item/circuitboard/random_tech_level/morality
+	name = "Corrupted drone morality core"
+	origin_tech = "syndicate="

@@ -126,6 +126,7 @@
 /obj/item/organ/internal/eyes/cybernetic/meson
 	name = "meson eyes"
 	desc = "These cybernetic eyes will allow you to see the structural layout of the station, and, well, everything else."
+	icon_state = "eyes-c-meson"
 	eye_color = "#199900"
 	lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_VISIBLE
 	origin_tech = "materials=4;engineering=4;biotech=4;magnets=4"
@@ -141,6 +142,7 @@
 /obj/item/organ/internal/eyes/cybernetic/xray
 	name = "\improper X-ray eyes"
 	desc = "These cybernetic eyes will give you X-ray vision. Blinking is futile."
+	icon_state = "eyes-c-xray"
 	see_in_dark = 8
 	vision_flags = SEE_MOBS | SEE_OBJS | SEE_TURFS
 	origin_tech = "materials=4;programming=4;biotech=7;magnets=4"
@@ -148,13 +150,15 @@
 /obj/item/organ/internal/eyes/cybernetic/xray/hardened
 	name = "hardened X-ray eyes"
 	desc = "These cybernetic eyes will give you X-ray vision. Blinking is futile. This pair has been hardened for special operations personnel."
+	eye_color = "#FFCC00"
 	emp_proof = TRUE
 	origin_tech = "materials=6;programming=5;biotech=7;magnets=6;syndicate=3"
 
 /obj/item/organ/internal/eyes/cybernetic/thermals
 	name = "thermal eyes"
 	desc = "These cybernetic eye implants will give you thermal vision. Vertical slit pupil included."
-	eye_color = "#FFCC00"
+	icon_state = "eyes-c-thermal"
+	eye_color = "#E12224"
 	vision_flags = SEE_MOBS
 	lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_VISIBLE
 	flash_protect = FLASH_PROTECTION_SENSITIVE
@@ -166,6 +170,39 @@
 	desc = "These cybernetic eye implants will give you thermal vision. Vertical slit pupil included. This pair has been hardened for special operations personnel."
 	emp_proof = TRUE
 	origin_tech = "materials=6;programming=5;biotech=6;magnets=6;syndicate=3"
+
+/obj/item/organ/internal/eyes/cybernetic/scope
+	name = "\improper Kaleido Optics eyes"
+	desc = "These cybernetic eye implants will let you zoom in on far away objects. Many users find it disorienting, and find it hard to interact with things near them when active."
+	icon_state = "eyes-c-kaleido"
+	eye_color = "#6f00ff"
+	flash_protect = FLASH_PROTECTION_EXTRA_SENSITIVE
+	origin_tech = "materials=5;programming=4;biotech=4;magnets=4"
+	var/scope_range = 0.8 //Only used in initialize. Greatly nerfed zoom range, since you are not taking the time zoom delay the lwap has.
+	var/active = FALSE
+
+/obj/item/organ/internal/eyes/cybernetic/scope/Initialize(mapload)
+	. = ..()
+	AddComponent(/datum/component/scope, range_modifier = scope_range, item_action_type = /datum/action/item_action/organ_action/toggle, flags = SCOPE_CLICK_MIDDLE)
+
+/obj/item/organ/internal/eyes/cybernetic/scope/insert(mob/living/carbon/human/M, special)
+	. = ..()
+	flash_protect = FLASH_PROTECTION_NONE //Resets it to none, so we can just flip to inital each time it is used.
+
+/obj/item/organ/internal/eyes/cybernetic/scope/ui_action_click(mob/user, actiontype)
+	active = !active
+	if(active)
+		flash_protect = initial(flash_protect)
+	else
+		flash_protect = FLASH_PROTECTION_NONE
+
+/obj/item/organ/internal/eyes/cybernetic/scope/hardened
+	name = "\improper Hardened Kaleido Optics eyes"
+	desc = "These cybernetic eye implants will let you zoom in on far away objects. Many users find it disorienting, and find it hard to interact with things near them when active. This pair has been hardened for special operations personnel, and has enhanced zoom functionality."
+	flash_protect = FLASH_PROTECTION_SENSITIVE
+	origin_tech = "materials=6;programming=5;biotech=6;magnets=6;syndicate=3"
+	scope_range = 1.25
+	emp_proof = TRUE
 
 /obj/item/organ/internal/eyes/cybernetic/flashlight
 	name = "flashlight eyes"
@@ -211,9 +248,10 @@
 #define ONE_SHATTERED 1
 #define BOTH_SHATTERED 2
 
-/obj/item/organ/internal/eyes/cybernetic/eyesofgod //no occuline allowed
+// no occuline allowed
+/obj/item/organ/internal/eyes/cybernetic/eyesofgod
 	name = "\improper Eyes of the Gods"
-	desc = "Two eyes said to belong to the gods. But such vision comes at a price"
+	desc = "Two eyes said to belong to the gods. But such vision comes at a price."
 	icon_state = "eyesofgod"
 	eye_color = "#58a5ec"
 	see_in_dark = 8

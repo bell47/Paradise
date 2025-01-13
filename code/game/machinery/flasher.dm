@@ -15,12 +15,14 @@
 	var/strength = 10 SECONDS //How weakened targets are when flashed.
 	var/base_state = "mflash"
 	anchored = TRUE
+	var/datum/proximity_monitor/proximity_monitor
 
-/obj/machinery/flasher/Initialize()
+/obj/machinery/flasher/Initialize(mapload)
 	. = ..()
 	update_icon()
 
-/obj/machinery/flasher/portable //Portable version of the flasher. Only flashes when anchored
+/// Portable version of the flasher. Only flashes when anchored
+/obj/machinery/flasher/portable
 	name = "portable flasher"
 	desc = "A portable flashing device. Wrench to activate and deactivate. Cannot detect slow movements."
 	icon_state = "pflash1"
@@ -31,7 +33,7 @@
 
 /obj/machinery/flasher/portable/Initialize(mapload)
 	. = ..()
-	AddComponent(/datum/component/proximity_monitor)
+	proximity_monitor = new(src, range)
 
 /obj/machinery/flasher/power_change()
 	if(!..())

@@ -15,6 +15,7 @@
 /obj/structure/stone_tile/block{
 	dir = 4
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "e" = (
@@ -24,6 +25,7 @@
 /obj/structure/stone_tile/block/cracked{
 	dir = 4
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "f" = (
@@ -33,18 +35,21 @@
 /obj/structure/stone_tile/block/cracked{
 	dir = 8
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "g" = (
 /obj/structure/stone_tile{
 	dir = 4
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "h" = (
 /obj/structure/stone_tile{
 	dir = 1
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "i" = (
@@ -55,6 +60,7 @@
 	dir = 1
 	},
 /obj/structure/stone_tile/cracked,
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "k" = (
@@ -65,6 +71,7 @@
 /obj/structure/stone_tile/cracked{
 	dir = 8
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "l" = (
@@ -75,6 +82,7 @@
 /obj/structure/stone_tile{
 	dir = 1
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "m" = (
@@ -85,6 +93,7 @@
 /obj/structure/stone_tile/cracked{
 	dir = 4
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "n" = (
@@ -95,12 +104,14 @@
 	dir = 8
 	},
 /obj/structure/stone_tile/cracked,
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "o" = (
 /obj/structure/stone_tile/cracked{
 	dir = 4
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "p" = (
@@ -111,6 +122,7 @@
 	dir = 8
 	},
 /obj/structure/stone_tile,
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "q" = (
@@ -121,6 +133,7 @@
 /obj/structure/stone_tile{
 	dir = 8
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "r" = (
@@ -131,20 +144,24 @@
 	dir = 8
 	},
 /obj/structure/stone_tile,
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "s" = (
 /obj/structure/stone_tile/surrounding_tile/cracked,
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "t" = (
 /obj/structure/stone_tile/block/cracked,
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "u" = (
 /obj/structure/stone_tile/surrounding_tile{
 	dir = 8
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "v" = (
@@ -152,8 +169,9 @@
 	dir = 6
 	},
 /obj/structure/stone_tile/center,
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
-/area/lavaland/surface/outdoors)
+/area/lavaland/surface/outdoors/unexplored)
 "w" = (
 /obj/structure/stone_tile/block{
 	dir = 8
@@ -162,101 +180,228 @@
 	dir = 4
 	},
 /mob/living/simple_animal/hostile/megafauna/blood_drunk_miner/hunter,
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
+"E" = (
+/obj/effect/mapping_helpers/no_lava,
+/turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
+/area/lavaland/surface/outdoors)
+"H" = (
+/turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
+/area/lavaland/surface/outdoors/unexplored)
+"L" = (
+/obj/effect/mapping_helpers/no_lava,
+/turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
+/area/lavaland/surface/outdoors/unexplored)
+"U" = (
+/turf/simulated/mineral/random/volcanic,
+/area/lavaland/surface/outdoors/unexplored)
 
 (1,1,1) = {"
 a
 a
 a
 a
+U
 a
 a
 a
+U
 a
-b
-b
-b
-b
-b
+U
+a
+U
+U
+a
+a
+a
 a
 a
 a
 "}
 (2,1,1) = {"
 a
-b
-b
-b
+U
+U
+U
+U
+U
 a
+U
+U
+U
+U
+U
+U
+U
+U
+U
+U
 a
-b
-b
-b
-c
-c
-b
-b
-b
 a
 a
 "}
 (3,1,1) = {"
-b
-b
-b
-b
-b
-b
-b
-b
-c
-g
-n
-c
-c
-b
-b
+a
+a
+U
+U
+U
+U
+U
+a
+U
+U
+E
+E
+E
+U
+U
+U
+U
+U
+a
 a
 "}
 (4,1,1) = {"
+a
+a
+U
+E
+E
+E
+b
+b
+b
+E
+E
+c
+b
+E
+E
+E
+E
+U
+a
+a
+"}
+(5,1,1) = {"
+a
+U
+U
+b
+b
+E
+E
+b
+E
+E
+c
+E
+E
+E
+b
+b
+b
+U
+U
+a
+"}
+(6,1,1) = {"
+U
+U
+E
+E
 b
 c
+E
+E
+E
+c
+E
+E
 c
 b
 b
 b
 c
+U
+U
+a
+"}
+(7,1,1) = {"
+a
+U
+U
+E
+E
+E
 c
+E
+E
+E
+E
+c
+E
+g
+n
+E
+E
+U
+U
+U
+"}
+(8,1,1) = {"
+U
+U
+U
+b
+c
+E
+E
+E
+E
+E
+E
+E
 g
 l
 h
 q
-c
-c
-b
-b
+E
+L
+U
+U
 "}
-(5,1,1) = {"
-b
-c
-c
-c
-c
-c
-c
+(9,1,1) = {"
+U
+U
+U
+E
+E
+E
+E
+E
+E
+E
+E
 g
 i
-c
-c
+E
+E
 h
 s
-c
-c
-b
+L
+U
+a
 "}
-(6,1,1) = {"
-b
+(10,1,1) = {"
+U
+U
+H
+c
+E
 d
 e
 e
@@ -270,96 +415,204 @@ w
 f
 t
 v
-c
-b
+U
+U
 "}
-(7,1,1) = {"
-b
-c
-c
-c
-c
-c
-c
+(11,1,1) = {"
+U
+U
+U
+E
+E
+E
+E
+E
+E
+E
+E
 h
 k
-c
-c
+E
+E
 o
 u
-c
-b
-b
+L
+U
+U
 "}
-(8,1,1) = {"
+(12,1,1) = {"
+a
+U
+U
 b
-b
-b
 c
-c
-c
-c
-c
+E
+E
+E
+E
+E
+E
+E
 h
 m
 o
 r
-c
-b
-b
-b
-"}
-(9,1,1) = {"
+E
+L
+U
 a
-b
-b
-b
-b
+"}
+(13,1,1) = {"
+a
+U
 c
+E
+E
+E
 c
+E
+E
+E
+E
 c
-c
+E
 h
 p
+E
+E
+H
+U
+U
+"}
+(14,1,1) = {"
+U
+U
+E
+E
+b
 c
+E
+E
+E
+c
+E
+E
 c
 b
 b
+c
+b
+U
+U
+U
+"}
+(15,1,1) = {"
+a
+U
+U
+b
+b
+E
+E
+c
+E
+E
+c
+E
+E
+E
+b
+b
+b
+U
+U
 a
 "}
-(10,1,1) = {"
+(16,1,1) = {"
 a
-a
-a
-b
-b
-b
-b
-b
+U
+U
+E
+E
+E
+U
+U
 c
-c
-c
-c
+E
+E
 b
 b
+E
+E
+E
+E
+U
 a
 a
 "}
-(11,1,1) = {"
+(17,1,1) = {"
+U
+U
+U
+U
+U
+U
+U
+U
+c
+c
+E
+E
+E
+U
+U
+U
+U
+U
+a
+a
+"}
+(18,1,1) = {"
+a
+U
+a
+U
+U
+a
+U
+U
+U
+U
+U
+U
+U
+U
+U
+a
+U
+a
+a
+a
+"}
+(19,1,1) = {"
+a
+a
+a
+U
+a
+a
+a
+U
+a
+U
+U
+U
 a
 a
 a
 a
 a
-b
-b
-b
-b
-b
-b
-b
-b
-b
+a
 a
 a
 "}

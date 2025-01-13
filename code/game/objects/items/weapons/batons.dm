@@ -1,17 +1,17 @@
 /**
   * # Police Baton
   *
-  * Knocks down the hit mob when not on harm intent and when [/obj/item/melee/classic_baton/on] is TRUE
+  * Knocks down the hit mob when not on harm intent and when [/obj/item/melee/classic_baton/var/on] is `TRUE`.
   *
   * A non-lethal attack has a cooldown to avoid spamming
   */
 /obj/item/melee/classic_baton
 	name = "police baton"
 	desc = "A wooden truncheon for beating criminal scum."
-	icon = 'icons/obj/baton.dmi'
+	icon = 'icons/obj/weapons/baton.dmi'
 	icon_state = "baton"
 	item_state = "classic_baton"
-	slot_flags = SLOT_FLAG_BELT
+	slot_flags = ITEM_SLOT_BELT
 	force = 12 //9 hit crit
 	w_class = WEIGHT_CLASS_NORMAL
 	// Settings
@@ -35,7 +35,7 @@
 	/// Whether the baton is toggled on (to allow attacking)
 	var/on = TRUE
 
-/obj/item/melee/classic_baton/attack(mob/living/target, mob/living/user)
+/obj/item/melee/classic_baton/attack__legacy__attackchain(mob/living/target, mob/living/user)
 	if(!on)
 		return ..()
 
@@ -130,7 +130,7 @@
 		percentage_reduction = (100 - ARMOUR_VALUE_TO_PERCENTAGE(armour)) / 100
 	else
 		percentage_reduction = (100 - armour) / 100 // converts the % into a decimal
-	target.adjustStaminaLoss(stamina_damage * percentage_reduction)
+	target.apply_damage(stamina_damage * percentage_reduction, STAMINA)
 
 /obj/item/melee/classic_baton/proc/baton_delay(mob/living/target, user_UID)
 	REMOVE_TRAIT(target, TRAIT_WAS_BATONNED, user_UID)
@@ -143,7 +143,6 @@
 	desc = "A cane with special engraving on it. It seems well suited for fending off assailants..."
 	icon_state = "cane_nt"
 	item_state = "cane_nt"
-	needs_permit = FALSE
 
 /obj/item/melee/classic_baton/ntcane/get_crutch_efficiency()
 	return 2
@@ -156,9 +155,8 @@
 	desc = "A compact yet robust personal defense weapon. Can be concealed when folded."
 	icon_state = "telebaton_0" // For telling what it is when mapping
 	item_state = null
-	slot_flags = SLOT_FLAG_BELT
+	slot_flags = ITEM_SLOT_BELT
 	w_class = WEIGHT_CLASS_SMALL
-	needs_permit = FALSE
 	on = FALSE
 	/// Force when concealed
 	var/force_off = 0
@@ -186,7 +184,7 @@
 	force = force_off
 	attack_verb = on ? attack_verb_on : attack_verb_off
 
-/obj/item/melee/classic_baton/telescopic/attack_self(mob/user)
+/obj/item/melee/classic_baton/telescopic/attack_self__legacy__attackchain(mob/user)
 	on = !on
 	icon_state = on ? icon_state_on : icon_state_off
 	if(on)
@@ -198,7 +196,7 @@
 	else
 		to_chat(user, "<span class='notice'>You collapse [src].</span>")
 		item_state = null //no sprite for concealment even when in hand
-		slot_flags = SLOT_FLAG_BELT
+		slot_flags = ITEM_SLOT_BELT
 		w_class = WEIGHT_CLASS_SMALL
 		force = force_off //not so robust now
 		attack_verb = attack_verb_off

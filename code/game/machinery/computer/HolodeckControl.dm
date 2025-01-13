@@ -1,4 +1,4 @@
-/obj/machinery/computer/HolodeckControl
+/obj/machinery/computer/holodeck_control
 	name = "holodeck control computer"
 	desc = "A computer used to control a nearby holodeck."
 	icon_keyboard = "tech_key"
@@ -32,29 +32,29 @@
 
 	light_color = LIGHT_COLOR_CYAN
 
-/obj/machinery/computer/HolodeckControl/Initialize(mapload)
+/obj/machinery/computer/holodeck_control/Initialize(mapload)
 	. = ..()
 	linkedholodeck = locate(/area/holodeck/alphadeck)
 
-/obj/machinery/computer/HolodeckControl/Destroy()
+/obj/machinery/computer/holodeck_control/Destroy()
 	emergency_shutdown()
 	return ..()
 
-/obj/machinery/computer/HolodeckControl/attack_ai(mob/user)
+/obj/machinery/computer/holodeck_control/attack_ai(mob/user)
 	return attack_hand(user)
 
-/obj/machinery/computer/HolodeckControl/attackby(obj/item/D, mob/user)
+/obj/machinery/computer/holodeck_control/attackby__legacy__attackchain(obj/item/D, mob/user)
 	return
 
-/obj/machinery/computer/HolodeckControl/attack_ghost(mob/user)
+/obj/machinery/computer/holodeck_control/attack_ghost(mob/user)
 	ui_interact(user)
 	return ..()
 
-/obj/machinery/computer/HolodeckControl/attack_hand(mob/user)
+/obj/machinery/computer/holodeck_control/attack_hand(mob/user)
 	ui_interact(user)
 	return ..()
 
-/obj/machinery/computer/HolodeckControl/process()
+/obj/machinery/computer/holodeck_control/process()
 	for(var/item in holographic_items) // do this first, to make sure people don't take items out when power is down.
 		if(!(get_turf(item) in linkedholodeck))
 			derez(item, 0)
@@ -75,10 +75,10 @@
 			for(var/turf/T in linkedholodeck)
 				if(prob(30))
 					do_sparks(2, 1, T)
-				T.ex_act(3)
-				T.hotspot_expose(1000,500,1)
+				T.ex_act(EXPLODE_LIGHT)
+				T.hotspot_expose(1000,500)
 
-/obj/machinery/computer/HolodeckControl/proc/loadProgram(area/A)
+/obj/machinery/computer/holodeck_control/proc/loadProgram(area/A)
 
 	if(world.time < (last_change + 25))
 		if(world.time < (last_change + 15))//To prevent super-spam clicking, reduced process size and annoyance -Sieve
@@ -97,7 +97,7 @@
 		qdel(B)
 	for(var/mob/living/simple_animal/hostile/carp/holocarp/C in linkedholodeck)
 		qdel(C)
-	holographic_items = A.copy_contents_to(linkedholodeck, platingRequired = TRUE, perfect_copy = FALSE)
+	holographic_items = A.copy_contents_to(linkedholodeck, platingRequired = TRUE)
 
 	if(emagged)
 		for(var/obj/item/holo/H in linkedholodeck)
@@ -109,7 +109,7 @@
 				new /mob/living/simple_animal/hostile/carp/holocarp(L.loc)
 
 
-/obj/machinery/computer/HolodeckControl/proc/emergency_shutdown()
+/obj/machinery/computer/holodeck_control/proc/emergency_shutdown()
 	//Get rid of any items
 	for(var/item in holographic_items)
 		derez(item)
@@ -123,7 +123,7 @@
 	active = FALSE
 
 
-/obj/machinery/computer/HolodeckControl/proc/derez(obj/obj, silent = TRUE)
+/obj/machinery/computer/holodeck_control/proc/derez(obj/obj, silent = TRUE)
 	holographic_items.Remove(obj)
 
 	if(!istype(obj))
@@ -131,26 +131,30 @@
 
 	var/mob/M = obj.loc
 	if(istype(M))
-		M.unEquip(obj, TRUE) //Holoweapons should always drop.
+		// Holoweapons should always drop.
+		M.drop_item_to_ground(obj, force = TRUE)
 
 	if(!silent)
 		var/obj/old_obj = obj
 		visible_message("[old_obj] fades away!")
 	qdel(obj)
 
-/obj/machinery/computer/HolodeckControl/proc/check_deck_integrity(area/A)
+/obj/machinery/computer/holodeck_control/proc/check_deck_integrity(area/A)
 	for(var/turf/space/T in A)
 		return FALSE
 	return TRUE
 
-/obj/machinery/computer/HolodeckControl/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = FALSE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/machinery/computer/holodeck_control/ui_state(mob/user)
+	return GLOB.default_state
+
+/obj/machinery/computer/holodeck_control/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "Holodeck", name, 400, 500, master_ui, state)
+		ui = new(user, src, "Holodeck", name)
 		ui.autoupdate = TRUE
 		ui.open()
 
-/obj/machinery/computer/HolodeckControl/ui_data(mob/user)
+/obj/machinery/computer/holodeck_control/ui_data(mob/user)
 	var/list/data = list()
 	data["current_deck"] = selected_deck
 	data["emagged"] = emagged
@@ -160,7 +164,7 @@
 		data["decks"] += deck_name
 	return data
 
-/obj/machinery/computer/HolodeckControl/ui_act(action, params, datum/tgui/ui)
+/obj/machinery/computer/holodeck_control/ui_act(action, params, datum/tgui/ui)
 	if(..())
 		return
 	. = TRUE
@@ -190,7 +194,7 @@
 			if(target)
 				loadProgram(target)
 
-/obj/machinery/computer/HolodeckControl/emag_act(user)
+/obj/machinery/computer/holodeck_control/emag_act(user)
 	if(emagged)
 		return
 	playsound(loc, 'sound/effects/sparks4.ogg', 75, 1)
@@ -198,16 +202,17 @@
 	to_chat(user, "<span class='notice'>You vastly increase projector power and override the safety and security protocols.</span>")
 	to_chat(user, "Warning! Automatic shutoff and derezing protocols have been corrupted. Please call Nanotrasen maintenance and do not use the simulator.")
 	log_game("[key_name(user)] emagged the Holodeck Control Computer")
+	return TRUE
 
-/obj/machinery/computer/HolodeckControl/emp_act(severity)
+/obj/machinery/computer/holodeck_control/emp_act(severity)
 	emergency_shutdown()
 	..()
 
-/obj/machinery/computer/HolodeckControl/ex_act(severity)
+/obj/machinery/computer/holodeck_control/ex_act(severity)
 	emergency_shutdown()
 	..()
 
-/obj/machinery/computer/HolodeckControl/blob_act(obj/structure/blob/B)
+/obj/machinery/computer/holodeck_control/blob_act(obj/structure/blob/B)
 	emergency_shutdown()
 	return ..()
 
@@ -223,13 +228,15 @@
 	thermal_conductivity = 0
 	icon_state = "plating"
 
+/turf/simulated/floor/holofloor/Initialize(mapload)
+	. = ..()
+	RegisterSignal(src, COMSIG_ATTACK_BY, TYPE_PROC_REF(/datum, signal_cancel_attack_by))
+
 /turf/simulated/floor/holofloor/carpet
 	name = "carpet"
 	icon = 'icons/turf/floors/carpet.dmi'
 	icon_state = "carpet-255"
 	base_icon_state = "carpet"
-	floor_tile = /obj/item/stack/tile/carpet
-	broken_states = list("damaged")
 	smoothing_flags = SMOOTH_BITMASK
 	smoothing_groups = list(SMOOTH_GROUP_TURF, SMOOTH_GROUP_CARPET)
 	canSmoothWith = list(SMOOTH_GROUP_CARPET)
@@ -248,6 +255,9 @@
 	if(smoothing_flags & (SMOOTH_CORNERS|SMOOTH_BITMASK))
 		QUEUE_SMOOTH(src)
 
+/turf/simulated/floor/holofloor/carpet/get_broken_states()
+	return list("damaged")
+
 /turf/simulated/floor/holofloor/grass
 	name = "Lush Grass"
 	icon = 'icons/turf/floors/grass.dmi'
@@ -259,11 +269,6 @@
 	pixel_x = -9
 	pixel_y = -9
 	layer = ABOVE_OPEN_TURF_LAYER
-	floor_tile = /obj/item/stack/tile/grass
-
-/turf/simulated/floor/holofloor/attackby(obj/item/W as obj, mob/user as mob, params)
-	return
-	// HOLOFLOOR DOES NOT GIVE A FUCK
 
 /turf/simulated/floor/holofloor/space
 	name = "\proper space"
@@ -333,6 +338,7 @@
 	desc = "What are you standing around staring at this for? Get to killing!"
 	lefthand_file = 'icons/mob/inhands/weapons_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/weapons_righthand.dmi'
+	icon = 'icons/obj/weapons/melee.dmi'
 	icon_state = "claymore"
 	item_state = "claymore"
 	hitsound = 'sound/weapons/bladeslice.ogg'
@@ -357,7 +363,7 @@
 /obj/item/holo/esword
 	name = "holographic energy sword"
 	desc = "This looks like a real energy sword!"
-	icon = 'icons/obj/energy_melee.dmi'
+	icon = 'icons/obj/weapons/energy_melee.dmi'
 	lefthand_file = 'icons/mob/inhands/weapons_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/weapons_righthand.dmi'
 	icon_state = "sword0"
@@ -391,7 +397,7 @@
 	..()
 	item_color = pick("red","blue","green","purple")
 
-/obj/item/holo/esword/attack_self(mob/living/user as mob)
+/obj/item/holo/esword/attack_self__legacy__attackchain(mob/living/user as mob)
 	active = !active
 	if(active)
 		force = 30
@@ -432,7 +438,7 @@
 	to_chat(user, "The station AI is not to interact with these devices.")
 	return
 
-/obj/machinery/readybutton/attackby(obj/item/W as obj, mob/user as mob, params)
+/obj/machinery/readybutton/attackby__legacy__attackchain(obj/item/W as obj, mob/user as mob, params)
 	to_chat(user, "The device is a solid button, there's nothing you can do with it!")
 
 /obj/machinery/readybutton/attack_hand(mob/user)

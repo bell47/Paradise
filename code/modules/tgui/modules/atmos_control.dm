@@ -1,5 +1,7 @@
 /datum/ui_module/atmos_control
 	name = "Atmospherics Control"
+	var/parent_area_type
+	var/z_level
 
 /datum/ui_module/atmos_control/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
 	if(..())
@@ -9,21 +11,34 @@
 		if("open_alarm")
 			var/obj/machinery/alarm/alarm = locate(params["aref"]) in GLOB.air_alarms
 			if(alarm)
-				alarm.ui_interact(usr, master_ui = ui, state = GLOB.always_state) // ALWAYS is intentional here, as the master_ui pass will prevent fuckery
+				alarm.ui_interact(usr)
 
-/datum/ui_module/atmos_control/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = FALSE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/datum/ui_module/atmos_control/ui_state(mob/user)
+	if(isliving(usr) && !issilicon(usr))
+		return GLOB.human_adjacent_state
+	return GLOB.default_state
+
+/datum/ui_module/atmos_control/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "AtmosControl", name, 800, 600, master_ui, state)
-
-		// Send nanomaps
-		var/datum/asset/nanomaps = get_asset_datum(/datum/asset/simple/nanomaps)
-		nanomaps.send(user)
-
+		ui = new(user, src, "AtmosControl", name)
 		ui.open()
 
+/datum/ui_module/atmos_control/ui_assets(mob/user)
+	return list(
+		get_asset_datum(/datum/asset/simple/nanomaps)
+	)
+
 /datum/ui_module/atmos_control/ui_data(mob/user)
+	var/list/alarms_on_net = GLOB.air_alarms
+	// default value means main station atmos control
+	if(parent_area_type)
+		alarms_on_net = list()
+		for(var/obj/machinery/alarm/air_alarm in GLOB.air_alarms)
+			if(air_alarm.alarm_area.type in typesof(parent_area_type))
+				alarms_on_net |= air_alarm
+
 	var/list/data = list()
-	data["alarms"] = GLOB.air_alarm_repository.air_alarm_data(GLOB.air_alarms, target_z=level_name_to_num(MAIN_STATION))
+	data["alarms"] = GLOB.air_alarm_repository.air_alarm_data(alarms_on_net, target_z = z_level)
 
 	return data

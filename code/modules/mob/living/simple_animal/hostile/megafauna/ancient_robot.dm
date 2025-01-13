@@ -103,9 +103,21 @@ Difficulty: Hard
 	BL = new /mob/living/simple_animal/hostile/ancient_robot_leg(loc, src, BOTTOM_LEFT)
 	beam = new /obj/effect/abstract(loc)
 	mode = pick(BLUESPACE, GRAV, PYRO, FLUX, VORTEX, CRYO) //picks one of the 6 cores
-	if(mode == FLUX) // Main attack is shock, so flux makes it stronger
-		melee_damage_lower = 25
-		melee_damage_upper = 25
+	switch(mode)
+		if(BLUESPACE)
+			desc += " It emits sparks of blue energy."
+		if(GRAV)
+			desc += " Gravity seems to distort around it."
+		if(PYRO)
+			desc += " You see flames burning around it."
+		if(FLUX) // Main attack is shock, so flux makes it stronger
+			melee_damage_lower = 25
+			melee_damage_upper = 25
+			desc += " It seems to overflow with energy."
+		if(VORTEX)
+			desc += " You see space bend and distort around it."
+		if(CRYO)
+			desc += " The air surrounding it is cold and listless."
 	body_shield()
 	add_overlay("[mode]")
 	add_overlay("eyes")
@@ -228,7 +240,7 @@ Difficulty: Hard
 	. = ..()
 	var/newcolor = rgb(241, 137, 172)
 	add_atom_colour(newcolor, TEMPORARY_COLOUR_PRIORITY)
-	beam_it_up()
+	addtimer(CALLBACK(src, PROC_REF(beam_it_up)), 0)
 
 /obj/effect/vetus_laser/ex_act(severity)
 	return
@@ -255,6 +267,8 @@ Difficulty: Hard
 
 /mob/living/simple_animal/hostile/megafauna/ancient_robot/proc/charge(atom/chargeat = target, delay = 5, chargepast = 2)
 	if(!chargeat)
+		return
+	if(chargeat.z != z)
 		return
 	if(mode == BLUESPACE || (enraged && prob(13)))
 		new /obj/effect/temp_visual/bsg_kaboom(get_turf(src))
@@ -293,9 +307,9 @@ Difficulty: Hard
 		return
 	return ..()
 
-/mob/living/simple_animal/hostile/megafauna/ancient_robot/Bump(atom/A, yes)
+/mob/living/simple_animal/hostile/megafauna/ancient_robot/Bump(atom/A)
 	if(charging)
-		if(isliving(A) && yes)
+		if(isliving(A))
 			var/mob/living/L = A
 			if(!istype(A, /mob/living/simple_animal/hostile/ancient_robot_leg))
 				L.visible_message("<span class='danger'>[src] slams into [L]!</span>", "<span class='userdanger'>[src] tramples you into the ground!</span>")
@@ -330,7 +344,7 @@ Difficulty: Hard
 	if(P.damage)
 		disable_shield()
 
-/mob/living/simple_animal/hostile/megafauna/ancient_robot/attacked_by(obj/item/I, mob/living/user)
+/mob/living/simple_animal/hostile/megafauna/ancient_robot/attacked_by__legacy__attackchain(obj/item/I, mob/living/user)
 	if(!body_shield_enabled)
 		return ..()
 	do_sparks(2, 1, src)
@@ -473,7 +487,7 @@ Difficulty: Hard
 	say(pick("OTZKMXOZE LGORAXK, YKRL JKYZXAIZ GIZOBK", "RUYY IKXZGOT, KTMGMKOTM XKIUBKXE JKTOGR", "VUCKX IUXKY 8-12 HXKGINKJ, UBKXRUGJOTM XKSGOTOTM IUXKY", "KXXUX KXXUX KXXUX KXXUX KXX-", "-ROQK ZKGXY OT XGOT- - -ZOSK ZU JOK"))
 	visible_message("<span class='biggerdanger'>[src] begins to overload it's core. It is going to explode!</span>")
 	walk(src, 0)
-	playsound(src,'sound/machines/alarm.ogg',100,0,5)
+	playsound(src,'sound/machines/alarm.ogg', 100, FALSE, 5)
 	addtimer(CALLBACK(src, PROC_REF(kaboom)), 10 SECONDS)
 
 /mob/living/simple_animal/hostile/megafauna/ancient_robot/proc/kaboom()
@@ -579,13 +593,15 @@ Difficulty: Hard
 				var/turf/C = get_turf(src)
 				new /obj/effect/temp_visual/lava_warning(C, enraged ? 18 SECONDS : 6 SECONDS)
 				for(var/turf/T in range (1,src))
-					new /obj/effect/hotspot(T)
-					T.hotspot_expose(700,50,1)
+					var/obj/effect/hotspot/hotspot = new /obj/effect/hotspot/fake(T)
+					hotspot.temperature = 1000
+					hotspot.recolor()
+					T.hotspot_expose(700, 50)
 			if(mode == VORTEX)
 				var/turf/T = get_turf(src)
 				for(var/atom/A in T)
-					A.ex_act(3) //Body is immune to explosions of this strength.
-				T.ex_act(3)
+					A.ex_act(EXPLODE_LIGHT) //Body is immune to explosions of this strength.
+				T.ex_act(EXPLODE_LIGHT)
 			if(mode == CRYO)
 				var/turf/simulated/S = get_turf(src)
 				S.MakeSlippery(TURF_WET_ICE, enraged ? rand(25, 35 SECONDS) : rand(10, 20 SECONDS))
@@ -615,7 +631,6 @@ Difficulty: Hard
 	weather_immunities = list("lava","ash")
 	atmos_requirements = list("min_oxy" = 0, "max_oxy" = 0, "min_tox" = 0, "max_tox" = 0, "min_co2" = 0, "max_co2" = 0, "min_n2" = 0, "max_n2" = 0)
 	minbodytemp = 0
-	flying = TRUE
 	check_friendly_fire = 1
 	ranged = TRUE
 	projectilesound = 'sound/weapons/gunshots/gunshot.ogg'
@@ -635,6 +650,8 @@ Difficulty: Hard
 	robust_searching = TRUE
 	ranged_ignores_vision = TRUE
 	stat_attack = UNCONSCIOUS
+	maxbodytemp = INFINITY
+	initial_traits = list(TRAIT_FLYING)
 	var/range = 3
 	var/mob/living/simple_animal/hostile/megafauna/ancient_robot/core = null
 	var/fake_max_hp = 300
@@ -678,9 +695,9 @@ Difficulty: Hard
 /mob/living/simple_animal/hostile/ancient_robot_leg/proc/beam_setup()
 	leg_part = Beam(core.beam, "leg_connection", 'icons/effects/effects.dmi', time=INFINITY, maxdistance=INFINITY, beam_type=/obj/effect/ebeam)
 
-/mob/living/simple_animal/hostile/ancient_robot_leg/onTransitZ(old_z,new_z)
+/mob/living/simple_animal/hostile/ancient_robot_leg/on_changed_z_level(turf/old_turf, turf/new_turf)
 	..()
-	update_z(new_z)
+	update_z(new_turf?.z)
 	if(leg_part)
 		QDEL_NULL(leg_part)
 	addtimer(CALLBACK(src, PROC_REF(beam_setup)), 1 SECONDS)
@@ -713,10 +730,10 @@ Difficulty: Hard
 	walk_towards(src, T, movespeed)
 	DestroySurroundings()
 
-/mob/living/simple_animal/hostile/ancient_robot_leg/Bump(atom/A, yes)
+/mob/living/simple_animal/hostile/ancient_robot_leg/Bump(atom/A)
 	if(!core.charging)
 		return
-	if(isliving(A) && yes)
+	if(isliving(A))
 		if(!istype(A, /mob/living/simple_animal/hostile/megafauna/ancient_robot))
 			var/mob/living/L = A
 			L.visible_message("<span class='danger'>[src] slams into [L]!</span>", "<span class='userdanger'>[src] tramples you into the ground!</span>")
@@ -782,7 +799,8 @@ Difficulty: Hard
 	duration = 20
 
 
-/obj/item/projectile/energy/tesla_bolt //Leaving here for adminbus / so vetus still uses it.
+/// Leaving here for adminbus / so vetus still uses it.
+/obj/item/projectile/energy/tesla_bolt
 	name = "shock bolt"
 	icon_state = "purple_laser"
 	impact_effect_type = /obj/effect/temp_visual/impact_effect/purple_laser
@@ -802,13 +820,14 @@ Difficulty: Hard
 	tesla_zap(src, zap_range, power, zap_flags)
 	qdel(src)
 
-/obj/item/projectile/energy/tesla_bolt/Bump(atom/A, yes) // Don't want the projectile hitting the legs
+/obj/item/projectile/energy/tesla_bolt/Bump(atom/A) // Don't want the projectile hitting the legs
 	if(!istype(/mob/living/simple_animal/hostile/ancient_robot_leg, A))
 		return ..()
 	var/turf/target_turf = get_turf(A)
 	loc = target_turf
 
-/obj/effect/temp_visual/dragon_swoop/bubblegum/ancient_robot //this is the worst path I have ever made
+/// this is the worst path I have ever made
+/obj/effect/temp_visual/dragon_swoop/bubblegum/ancient_robot
 	icon_state = "target"
 
 /obj/effect/temp_visual/dragon_swoop/bubblegum/ancient_robot/Initialize(mapload, target)
@@ -859,3 +878,8 @@ Difficulty: Hard
 #undef FLUX
 #undef CRYO
 #undef VORTEX
+
+#undef TOP_RIGHT
+#undef TOP_LEFT
+#undef BOTTOM_RIGHT
+#undef BOTTOM_LEFT

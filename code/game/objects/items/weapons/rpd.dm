@@ -33,16 +33,19 @@
 	var/pipe_category = RPD_ATMOS_PIPING //For TGUI menus, this is a subtype of pipes e.g. scrubbers pipes, devices
 	var/whatpipe = PIPE_SIMPLE_STRAIGHT //What kind of atmos pipe is it?
 	var/whatdpipe = PIPE_DISPOSALS_STRAIGHT //What kind of disposals pipe is it?
+	var/whatttube = PIPE_TRANSIT_TUBE
 	var/spawndelay = RPD_COOLDOWN_TIME
 	var/walldelay = RPD_WALLBUILD_TIME
 	var/ranged = FALSE
 	var/primary_sound = 'sound/machines/click.ogg'
 	var/alt_sound = null
+	var/auto_wrench_toggle = TRUE
 
 	//Lists of things
 	var/list/mainmenu = list(
 		list("category" = "Atmospherics", "mode" = RPD_ATMOS_MODE, "icon" = "wrench"),
 		list("category" = "Disposals", "mode" = RPD_DISPOSALS_MODE, "icon" = "recycle"),
+		list("category" = "Transit", "mode" = RPD_TRANSIT_MODE, "icon" = "subway"),
 		list("category" = "Rotate", "mode" = RPD_ROTATE_MODE, "icon" = "sync-alt"),
 		list("category" = "Flip", "mode" = RPD_FLIP_MODE, "icon" = "arrows-alt-h"),
 		list("category" = "Recycle", "mode" = RPD_DELETE_MODE, "icon" = "trash"))
@@ -112,6 +115,7 @@
 		else if(!iconrotation) //If user selected a rotation
 			P.dir = user.dir
 	to_chat(user, "<span class='notice'>[src] rapidly dispenses [P]!</span>")
+	automatic_wrench_down(user, P)
 	activate_rpd(TRUE)
 
 /obj/item/rpd/proc/create_disposals_pipe(mob/user, turf/T) //Make a disposals pipe / construct
@@ -123,19 +127,40 @@
 	if(!iconrotation && whatdpipe != PIPE_DISPOSALS_JUNCTION_RIGHT) //Disposals pipes are in the opposite direction to atmos pipes, so we need to flip them. Junctions don't have this quirk though
 		P.flip()
 	to_chat(user, "<span class='notice'>[src] rapidly dispenses [P]!</span>")
+	automatic_wrench_down(user, P)
 	activate_rpd(TRUE)
+
+/obj/item/rpd/proc/create_transit_tube(mob/user, turf/dest)
+	if(!can_dispense_pipe(whatttube, PIPETYPE_TRANSIT))
+		CRASH("Failed to spawn [get_pipe_name(whatttube, PIPETYPE_TRANSIT)] - possible tampering detected")
+
+	for(var/datum/pipes/transit/T in GLOB.construction_pipe_list)
+		if(T.pipe_id == whatttube)
+			var/obj/structure/transit_tube_construction/S = new T.construction_type(dest)
+			if(!istype(S))
+				CRASH("found [S] when constructing transit tube but expected /obj/structure/transit_tube_construction")
+
+			S.dir = iconrotation ? iconrotation : user.dir
+
+			to_chat(user, "<span class='notice'>[src] rapidly dispenses [S]!</span>")
+			automatic_wrench_down(user, S)
+			activate_rpd(TRUE)
 
 /obj/item/rpd/proc/rotate_all_pipes(mob/user, turf/T) //Rotate all pipes on a turf
 	for(var/obj/item/pipe/P in T)
 		P.rotate()
 	for(var/obj/structure/disposalconstruct/D in T)
 		D.rotate()
+	for(var/obj/structure/transit_tube_construction/tube in T)
+		tube.rotate()
 
 /obj/item/rpd/proc/flip_all_pipes(mob/user, turf/T) //Flip all pipes on a turf
 	for(var/obj/item/pipe/P in T)
 		P.flip()
 	for(var/obj/structure/disposalconstruct/D in T)
 		D.flip()
+	for(var/obj/structure/transit_tube_construction/tube in T)
+		tube.flip()
 
 /obj/item/rpd/proc/delete_all_pipes(mob/user, turf/T) //Delete all pipes on a turf
 	var/eaten
@@ -154,6 +179,9 @@
 		if(!D.anchored)
 			QDEL_NULL(D)
 			eaten = TRUE
+	for(var/obj/structure/transit_tube_construction/C in T)
+		QDEL_NULL(C)
+		eaten = TRUE
 	if(eaten)
 		to_chat(user, "<span class='notice'>[src] sucks up the loose pipes on [T].")
 		activate_rpd()
@@ -165,17 +193,40 @@
 	QDEL_NULL(P)
 	activate_rpd()
 
+/**
+ * Automatically wrenches down an atmos device/pipe if the auto_wrench_toggle is TRUE.
+ * Arguments:
+ * * user - the user of the RPD.
+ * * target - the pipe/device/tube being placed by the RPD.
+ */
+/obj/item/rpd/proc/automatic_wrench_down(mob/living/user, obj/item/target)
+	if(!auto_wrench_toggle)
+		return
+	if(mode == RPD_TRANSIT_MODE)
+		if(target.screwdriver_act(user, src) & RPD_TOOL_SUCCESS)
+			playsound(src, 'sound/items/impactwrench.ogg', 50, TRUE)
+			return
+	if(target.wrench_act(user, src) & RPD_TOOL_SUCCESS)
+		playsound(src, 'sound/items/impactwrench.ogg', 50, TRUE)
+		return
 // TGUI stuff
 
-/obj/item/rpd/attack_self(mob/user)
+/obj/item/rpd/attack_self__legacy__attackchain(mob/user)
 	ui_interact(user)
 
-/obj/item/rpd/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = FALSE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.inventory_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/item/rpd/ui_state(mob/user)
+	return GLOB.inventory_state
+
+/obj/item/rpd/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "RPD", name, 450, 650, master_ui, state)
+		ui = new(user, src, "RPD", name)
 		ui.open()
 
+/obj/item/rpd/ui_assets(mob/user)
+	return list(
+		get_asset_datum(/datum/asset/spritesheet/rpd)
+	)
 
 /obj/item/rpd/AltClick(mob/user)
 	radial_menu(user)
@@ -190,6 +241,8 @@
 	data["pipe_category"] = pipe_category
 	data["whatdpipe"] = whatdpipe
 	data["whatpipe"] = whatpipe
+	data["whatttube"] = whatttube
+	data["auto_wrench_toggle"] = auto_wrench_toggle
 	return data
 
 /obj/item/rpd/ui_act(action, list/params)
@@ -200,15 +253,19 @@
 
 	switch(action)
 		if("iconrotation")
-			iconrotation = text2num(sanitize(params["iconrotation"]))
+			iconrotation = isnum(params[action]) ? params[action] : text2num(params[action])
 		if("whatpipe")
-			whatpipe = text2num(sanitize(params["whatpipe"]))
+			whatpipe = isnum(params[action]) ? params[action] : text2num(params[action])
 		if("whatdpipe")
-			whatdpipe = text2num(sanitize(params["whatdpipe"]))
+			whatdpipe = isnum(params[action]) ? params[action] : text2num(params[action])
+		if("whatttube")
+			whatttube = isnum(params[action]) ? params[action] : text2num(params[action])
 		if("pipe_category")
-			pipe_category = text2num(sanitize(params["pipe_category"]))
+			pipe_category = isnum(params[action]) ? params[action] : text2num(params[action])
 		if("mode")
-			mode = text2num(sanitize(params["mode"]))
+			mode = isnum(params[action]) ? params[action] : text2num(params[action])
+		if("auto_wrench_toggle")
+			auto_wrench_toggle = !auto_wrench_toggle
 
 //RPD radial menu
 /obj/item/rpd/proc/check_menu(mob/living/user)
@@ -247,7 +304,7 @@
 				return //Either nothing was selected, or an invalid mode was selected
 		to_chat(user, "<span class='notice'>You set [src]'s mode.</span>")
 
-/obj/item/rpd/afterattack(atom/target, mob/user, proximity)
+/obj/item/rpd/afterattack__legacy__attackchain(atom/target, mob/user, proximity)
 	..()
 	if(isstorage(target))
 		var/obj/item/storage/S = target
@@ -268,7 +325,7 @@
 	if(target != T)
 		// We only check the rpd_act of the target if it isn't the turf, because otherwise
 		// (A) blocked turfs can be acted on, and (B) unblocked turfs get acted on twice.
-		if(target.rpd_act(user, src) == TRUE)
+		if(target.rpd_act(user, src))
 			// If the object we are clicking on has a valid RPD interaction for just that specific object, do that and nothing else.
 			// Example: clicking on a pipe with a RPD in rotate mode should rotate that pipe and ignore everything else on the tile.
 			if(ranged)
@@ -279,25 +336,34 @@
 	// This is done by calling rpd_blocksusage on every /obj in the tile. If any block usage, fail at this point.
 
 	for(var/obj/O in T)
-		if(O.rpd_blocksusage() == TRUE)
+		if(O.rpd_blocksusage())
 			to_chat(user, "<span class='warning'>[O] blocks [src]!</span>")
 			return
 
 	// If we get here, then we're effectively acting on the turf, probably placing a pipe.
 	if(ranged) //woosh beam if bluespaced at a distance
-		if(get_dist(src, T) <= (user.client.maxview() + 2))\
-			user.Beam(T, icon_state = "rped_upgrade", icon = 'icons/effects/effects.dmi', time = 5)
-		else
+		if(get_dist(src, T) >= (user.client.maxview() + 2))
 			message_admins("\[EXPLOIT] [key_name_admin(user)] attempted to place pipes with a BRPD via a camera console. (Attempted range exploit)")
 			playsound(src, 'sound/machines/synth_no.ogg', 15, TRUE)
 			to_chat(user, "<span class='notice'>ERROR: \The [T] is out of [src]'s range!</span>")
 			return
 
+		if(!(user in viewers(12, T))) // Checks if the user can see the target turf
+			to_chat(user, "<span class='warning'>[src] needs full visibility to determine the dispensing location.</span>")
+			playsound(src, 'sound/machines/synth_no.ogg', 50, TRUE)
+			return
+		user.Beam(T, icon_state = "rped_upgrade", icon = 'icons/effects/effects.dmi', time = 0.5 SECONDS)
 	T.rpd_act(user, src)
 
-/obj/item/rpd/attack_obj(obj/O, mob/living/user)
-	if(istype(O, /obj/machinery/atmospherics/pipe) && user.a_intent != INTENT_HARM)
-		return
+/obj/item/rpd/attack_obj__legacy__attackchain(obj/O, mob/living/user)
+	if(user.a_intent != INTENT_HARM)
+		if(istype(O, /obj/machinery/atmospherics/pipe))
+			return
+		else if(istype(O, /obj/structure/disposalconstruct))
+			return
+		else if(istype(O, /obj/structure/transit_tube_construction))
+			return
+
 	return ..()
 
 #undef RPD_COOLDOWN_TIME

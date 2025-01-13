@@ -2,9 +2,8 @@
 	name = "robot parts"
 	icon = 'icons/obj/robot_parts.dmi'
 	item_state = "buildpipe"
-	icon_state = "blank"
 	flags = CONDUCT
-	slot_flags = SLOT_FLAG_BELT
+	slot_flags = ITEM_SLOT_BELT
 	var/list/part = null
 	var/sabotaged = FALSE //Emagging limbs can have repercussions when installed as prosthetics.
 	var/model_info = "Unbranded"
@@ -25,7 +24,7 @@
 
 	AddComponent(/datum/component/surgery_initiator/limb, forced_surgery = /datum/surgery/attach_robotic_limb)
 
-/obj/item/robot_parts/attack_self(mob/user)
+/obj/item/robot_parts/attack_self__legacy__attackchain(mob/user)
 	var/choice = tgui_input_list(user, "Select the company appearance for this limb", "Limb Company Selection", GLOB.selectable_robolimbs)
 	if(!choice)
 		return
@@ -87,6 +86,7 @@
 	name = "endoskeleton"
 	desc = "A complex metal backbone with standard limb sockets and pseudomuscle anchors."
 	icon_state = "robo_suit"
+	w_class = WEIGHT_CLASS_BULKY
 	model_info = null
 	var/obj/item/robot_parts/l_arm/l_arm = null
 	var/obj/item/robot_parts/r_arm/r_arm = null
@@ -116,7 +116,7 @@
 	forced_ai = null
 	return ..()
 
-/obj/item/robot_parts/robot_suit/attack_self(mob/user)
+/obj/item/robot_parts/robot_suit/attack_self__legacy__attackchain(mob/user)
 	return
 
 /obj/item/robot_parts/robot_suit/update_overlays()
@@ -142,7 +142,7 @@
 				return 1
 	return 0
 
-/obj/item/robot_parts/robot_suit/attackby(obj/item/W, mob/user, params)
+/obj/item/robot_parts/robot_suit/attackby__legacy__attackchain(obj/item/W, mob/user, params)
 	..()
 	if(istype(W, /obj/item/stack/sheet/metal) && !l_arm && !r_arm && !l_leg && !r_leg && !chest && !head)
 		var/obj/item/stack/sheet/metal/M = W
@@ -151,7 +151,7 @@
 		to_chat(user, "You armed the robot frame")
 		M.use(1)
 		if(user.get_inactive_hand()==src)
-			user.unEquip(src)
+			user.unequip(src)
 			user.put_in_inactive_hand(B)
 		qdel(src)
 	if(istype(W, /obj/item/robot_parts/l_leg))
@@ -233,19 +233,15 @@
 				return
 
 			if(!M.brainmob.key)
-				var/ghost_can_reenter = FALSE
-				if(M.brainmob.mind)
-					for(var/mob/dead/observer/G in GLOB.player_list)
-						if(G.can_reenter_corpse && G.mind == M.brainmob.mind)
-							ghost_can_reenter = TRUE
-							if(M.next_possible_ghost_ping < world.time)
-								G.notify_cloning("Somebody is trying to borg you! Re-enter your corpse if you want to be borged!", 'sound/voice/liveagain.ogg', src)
-								M.next_possible_ghost_ping = world.time + 30 SECONDS // Avoid spam
-							break
-				if(!ghost_can_reenter)
-					to_chat(user, "<span class='notice'>[M] is completely unresponsive; there's no point.</span>")
+				var/mob/dead/observer/G = M.brainmob.get_ghost()
+				if(G)
+					if(M.next_possible_ghost_ping < world.time)
+						G.notify_cloning("Somebody is trying to borg you! Re-enter your corpse if you want to be borged!", 'sound/voice/liveagain.ogg', src)
+						M.next_possible_ghost_ping = world.time + 30 SECONDS // Avoid spam
 				else
-					to_chat(user, "<span class='warning'>[M] is currently inactive. Try again later.</span>")
+					to_chat(user, "<span class='notice'>[M] is completely unresponsive; there's no point.</span>")
+					return
+				to_chat(user, "<span class='warning'>[M] is currently inactive. Try again later.</span>")
 				return
 
 			if(M.brainmob.stat == DEAD)
@@ -262,7 +258,7 @@
 			if(!aisync)
 				lawsync = FALSE
 
-			var/mob/living/silicon/robot/O = new /mob/living/silicon/robot(get_turf(loc), unfinished = 1, ai_to_sync_to = forced_ai)
+			var/mob/living/silicon/robot/O = new /mob/living/silicon/robot(get_turf(loc), unfinished = 1, connect_to_AI = aisync, ai_to_sync_to = forced_ai)
 			if(!O)
 				return
 
@@ -295,7 +291,6 @@
 
 			var/datum/robot_component/cell_component = O.components["power cell"]
 			cell_component.install(chest.cell)
-			chest.cell.forceMove(O)
 			chest.cell = null
 
 			M.forceMove(O) //Should fix cybros run time erroring when blown up. It got deleted before, along with the frame.
@@ -314,8 +309,8 @@
 			O.robot_suit = src
 
 			if(!locomotion)
-				O.lockcharge = 1
-				to_chat(O, "<span class='warning'>Error: Servo motors unresponsive.</span>")
+				O.SetLockdown(TRUE)
+				to_chat(O, "<span class='danger'>Error: Servo motors unresponsive. Lockdown enabled.</span>")
 
 		else
 			to_chat(user, "<span class='warning'>The MMI must go in after everything else!</span>")
@@ -325,13 +320,13 @@
 	return
 
 /obj/item/robot_parts/robot_suit/proc/Interact(mob/user)
-			var/t1 = "Designation: <A href='?src=[UID()];Name=1'>[(created_name ? "[created_name]" : "Default Cyborg")]</a><br>\n"
-			t1 += "Master AI: <A href='?src=[UID()];Master=1'>[(forced_ai ? "[forced_ai.name]" : "Automatic")]</a><br><br>\n"
+			var/t1 = "Designation: <A href='byond://?src=[UID()];Name=1'>[(created_name ? "[created_name]" : "Default Cyborg")]</a><br>\n"
+			t1 += "Master AI: <A href='byond://?src=[UID()];Master=1'>[(forced_ai ? "[forced_ai.name]" : "Automatic")]</a><br><br>\n"
 
-			t1 += "LawSync Port: <A href='?src=[UID()];Law=1'>[(lawsync ? "Open" : "Closed")]</a><br>\n"
-			t1 += "AI Connection Port: <A href='?src=[UID()];AI=1'>[(aisync ? "Open" : "Closed")]</a><br>\n"
-			t1 += "Servo Motor Functions: <A href='?src=[UID()];Loco=1'>[(locomotion ? "Unlocked" : "Locked")]</a><br>\n"
-			t1 += "Panel Lock: <A href='?src=[UID()];Panel=1'>[(panel_locked ? "Engaged" : "Disengaged")]</a><br>\n"
+			t1 += "LawSync Port: <A href='byond://?src=[UID()];Law=1'>[(lawsync ? "Open" : "Closed")]</a><br>\n"
+			t1 += "AI Connection Port: <A href='byond://?src=[UID()];AI=1'>[(aisync ? "Open" : "Closed")]</a><br>\n"
+			t1 += "Servo Motor Functions: <A href='byond://?src=[UID()];Loco=1'>[(locomotion ? "Unlocked" : "Locked")]</a><br>\n"
+			t1 += "Panel Lock: <A href='byond://?src=[UID()];Panel=1'>[(panel_locked ? "Engaged" : "Disengaged")]</a><br>\n"
 			var/datum/browser/popup = new(user, "robotdebug", "Cyborg Boot Debug", 310, 220)
 			popup.set_content(t1)
 			popup.open()
@@ -372,7 +367,7 @@
 	Interact(usr)
 	return
 
-/obj/item/robot_parts/chest/attackby(obj/item/W as obj, mob/user as mob, params)
+/obj/item/robot_parts/chest/attackby__legacy__attackchain(obj/item/W as obj, mob/user as mob, params)
 	..()
 	if(istype(W, /obj/item/stock_parts/cell))
 		if(cell)
@@ -394,7 +389,7 @@
 			to_chat(user, "<span class='notice'>You insert the wire!</span>")
 	return
 
-/obj/item/robot_parts/head/attackby(obj/item/W as obj, mob/user as mob, params)
+/obj/item/robot_parts/head/attackby__legacy__attackchain(obj/item/W as obj, mob/user as mob, params)
 	..()
 	if(istype(W, /obj/item/flash))
 		if(isrobot(user))
@@ -426,3 +421,4 @@
 	else
 		to_chat(user, "<span class='warning'>You slide the emag into the dataport on [src] and short out the safeties.</span>")
 		sabotaged = TRUE
+		return TRUE

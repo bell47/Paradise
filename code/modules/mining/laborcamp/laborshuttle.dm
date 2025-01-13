@@ -36,7 +36,7 @@
 	var/inserted_id_uid
 	var/obj/item/radio/intercom/announcer
 
-/obj/machinery/mineral/labor_prisoner_shuttle_console/Initialize()
+/obj/machinery/mineral/labor_prisoner_shuttle_console/Initialize(mapload)
 	. = ..()
 	announcer = new /obj/item/radio/intercom(null)
 	announcer.follow_target = src
@@ -46,13 +46,13 @@
 	QDEL_NULL(announcer)
 	return ..()
 
-/obj/machinery/mineral/labor_prisoner_shuttle_console/attackby(obj/item/I, mob/user, params)
+/obj/machinery/mineral/labor_prisoner_shuttle_console/attackby__legacy__attackchain(obj/item/I, mob/user, params)
 	if(istype(I, /obj/item/card/id/prisoner))
 		if(inserted_id_uid)
 			to_chat(user, "<span class='notice'>There's an ID inserted already.</span>")
 			return
 
-		if(!user.unEquip(I))
+		if(!user.drop_item_to_ground(I))
 			return
 
 		I.forceMove(src)
@@ -70,10 +70,13 @@
 /obj/machinery/mineral/labor_prisoner_shuttle_console/attack_ghost(mob/user)
 	attack_hand(user)
 
-/obj/machinery/mineral/labor_prisoner_shuttle_console/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = FALSE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/machinery/mineral/labor_prisoner_shuttle_console/ui_state(mob/user)
+	return GLOB.default_state
+
+/obj/machinery/mineral/labor_prisoner_shuttle_console/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "PrisonerShuttleConsole", name, 315, 150, master_ui, state)
+		ui = new(user, src, "PrisonerShuttleConsole", name)
 		ui.open()
 
 /obj/machinery/mineral/labor_prisoner_shuttle_console/ui_data(mob/user)
@@ -105,7 +108,7 @@
 
 			var/obj/item/I = ui.user.get_active_hand()
 			if(istype(I, /obj/item/card/id/prisoner))
-				if(!ui.user.unEquip(I))
+				if(!ui.user.drop_item_to_ground(I))
 					return
 				I.forceMove(src)
 				inserted_id_uid = I.UID()
@@ -153,6 +156,7 @@
 	if(!emagged)
 		emagged = TRUE
 		to_chat(user, "<span class='warning'>PZZTTPFFFT</span>")
+		return TRUE
 
 /**********************Point Lookup Console**************************/
 /obj/machinery/mineral/labor_points_checker
@@ -168,7 +172,7 @@
 		return
 	user.examinate(src)
 
-/obj/machinery/mineral/labor_points_checker/attackby(obj/item/I, mob/user, params)
+/obj/machinery/mineral/labor_points_checker/attackby__legacy__attackchain(obj/item/I, mob/user, params)
 	if(istype(I, /obj/item/card/id/prisoner))
 		var/obj/item/card/id/prisoner/prisoner_id = I
 		if(!prisoner_id.goal)

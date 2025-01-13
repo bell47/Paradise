@@ -11,7 +11,8 @@
 	invisibility = 101
 	GLOB.landmarks_list += src
 
-/obj/effect/landmark/newplayer_start //There should only be one of these, in the lobby art area
+/// There should only be one of these, in the lobby art area
+/obj/effect/landmark/newplayer_start
 	name = "start"
 
 INITIALIZE_IMMEDIATE(/obj/effect/landmark/newplayer_start) //Without this you spawn in the corner of the map and things break horribly
@@ -35,9 +36,17 @@ INITIALIZE_IMMEDIATE(/obj/effect/landmark/newplayer_start) //Without this you sp
 		spawner_list += loc
 		return INITIALIZE_HINT_QDEL
 
-/obj/effect/landmark/spawner/soltrader
-	name = "traderstart_sol"
+/obj/effect/landmark/spawner/trader
+	name = "traderstart"
 	icon_state = "Trader"
+
+/obj/effect/landmark/spawner/tradergearminor
+	name = "traderstart_specificgear_minor"
+	icon_state = "questionmark"
+
+/obj/effect/landmark/spawner/tradergearmajor
+	name = "traderstart_specificgear_major"
+	icon_state = "questionmark"
 
 /obj/effect/landmark/spawner/ert
 	name = "Response Team"
@@ -223,11 +232,16 @@ INITIALIZE_IMMEDIATE(/obj/effect/landmark/newplayer_start) //Without this you sp
 /obj/effect/landmark/spawner/nuclear_bomb/death_squad
 	name = "Death Squad Nuclear Bomb"
 
-/obj/effect/landmark/spawner/teleport_scroll
-	name = "Teleport-Scroll"
-
 /obj/effect/landmark/spawner/nuke_code
 	name = "nukecode"
+
+/obj/effect/landmark/spawner/roundstart_observer
+	name = "Roundstart Observer"
+	icon_state = "spooky"
+
+/obj/effect/landmark/spawner/roundstart_observer/Initialize(mapload)
+	spawner_list = GLOB.roundstart_observer_start
+	return ..()
 
 /obj/effect/landmark/Destroy()
 	GLOB.landmarks_list -= src
@@ -408,17 +422,23 @@ INITIALIZE_IMMEDIATE(/obj/effect/landmark/newplayer_start) //Without this you sp
 	name = "Warden"
 	icon_state = "Warden"
 
+/obj/effect/landmark/start/nanotrasen_career_trainer
+	name ="Nanotrasen Career Trainer"
+	icon_state = "NCT"
 
 /obj/effect/landmark/start/set_tag()
 	tag = "start*[name]"
 
+/obj/effect/landmark/game_test/bottom_left_corner
+
+/obj/effect/landmark/game_test/top_right_corner
 
 //Costume spawner landmarks
 
 /obj/effect/landmark/costume/random/Initialize(mapload) //costume spawner, selects a random subclass and disappears
 	. = ..()
 	var/list/options = (typesof(/obj/effect/landmark/costume) - /obj/effect/landmark/costume/random)
-	var/PICK= options[rand(1,options.len)]
+	var/PICK= options[rand(1,length(options))]
 	new PICK(src.loc)
 	return INITIALIZE_HINT_QDEL
 
@@ -437,7 +457,7 @@ INITIALIZE_IMMEDIATE(/obj/effect/landmark/newplayer_start) //Without this you sp
 
 /obj/effect/landmark/costume/madscientist/Initialize(mapload)
 	. = ..()
-	new /obj/item/clothing/under/misc/gimmick/rank/captain/suit(src.loc)
+	new /obj/item/clothing/under/misc/gimmick_captain_suit(src.loc)
 	new /obj/item/clothing/head/flatcap(src.loc)
 	new /obj/item/clothing/suit/storage/labcoat/mad(src.loc)
 	new /obj/item/clothing/glasses/gglasses(src.loc)
@@ -445,7 +465,7 @@ INITIALIZE_IMMEDIATE(/obj/effect/landmark/newplayer_start) //Without this you sp
 
 /obj/effect/landmark/costume/elpresidente/Initialize(mapload)
 	. = ..()
-	new /obj/item/clothing/under/misc/gimmick/rank/captain/suit(src.loc)
+	new /obj/item/clothing/under/misc/gimmick_captain_suit(src.loc)
 	new /obj/item/clothing/head/flatcap(src.loc)
 	new /obj/item/clothing/mask/cigarette/cigar/havana(src.loc)
 	new /obj/item/clothing/shoes/jackboots(src.loc)
@@ -582,7 +602,7 @@ INITIALIZE_IMMEDIATE(/obj/effect/landmark/newplayer_start) //Without this you sp
 	var/datum/map_template/ruin/ruin_template
 
 /obj/effect/landmark/ruin/New(loc, my_ruin_template)
-	name = "ruin_[GLOB.ruin_landmarks.len + 1]"
+	name = "ruin_[length(GLOB.ruin_landmarks) + 1]"
 	..(loc)
 	ruin_template = my_ruin_template
 	GLOB.ruin_landmarks |= src
@@ -646,27 +666,3 @@ INITIALIZE_IMMEDIATE(/obj/effect/landmark/newplayer_start) //Without this you sp
 
 /obj/effect/landmark/mob_spawner/abandoned_minebot
 	mobtype = /mob/living/simple_animal/hostile/asteroid/abandoned_minebot
-
-// Damage tiles
-/obj/effect/landmark/damageturf
-	icon_state = "damaged"
-
-/obj/effect/landmark/damageturf/Initialize(mapload)
-	. = ..()
-	var/turf/simulated/T = get_turf(src)
-	if(istype(T))
-		T.break_tile()
-
-/obj/effect/landmark/burnturf
-	icon_state = "burned"
-
-/obj/effect/landmark/burnturf/Initialize(mapload)
-	. = ..()
-	var/turf/simulated/T = get_turf(src)
-	T.burn_tile()
-
-/obj/effect/landmark/battle_mob_point
-	name = "Nanomob Battle Avatar Spawn Point"
-
-/obj/effect/landmark/free_golem_spawn
-	name = "Free Golem Spawn Point"

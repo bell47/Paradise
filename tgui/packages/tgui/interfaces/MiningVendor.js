@@ -1,31 +1,24 @@
 import { createSearch } from 'common/string';
-import { Fragment } from 'inferno';
 import { useBackend, useLocalState } from '../backend';
-import {
-  Box,
-  Button,
-  Collapsible,
-  Dropdown,
-  Flex,
-  Input,
-  NoticeBox,
-  Section,
-} from '../components';
+import { Box, Button, Collapsible, Dropdown, Stack, Input, ImageButton, NoticeBox, Section } from '../components';
 import { Window } from '../layouts';
 
 const sortTypes = {
   'Alphabetical': (a, b) => a - b,
-  'By availability': (a, b) => -(a.affordable - b.affordable),
-  'By price': (a, b) => a.price - b.price,
+  'Availability': (a, b) => -(a.affordable - b.affordable),
+  'Price': (a, b) => a.price - b.price,
 };
 
 export const MiningVendor = (_properties, _context) => {
+  const [gridLayout, setGridLayout] = useLocalState(_context, 'gridLayout', false);
   return (
-    <Window>
-      <Window.Content className="Layout__content--flexColumn">
-        <MiningVendorUser />
-        <MiningVendorSearch />
-        <MiningVendorItems />
+    <Window width={400} height={525}>
+      <Window.Content>
+        <Stack fill vertical>
+          <MiningVendorUser />
+          <MiningVendorSearch gridLayout={gridLayout} setGridLayout={setGridLayout} />
+          <MiningVendorItems gridLayout={gridLayout} />
+        </Stack>
       </Window.Content>
     </Window>
   );
@@ -37,9 +30,9 @@ const MiningVendorUser = (_properties, context) => {
   return (
     <NoticeBox success={has_id}>
       {has_id ? (
-        <Fragment>
+        <>
           <Box
-            display="inline-block"
+            inline
             verticalAlign="middle"
             style={{
               float: 'left',
@@ -61,7 +54,7 @@ const MiningVendorUser = (_properties, context) => {
               clear: 'both',
             }}
           />
-        </Fragment>
+        </>
       ) : (
         'Please insert an ID in order to make purchases.'
       )}
@@ -72,18 +65,11 @@ const MiningVendorUser = (_properties, context) => {
 const MiningVendorItems = (_properties, context) => {
   const { act, data } = useBackend(context);
   const { has_id, id, items } = data;
+  const { gridLayout } = _properties;
   // Search thingies
   const [searchText, _setSearchText] = useLocalState(context, 'search', '');
-  const [sortOrder, _setSortOrder] = useLocalState(
-    context,
-    'sort',
-    'Alphabetical'
-  );
-  const [descending, _setDescending] = useLocalState(
-    context,
-    'descending',
-    false
-  );
+  const [sortOrder, _setSortOrder] = useLocalState(context, 'sort', 'Alphabetical');
+  const [descending, _setDescending] = useLocalState(context, 'descending', false);
   const searcher = createSearch(searchText, (item) => {
     return item[0];
   });
@@ -105,108 +91,117 @@ const MiningVendorItems = (_properties, context) => {
     }
 
     has_contents = true;
-    return (
-      <MiningVendorItemsCategory
-        key={kv[0]}
-        title={kv[0]}
-        items={items_in_cat}
-      />
-    );
+    return <MiningVendorItemsCategory key={kv[0]} title={kv[0]} items={items_in_cat} gridLayout={gridLayout} />;
   });
   return (
-    <Flex.Item grow="1" overflow="auto">
-      <Section>
-        {has_contents ? (
-          contents
-        ) : (
-          <Box color="label">No items matching your criteria was found!</Box>
-        )}
+    <Stack.Item grow mt={0.5}>
+      <Section fill scrollable>
+        {has_contents ? contents : <Box color="label">No items matching your criteria was found!</Box>}
       </Section>
-    </Flex.Item>
+    </Stack.Item>
   );
 };
 
 const MiningVendorSearch = (_properties, context) => {
+  const { gridLayout, setGridLayout } = _properties;
   const [_searchText, setSearchText] = useLocalState(context, 'search', '');
   const [_sortOrder, setSortOrder] = useLocalState(context, 'sort', '');
-  const [descending, setDescending] = useLocalState(
-    context,
-    'descending',
-    false
-  );
+  const [descending, setDescending] = useLocalState(context, 'descending', false);
   return (
-    <Box mb="0.5rem">
-      <Flex width="100%">
-        <Flex.Item grow="1" mr="0.5rem">
+    <Box>
+      <Stack fill>
+        <Stack.Item grow>
           <Input
+            mt={0.2}
             placeholder="Search by item name.."
             width="100%"
             onInput={(_e, value) => setSearchText(value)}
           />
-        </Flex.Item>
-        <Flex.Item basis="30%">
+        </Stack.Item>
+        <Stack.Item>
+          <Button
+            icon={gridLayout ? 'list' : 'table-cells-large'}
+            height={1.75}
+            tooltip={gridLayout ? 'Toggle List Layout' : 'Toggle Grid Layout'}
+            tooltipPosition="bottom-start"
+            onClick={() => setGridLayout(!gridLayout)}
+          />
+        </Stack.Item>
+        <Stack.Item basis="30%">
           <Dropdown
             selected="Alphabetical"
             options={Object.keys(sortTypes)}
             width="100%"
-            lineHeight="19px"
             onSelected={(v) => setSortOrder(v)}
           />
-        </Flex.Item>
-        <Flex.Item>
+        </Stack.Item>
+        <Stack.Item>
           <Button
             icon={descending ? 'arrow-down' : 'arrow-up'}
-            height="19px"
+            height={1.75}
             tooltip={descending ? 'Descending order' : 'Ascending order'}
-            tooltipPosition="bottom-left"
-            ml="0.5rem"
+            tooltipPosition="bottom-start"
             onClick={() => setDescending(!descending)}
           />
-        </Flex.Item>
-      </Flex>
+        </Stack.Item>
+      </Stack>
     </Box>
   );
 };
 
 const MiningVendorItemsCategory = (properties, context) => {
   const { act, data } = useBackend(context);
-  const { title, items, ...rest } = properties;
+  const { title, items, gridLayout, ...rest } = properties;
   return (
     <Collapsible open title={title} {...rest}>
-      {items.map((item) => (
-        <Box key={item.name}>
-          <Box
-            display="inline-block"
-            verticalAlign="middle"
-            lineHeight="20px"
-            style={{
-              float: 'left',
-            }}
-          >
-            {item.name}
-          </Box>
-          <Button
+      {items.map((item) =>
+        gridLayout ? (
+          <ImageButton
+            key={item.name}
+            mb={0.5}
+            imageSize={57.5}
+            dmIcon={item.icon}
+            dmIconState={item.icon_state}
             disabled={!data.has_id || data.id.points < item.price}
-            content={item.price.toLocaleString('en-US')}
-            width="15%"
-            textAlign="center"
-            style={{
-              float: 'right',
-            }}
+            tooltip={item.name}
+            tooltipPosition="top"
             onClick={() =>
               act('purchase', {
                 cat: title,
                 name: item.name,
               })
             }
-          />
-          <Box
-            style={{
-              clear: 'both',
-            }}
-          />
-        </Box>
-      ))}
+          >
+            {item.price.toLocaleString('en-US')}
+          </ImageButton>
+        ) : (
+          <ImageButton
+            key={item.name}
+            fluid
+            mb={0.5}
+            imageSize={32}
+            dmIcon={item.icon}
+            dmIconState={item.icon_state}
+            buttons={
+              <Button
+                translucent
+                width={3.75}
+                disabled={!data.has_id || data.id.points < item.price}
+                onClick={() =>
+                  act('purchase', {
+                    cat: title,
+                    name: item.name,
+                  })
+                }
+              >
+                {item.price.toLocaleString('en-US')}
+              </Button>
+            }
+          >
+            <Box textAlign={'left'}>{item.name}</Box>
+          </ImageButton>
+        )
+      )}
     </Collapsible>
   );
 };

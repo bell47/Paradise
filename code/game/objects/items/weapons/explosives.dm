@@ -12,24 +12,33 @@
 	var/image_overlay = null
 	var/obj/item/assembly/nadeassembly = null
 	var/assemblyattacher
+	var/notify_admins = TRUE
+	/// C4 overlay to put on target
+	var/mutable_appearance/plastic_overlay
+	/// Target of the overlay, not neccicarly the thing the C4 is attached to!
+	var/atom/plastic_overlay_target
 
 /obj/item/grenade/plastic/Initialize(mapload)
 	. = ..()
-	image_overlay = image('icons/obj/grenade.dmi', "[item_state]2")
+	plastic_overlay = mutable_appearance(icon, "[item_state]2", HIGH_OBJ_LAYER)
+	var/static/list/loc_connections = list(
+		COMSIG_ATOM_ENTERED = PROC_REF(on_atom_entered)
+	)
+	AddElement(/datum/element/connect_loc, loc_connections)
 
 /obj/item/grenade/plastic/Destroy()
 	QDEL_NULL(nadeassembly)
 	target = null
+	plastic_overlay_target = null
 	return ..()
 
-/obj/item/grenade/plastic/attackby(obj/item/I, mob/user, params)
+/obj/item/grenade/plastic/attackby__legacy__attackchain(obj/item/I, mob/user, params)
 	if(!nadeassembly && istype(I, /obj/item/assembly))
 		var/obj/item/assembly/A = I
-		if(!user.unEquip(I))
+		if(!user.transfer_item_to(A, src))
 			return ..()
 		nadeassembly = A
 		A.master = src
-		A.loc = src
 		assemblyattacher = user.ckey
 		to_chat(user, "<span class='notice'>You add [A] to [src].</span>")
 		playsound(src, 'sound/weapons/tap.ogg', 20, 1)
@@ -44,17 +53,17 @@
 		return
 	..()
 
-/obj/item/grenade/plastic/Crossed(atom/movable/AM, oldloc)
+/obj/item/grenade/plastic/proc/on_atom_entered(datum/source, atom/movable/entered)
 	if(nadeassembly)
-		nadeassembly.Crossed(AM, oldloc)
+		nadeassembly.on_atom_entered(source, entered)
 
 /obj/item/grenade/plastic/on_found(mob/finder)
 	if(nadeassembly)
 		nadeassembly.on_found(finder)
 
-/obj/item/grenade/plastic/attack_self(mob/user)
+/obj/item/grenade/plastic/attack_self__legacy__attackchain(mob/user)
 	if(nadeassembly)
-		nadeassembly.attack_self(user)
+		nadeassembly.attack_self__legacy__attackchain(user)
 		return
 	var/newtime = input(usr, "Please set the timer.", "Timer", det_time) as num
 	if(user.is_in_active_hand(src))
@@ -62,33 +71,56 @@
 		det_time = newtime
 		to_chat(user, "Timer set for [det_time] seconds.")
 
-/obj/item/grenade/plastic/afterattack(atom/movable/AM, mob/user, flag)
+/obj/item/grenade/plastic/afterattack__legacy__attackchain(mob/AM, mob/user, flag)
 	if(!flag)
 		return
-	if(iscarbon(AM))
-		to_chat(user, "<span class='warning'>You can't get the [src] to stick to [AM]!</span>")
+	if(ismob(AM) && AM.stat == CONSCIOUS)
+		to_chat(user, "<span class='warning'>You can't get the [src] to stick to [AM]! Perhaps if [AM] was asleep or dead you could attach it?</span>")
 		return
+	if(isstorage(AM) || ismodcontrol(AM))
+		return ..() //Let us not have people c4 themselfs. Especially with a now 1.5 second do_after
 	if(isobserver(AM))
 		to_chat(user, "<span class='warning'>Your hand just phases through [AM]!</span>")
 		return
 	to_chat(user, "<span class='notice'>You start planting [src].[isnull(nadeassembly) ? " The timer is set to [det_time]..." : ""]</span>")
 
-	if(do_after(user, 50 * toolspeed, target = AM))
-		if(!user.unEquip(src))
+	if(do_after(user, 1.5 SECONDS * toolspeed, target = AM))
+		if(!user.unequip(src))
 			return
+
 		target = AM
 		loc = null
 
-		message_admins("[key_name_admin(user)]([ADMIN_QUE(user,"?")]) ([ADMIN_FLW(user,"FLW")]) planted [src.name] on [target.name] at ([target.x],[target.y],[target.z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[target.x];Y=[target.y];Z=[target.z]'>JMP</a>) with [det_time] second fuse",0,1)
-		log_game("[key_name(user)] planted [name] on [target.name] at ([target.x],[target.y],[target.z]) with [det_time] second fuse")
+		if(notify_admins)
+			message_admins("[ADMIN_LOOKUPFLW(user)] planted [name] on [target.name] at ([target.x],[target.y],[target.z] - <a href='byond://?_src_=holder;adminplayerobservecoodjump=1;X=[target.x];Y=[target.y];Z=[target.z]'>JMP</a>) with [det_time] second fuse", 0, 1)
+			log_game("[key_name(user)] planted [name] on [target.name] at ([target.x],[target.y],[target.z]) with [det_time] second fuse")
 
-		AddComponent(/datum/component/persistent_overlay, image_overlay, target)
+		plastic_overlay.layer = HIGH_OBJ_LAYER
+		if(isturf(target) || isairlock(target))
+			plastic_overlay_target = new /obj/effect/plastic(get_turf(user))
+		else
+			plastic_overlay_target = target
+		if(isliving(target))
+			plastic_overlay.layer = ABOVE_ALL_MOB_LAYER
+		if(plastic_overlay_target != target)
+			switch(plastic_overlay_target.x - target.x)
+				if(-1)
+					plastic_overlay.pixel_x += 32
+				if(1)
+					plastic_overlay.pixel_x -= 32
+			switch(plastic_overlay_target.y - target.y)
+				if(-1)
+					plastic_overlay.pixel_y += 32
+				if(1)
+					plastic_overlay.pixel_y -= 32
+		plastic_overlay_target.add_overlay(plastic_overlay)
+
 		if(!nadeassembly)
 			to_chat(user, "<span class='notice'>You plant the bomb. Timer counting down from [det_time].</span>")
 			addtimer(CALLBACK(src, PROC_REF(prime)), det_time SECONDS)
 
 /obj/item/grenade/plastic/suicide_act(mob/user)
-	message_admins("[key_name_admin(user)]([ADMIN_QUE(user,"?")]) ([ADMIN_FLW(user,"FLW")]) suicided with [src.name] at ([user.x],[user.y],[user.z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[user.x];Y=[user.y];Z=[user.z]'>JMP</a>)",0,1)
+	message_admins("[key_name_admin(user)]([ADMIN_QUE(user,"?")]) ([ADMIN_FLW(user,"FLW")]) suicided with [src.name] at ([user.x],[user.y],[user.z] - <A href='byond://?_src_=holder;adminplayerobservecoodjump=1;X=[user.x];Y=[user.y];Z=[user.z]'>JMP</a>)",0,1)
 	log_game("[key_name(user)] suicided with [name] at ([user.x],[user.y],[user.z])")
 	user.visible_message("<span class='suicide'>[user] activates [src] and holds it above [user.p_their()] head! It looks like [user.p_theyre()] going out with a bang!</span>")
 	var/message_say = "FOR NO RAISIN!"
@@ -138,12 +170,16 @@
 	/// Will the explosion cause a breach. C4 placed on floors will always cause a breach, regardless of this value.
 	var/ex_breach = FALSE
 
-/obj/item/grenade/plastic/c4/afterattack(atom/movable/AM, mob/user, flag)
+/obj/item/grenade/plastic/c4/afterattack__legacy__attackchain(atom/movable/AM, mob/user, flag)
 	aim_dir = get_dir(user, AM)
 	..()
 
 /obj/item/grenade/plastic/c4/prime()
 	var/turf/location
+	if(plastic_overlay_target && !QDELETED(plastic_overlay_target))
+		plastic_overlay_target.cut_overlay(plastic_overlay, TRUE)
+		if(istype(plastic_overlay_target, /obj/effect/plastic))
+			qdel(plastic_overlay_target)
 	if(target)
 		if(!QDELETED(target))
 			location = get_turf(target)
@@ -209,6 +245,10 @@
 
 /obj/item/grenade/plastic/c4/thermite/prime()
 	var/turf/location
+	if(plastic_overlay_target && !QDELETED(plastic_overlay_target))
+		plastic_overlay_target.cut_overlay(plastic_overlay, TRUE)
+		if(istype(plastic_overlay_target, /obj/effect/plastic))
+			qdel(plastic_overlay_target)
 	if(target)
 		if(!QDELETED(target))
 			location = get_turf(target)
@@ -233,3 +273,7 @@
 		M.adjust_fire_stacks(2)
 		M.IgniteMob()
 	qdel(src)
+
+//Used so the effect is visable for overlay purposes, but not show on right click with a broken sprite
+/obj/effect/plastic
+	mouse_opacity = MOUSE_OPACITY_TRANSPARENT

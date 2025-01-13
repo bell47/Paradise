@@ -36,9 +36,6 @@
 /obj/structure/flora/tree/dead/Initialize(mapload)
 	. = ..()
 	AddComponent(/datum/component/largetransparency, 0, 1, 0, 0)
-
-/obj/structure/flora/tree/dead/Initialize(mapload)
-	. = ..()
 	icon_state = "tree_[rand(1, 6)]"
 
 /obj/structure/flora/tree/palm
@@ -48,7 +45,6 @@
 /obj/structure/flora/tree/palm/Initialize(mapload)
 	. = ..()
 	icon_state = pick("palm1","palm2")
-	pixel_x = 0
 
 /obj/structure/flora/tree/jungle
 	name = "tree"
@@ -237,7 +233,7 @@
 
 /obj/structure/flora/ausbushes/ppflowers/Initialize(mapload)
 	. = ..()
-	icon_state = "ppflowers_[rand(1, 4)]"
+	icon_state = "ppflowers_[rand(1, 3)]"
 
 /obj/structure/flora/ausbushes/sparsegrass
 	icon_state = "sparsegrass_1"
@@ -253,11 +249,12 @@
 	. = ..()
 	icon_state = "fullgrass_[rand(1, 3)]"
 
-
+// Kirby plants
 /obj/item/kirbyplants
 	name = "potted plant"
+	desc = "Some greenery, how nice."
 	icon = 'icons/obj/flora/plants.dmi'
-	icon_state = "plant-1"
+	icon_state = "random_plant"
 	anchored = FALSE
 	layer = ABOVE_MOB_LAYER
 	w_class = WEIGHT_CLASS_HUGE
@@ -270,9 +267,11 @@
 
 /obj/item/kirbyplants/Initialize(mapload)
 	. = ..()
-	icon_state = "plant-[rand(1,35)]"
-	if(prob(1))
-		icon_state = "plant-36"
+	if(prob(1) && icon_state == "random_plant")
+		icon_state = "plant-eye"
+	if(icon_state == "random_plant")
+		icon_state = "plant-[rand(1, 34)]"
+	update_appearance(UPDATE_ICON_STATE)
 	AddComponent(/datum/component/two_handed, require_twohands = TRUE)
 
 /obj/item/kirbyplants/Destroy()
@@ -294,13 +293,20 @@
 	RegisterSignal(user, COMSIG_CARBON_REGENERATE_ICONS, PROC_REF(reapply_hide))
 	mob_overlay = mutable_appearance(icon, icon_state, user.layer, user.plane, 255, appearance_flags = RESET_COLOR | RESET_TRANSFORM | RESET_ALPHA | KEEP_APART)
 	user.add_overlay(mob_overlay)
-	user.alpha = 0
+	if(ishuman(user))
+		var/mob/living/carbon/human/H = user
+		H.set_alpha_tracking(0, src)
+	else
+		user.alpha = 0
 
 /// User has either dropped the plant, or plant is being destroyed, restore user to normal.
 /obj/item/kirbyplants/proc/unhide_user(mob/living/carbon/user)
 	UnregisterSignal(user, COMSIG_CARBON_REGENERATE_ICONS)
 	user.cut_overlay(mob_overlay)
 	user.alpha = initial(user.alpha)
+	if(ishuman(user))
+		var/mob/living/carbon/human/H = user
+		H.set_alpha_tracking(ALPHA_VISIBLE, src)
 	QDEL_NULL(mob_overlay)
 
 /// Icon operation has occured, time to make sure we're showing a plant again if we need to be.
@@ -314,10 +320,117 @@
 	..()
 	unhide_user(user)
 
+/obj/item/kirbyplants/plant1
+	icon_state = "plant-1"
+
+/obj/item/kirbyplants/plant2
+	icon_state = "plant-2"
+
+/obj/item/kirbyplants/plant3
+	icon_state = "plant-3"
+
+/obj/item/kirbyplants/plant4
+	icon_state = "plant-4"
+
+/obj/item/kirbyplants/plant5
+	icon_state = "plant-5"
+
+/obj/item/kirbyplants/plant6
+	icon_state = "plant-6"
+
+/obj/item/kirbyplants/plant7
+	icon_state = "plant-7"
+
+/obj/item/kirbyplants/plant8
+	icon_state = "plant-8"
+
+/obj/item/kirbyplants/plant9
+	icon_state = "plant-9"
+
+/obj/item/kirbyplants/plant10
+	icon_state = "plant-10"
+
+/obj/item/kirbyplants/plant11
+	icon_state = "plant-11"
+
+/obj/item/kirbyplants/plant12
+	icon_state = "plant-12"
+
+/obj/item/kirbyplants/plant13
+	icon_state = "plant-13"
+
+/obj/item/kirbyplants/plant14
+	icon_state = "plant-14"
+
+/obj/item/kirbyplants/plant15
+	icon_state = "plant-15"
+
+/obj/item/kirbyplants/plant16
+	icon_state = "plant-16"
+
+/obj/item/kirbyplants/plant17
+	icon_state = "plant-17"
+
+/obj/item/kirbyplants/plant18
+	icon_state = "plant-18"
+
+/obj/item/kirbyplants/plant19
+	icon_state = "plant-19"
+
+/obj/item/kirbyplants/plant20
+	icon_state = "plant-20"
+
+/obj/item/kirbyplants/plant21
+	icon_state = "plant-21"
+
+/obj/item/kirbyplants/plant22
+	icon_state = "plant-22"
+
+/obj/item/kirbyplants/plant23
+	icon_state = "plant-23"
+
+/obj/item/kirbyplants/plant24
+	icon_state = "plant-24"
+
+/obj/item/kirbyplants/plant25
+	icon_state = "plant-25"
+
+/obj/item/kirbyplants/plant26
+	icon_state = "plant-26"
+
+/obj/item/kirbyplants/plant27
+	icon_state = "plant-27"
+
+/obj/item/kirbyplants/plant28
+	icon_state = "plant-28"
+
+/obj/item/kirbyplants/plant29
+	icon_state = "plant-29"
+
+/obj/item/kirbyplants/plant30
+	icon_state = "plant-30"
+
+/obj/item/kirbyplants/plant31
+	icon_state = "plant-31"
+
+/obj/item/kirbyplants/plant32
+	icon_state = "plant-32"
+
+/obj/item/kirbyplants/plant33
+	icon_state = "plant-33"
+
+/obj/item/kirbyplants/plant34
+	icon_state = "plant-34"
+
+/obj/item/kirbyplants/applebush
+	icon_state = "applebush"
+
 /obj/item/kirbyplants/dead
+	icon_state = "plant-dead"
+
+/obj/item/kirbyplants/dead/rd
 	name = "\improper RD's potted plant"
 	desc = "A gift from the botanical staff, presented after the RD's reassignment. There's a tag on it that says \"Y'all come back now, y'hear?\"\nIt doesn't look very healthy..."
-	icon_state = "plant-dead"
 
 //a rock is flora according to where the icon file is
 //and now these defines
@@ -402,7 +515,7 @@
 		A.loc = get_turf(src)
 */
 
-/obj/structure/bush/attackby(obj/I as obj, mob/user as mob, params)
+/obj/structure/bush/attackby__legacy__attackchain(obj/I as obj, mob/user as mob, params)
 	//hatchets can clear away undergrowth
 	if(istype(I, /obj/item/hatchet) && !stump)
 		if(indestructable)

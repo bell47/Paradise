@@ -35,7 +35,7 @@
 	else
 		to_chat(user, "Error, no route to host.")
 
-/obj/machinery/door_control/attackby(obj/item/W, mob/user as mob, params)
+/obj/machinery/door_control/attackby__legacy__attackchain(obj/item/W, mob/user as mob, params)
 	if(istype(W, /obj/item/detective_scanner))
 		return
 	return ..()
@@ -46,6 +46,7 @@
 		req_access = list()
 		req_one_access = list()
 		playsound(src, "sparks", 100, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
+		return TRUE
 
 /obj/machinery/door_control/attack_ghost(mob/user)
 	if(user.can_advanced_admin_interact())
@@ -131,4 +132,12 @@
 
 /obj/machinery/door_control/no_emag/emag_act(user as mob)
 	to_chat(user, "<span class='notice'>The electronic systems in this button are far too advanced for your primitive hacking peripherals.</span>")
+	return
+
+/obj/machinery/door_control/no_emag/no_cyborg
+	desc = "A remote control-switch for a door. Looks strangely analog in design."
+	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
+
+/obj/machinery/door_control/no_emag/no_cyborg/attack_ai(mob/user)
+	to_chat(user, "<span class='warning'>Error, no route to host.</span>")
 	return

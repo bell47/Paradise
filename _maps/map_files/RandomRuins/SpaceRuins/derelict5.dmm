@@ -1,6 +1,6 @@
 //MAP CONVERTED BY dmm2tgm.py THIS HEADER COMMENT PREVENTS RECONVERSION, DO NOT REMOVE
 "aN" = (
-/obj/effect/spawner/lootdrop/crate_spawner,
+/obj/effect/spawner/random/loot/crate,
 /obj/effect/decal/cleanable/dirt,
 /turf/simulated/floor/plasteel,
 /area/ruin/space/unpowered)
@@ -34,6 +34,9 @@
 /mob/living/simple_animal/cockroach,
 /turf/simulated/floor/plasteel,
 /area/ruin/space/unpowered)
+"ez" = (
+/turf/simulated/mineral/random/high_chance/clown,
+/area/ruin/space/unpowered)
 "fi" = (
 /obj/structure/closet/cabinet,
 /obj/item/clothing/under/suit/charcoal,
@@ -48,6 +51,10 @@
 /obj/effect/decal/cleanable/dirt,
 /turf/simulated/floor/plasteel,
 /area/ruin/space/unpowered)
+"gx" = (
+/obj/structure/spawner/mining/basilisk,
+/turf/simulated/floor/plating/asteroid/airless,
+/area/ruin/space/unpowered)
 "hG" = (
 /obj/structure/kitchenspike,
 /turf/simulated/floor/plasteel,
@@ -58,7 +65,7 @@
 /turf/simulated/floor/plating,
 /area/ruin/space/unpowered)
 "jz" = (
-/obj/effect/spawner/lootdrop/crate_spawner,
+/obj/effect/spawner/random/loot/crate,
 /turf/simulated/floor/plasteel,
 /area/ruin/space/unpowered)
 "kb" = (
@@ -117,7 +124,7 @@
 /turf/simulated/floor/plasteel,
 /area/ruin/space/unpowered)
 "qF" = (
-/obj/effect/spawner/lootdrop/crate_spawner,
+/obj/effect/spawner/random/loot/crate,
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/decal/cleanable/cobweb2,
 /turf/simulated/floor/plasteel,
@@ -160,14 +167,18 @@
 /turf/simulated/floor/plasteel,
 /area/ruin/space/unpowered)
 "xs" = (
-/obj/effect/decal/cleanable/fungus,
+/obj/effect/spawner/random/fungus/frequent,
 /turf/simulated/floor/plasteel,
 /area/ruin/space/unpowered)
 "xQ" = (
 /obj/structure/table,
-/obj/item/gun/projectile/revolver/russian,
+/obj/item/toy/russian_revolver,
 /turf/simulated/floor/plasteel,
 /area/ruin/space/unpowered)
+"yq" = (
+/mob/living/simple_animal/hostile/carp,
+/turf/template_noop,
+/area/template_noop)
 "yY" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/decal/cleanable/dirt,
@@ -202,6 +213,9 @@
 /obj/effect/decal/cleanable/insectguts,
 /turf/simulated/floor/plasteel,
 /area/ruin/space/unpowered)
+"Dt" = (
+/turf/simulated/mineral/random/high_chance,
+/area/ruin/space/unpowered)
 "Gx" = (
 /obj/effect/decal/cleanable/blood,
 /turf/simulated/floor/plasteel,
@@ -215,6 +229,10 @@
 /obj/effect/decal/cleanable/dirt,
 /obj/effect/decal/cleanable/blood/splatter,
 /turf/simulated/floor/plating,
+/area/ruin/space/unpowered)
+"KW" = (
+/obj/structure/spawner/mining/hivelord,
+/turf/simulated/floor/plating/asteroid/airless,
 /area/ruin/space/unpowered)
 "Li" = (
 /obj/structure/door_assembly,
@@ -250,7 +268,7 @@
 /turf/simulated/floor/plasteel,
 /area/ruin/space/unpowered)
 "Pq" = (
-/obj/effect/spawner/random_spawners/wall_rusted_always,
+/obj/effect/mapping_helpers/turfs/rust,
 /turf/simulated/wall,
 /area/ruin/space/unpowered)
 "Qx" = (
@@ -261,10 +279,10 @@
 /area/ruin/space/unpowered)
 "SX" = (
 /obj/structure/table,
-/obj/item/reagent_containers/food/snacks/beans{
+/obj/item/food/beans{
 	pixel_x = 10
 	},
-/obj/item/reagent_containers/food/snacks/beans{
+/obj/item/food/beans{
 	pixel_x = -5
 	},
 /turf/simulated/floor/plasteel,
@@ -393,8 +411,7 @@ TT
 TT
 TT
 TT
-TT
-TT
+yq
 TT
 TT
 TT
@@ -409,6 +426,7 @@ VS
 VS
 TT
 TT
+yq
 TT
 TT
 "}
@@ -445,10 +463,10 @@ TT
 TT
 TT
 TT
+Dt
+Dt
+VS
 TT
-VS
-VS
-VS
 TT
 TT
 TT
@@ -460,7 +478,21 @@ TT
 TT
 TT
 TT
+yq
 TT
+TT
+TT
+TT
+TT
+TT
+TT
+TT
+TT
+TT
+TT
+TT
+TT
+VS
 TT
 TT
 TT
@@ -479,22 +511,8 @@ VS
 TT
 TT
 TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
 VS
 TT
-TT
-TT
-VS
 "}
 (5,1,1) = {"
 TT
@@ -523,7 +541,7 @@ TT
 TT
 TT
 TT
-TT
+yq
 TT
 TT
 TT
@@ -549,7 +567,6 @@ TT
 TT
 TT
 TT
-TT
 WA
 WA
 WA
@@ -577,7 +594,8 @@ TT
 TT
 TT
 TT
-VS
+Dt
+TT
 TT
 "}
 (7,1,1) = {"
@@ -589,13 +607,13 @@ TT
 TT
 TT
 TT
+WA
+WA
+WA
+WA
+WA
+WA
 TT
-WA
-WA
-WA
-WA
-WA
-WA
 TT
 TT
 TT
@@ -630,7 +648,6 @@ TT
 TT
 TT
 TT
-TT
 Qx
 Qx
 Qx
@@ -651,23 +668,23 @@ TT
 TT
 VS
 VS
-VS
+Dt
 TT
 TT
 TT
 TT
 TT
 TT
+yq
 TT
-TT
+yq
 TT
 TT
 TT
 "}
 (9,1,1) = {"
 TT
-TT
-TT
+yq
 TT
 TT
 TT
@@ -693,7 +710,8 @@ TT
 TT
 VS
 VS
-VS
+Dt
+TT
 TT
 TT
 TT
@@ -713,12 +731,11 @@ TT
 TT
 TT
 TT
-TT
 Qx
+Dt
+Dt
 Qx
-Qx
-Qx
-Qx
+Dt
 Qx
 Qx
 Qx
@@ -745,6 +762,7 @@ TT
 TT
 TT
 TT
+yq
 TT
 TT
 "}
@@ -755,7 +773,6 @@ TT
 TT
 TT
 TT
-TT
 Qx
 Qx
 Qx
@@ -776,10 +793,11 @@ TT
 TT
 TT
 TT
+Dt
 VS
 VS
 VS
-VS
+TT
 TT
 TT
 TT
@@ -796,24 +814,24 @@ TT
 TT
 TT
 TT
+Qx
+Qx
+Qx
+Qx
+Qx
+Qx
+Qx
+Dt
+Qx
+Qx
+Dt
+Qx
+Qx
+WA
+WA
+WA
+WA
 TT
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-WA
-WA
-WA
-WA
 TT
 TT
 TT
@@ -838,24 +856,24 @@ TT
 TT
 TT
 TT
+Qx
+Qx
+Qx
+Dt
+Dt
+Qx
+Qx
+Dt
+Qx
+Qx
+Dt
+Dt
+Qx
+Qx
+Qx
+WA
+WA
 TT
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-WA
-WA
 TT
 TT
 TT
@@ -880,26 +898,26 @@ TT
 TT
 TT
 TT
+Qx
+Qx
+Qx
+Qx
+Qx
+Qx
+Qx
+Qx
+Qx
+Qx
+Qx
+Qx
+Qx
+Qx
+Qx
+Qx
+WA
+WA
+WA
 TT
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-WA
-WA
-WA
 TT
 TT
 TT
@@ -922,26 +940,26 @@ TT
 TT
 TT
 TT
+Qx
+Qx
+Qx
+Qx
+Qx
+Qx
+Qx
+Pq
+Pq
+Se
+Pq
+Se
+Qx
+Dt
+Dt
+Qx
+Qx
+WA
+WA
 TT
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Pq
-Pq
-Se
-Pq
-Se
-Qx
-Qx
-Qx
-Qx
-Qx
-WA
-WA
 TT
 TT
 TT
@@ -964,11 +982,10 @@ TT
 TT
 TT
 TT
-TT
 Qx
 Qx
-Qx
-Qx
+Dt
+Dt
 Qx
 Pq
 aN
@@ -978,12 +995,13 @@ vg
 kb
 Pq
 LZ
-Qx
+Dt
 Qx
 Qx
 Qx
 WA
 WA
+TT
 TT
 TT
 TT
@@ -1007,9 +1025,8 @@ TT
 TT
 TT
 TT
-TT
 Qx
-Qx
+Dt
 Qx
 Qx
 Se
@@ -1041,9 +1058,9 @@ TT
 TT
 TT
 TT
+TT
 "}
 (18,1,1) = {"
-TT
 TT
 TT
 TT
@@ -1064,7 +1081,7 @@ Se
 vE
 KU
 Se
-Qx
+Dt
 Qx
 Qx
 WA
@@ -1078,6 +1095,7 @@ TT
 Qx
 Qx
 Qx
+TT
 TT
 TT
 TT
@@ -1085,7 +1103,6 @@ TT
 TT
 "}
 (19,1,1) = {"
-TT
 TT
 TT
 TT
@@ -1106,7 +1123,7 @@ Se
 zN
 xs
 Qx
-Qx
+Dt
 Qx
 Qx
 Qx
@@ -1122,21 +1139,21 @@ Qx
 Qx
 Qx
 Qx
+TT
 TT
 TT
 TT
 "}
 (20,1,1) = {"
 TT
-TT
-TT
+yq
 TT
 TT
 TT
 TT
 Qx
 Qx
-Qx
+Dt
 Qx
 Se
 ph
@@ -1167,6 +1184,7 @@ Qx
 TT
 TT
 TT
+TT
 "}
 (21,1,1) = {"
 TT
@@ -1175,10 +1193,9 @@ TT
 TT
 TT
 TT
-TT
 Qx
 Qx
-Qx
+Dt
 Qx
 Qx
 ZP
@@ -1195,7 +1212,7 @@ Qx
 Qx
 Qx
 WA
-WA
+KW
 WA
 WA
 WA
@@ -1208,10 +1225,10 @@ Qx
 Qx
 Qx
 Qx
+TT
 TT
 "}
 (22,1,1) = {"
-TT
 TT
 TT
 TT
@@ -1233,9 +1250,9 @@ vE
 kO
 Se
 Qx
+Dt
+Dt
 Qx
-Qx
-Qx
 WA
 WA
 WA
@@ -1247,13 +1264,13 @@ WA
 WA
 WA
 Qx
+Dt
+Dt
 Qx
-Qx
-Qx
+TT
 TT
 "}
 (23,1,1) = {"
-TT
 TT
 TT
 TT
@@ -1285,17 +1302,17 @@ WA
 WA
 WA
 WA
+gx
 WA
 WA
-WA
 Qx
 Qx
 Qx
 Qx
 Qx
+TT
 "}
 (24,1,1) = {"
-TT
 TT
 TT
 TT
@@ -1335,9 +1352,9 @@ Qx
 Qx
 Qx
 Qx
+TT
 "}
 (25,1,1) = {"
-TT
 TT
 TT
 TT
@@ -1372,14 +1389,14 @@ WA
 WA
 Qx
 Qx
+Dt
+Dt
 Qx
 Qx
 Qx
-Qx
-Qx
+TT
 "}
 (26,1,1) = {"
-TT
 TT
 TT
 VS
@@ -1390,8 +1407,8 @@ TT
 Qx
 Qx
 Qx
-Qx
-Qx
+Dt
+Dt
 Gx
 zN
 zN
@@ -1415,10 +1432,11 @@ Qx
 Qx
 Qx
 Qx
+Dt
 Qx
 Qx
 Qx
-Qx
+TT
 "}
 (27,1,1) = {"
 TT
@@ -1429,11 +1447,10 @@ TT
 TT
 TT
 TT
-TT
 Qx
 Qx
 Qx
-Qx
+Dt
 Qx
 zN
 Wy
@@ -1445,8 +1462,8 @@ Se
 Qx
 Qx
 Qx
-Qx
-Qx
+ez
+ez
 Qx
 Qx
 Qx
@@ -1461,9 +1478,9 @@ Qx
 Qx
 Qx
 Qx
+TT
 "}
 (28,1,1) = {"
-TT
 TT
 TT
 TT
@@ -1484,12 +1501,12 @@ Se
 nb
 zN
 Qx
+Dt
 Qx
 Qx
-Qx
-Qx
-Qx
-Qx
+Dt
+Dt
+ez
 Qx
 Se
 fi
@@ -1501,8 +1518,9 @@ Qx
 Qx
 Qx
 Qx
+Dt
 Qx
-Qx
+TT
 "}
 (29,1,1) = {"
 TT
@@ -1513,7 +1531,6 @@ TT
 TT
 TT
 TT
-TT
 Qx
 Qx
 Qx
@@ -1526,12 +1543,12 @@ Se
 Se
 Pq
 Qx
+Dt
+ez
 Qx
 Qx
-Qx
-Qx
-Qx
-Qx
+Dt
+ez
 Qx
 Pq
 zN
@@ -1543,8 +1560,9 @@ Pq
 Qx
 Qx
 Qx
+Dt
 Qx
-Qx
+TT
 "}
 (30,1,1) = {"
 TT
@@ -1556,24 +1574,23 @@ TT
 TT
 TT
 TT
-TT
 Qx
 Qx
 Qx
 Qx
 Qx
 Qx
+Dt
+Dt
 Qx
 Qx
 Qx
+Dt
 Qx
 Qx
+ez
 Qx
-Qx
-Qx
-Qx
-Qx
-Qx
+ez
 Qx
 Se
 vE
@@ -1587,11 +1604,11 @@ Qx
 Qx
 Qx
 Qx
+TT
 "}
 (31,1,1) = {"
 TT
 TT
-TT
 VS
 VS
 TT
@@ -1610,12 +1627,12 @@ Qx
 Qx
 Qx
 Qx
+Dt
+ez
 Qx
 Qx
-Qx
-Qx
-Qx
-Qx
+Dt
+ez
 Qx
 Pq
 sd
@@ -1625,14 +1642,14 @@ rc
 vE
 Se
 Qx
+Dt
 Qx
 Qx
 Qx
-Qx
+TT
 "}
 (32,1,1) = {"
 TT
-TT
 VS
 VS
 VS
@@ -1652,12 +1669,12 @@ Qx
 Qx
 Qx
 Qx
+Dt
 Qx
 Qx
-Qx
-Qx
-Qx
-Qx
+Dt
+Dt
+ez
 Qx
 Se
 Qx
@@ -1666,19 +1683,19 @@ Pq
 Se
 Pq
 Se
+Dt
+Dt
 Qx
 Qx
-Qx
-Qx
+TT
 TT
 "}
 (33,1,1) = {"
 TT
-TT
 VS
 VS
-VS
-VS
+Dt
+Dt
 TT
 TT
 TT
@@ -1697,6 +1714,8 @@ Qx
 Qx
 Qx
 Qx
+ez
+ez
 Qx
 Qx
 Qx
@@ -1710,17 +1729,15 @@ Qx
 Qx
 Qx
 Qx
-Qx
-Qx
+TT
 TT
 "}
 (34,1,1) = {"
 TT
 TT
-TT
+Dt
+Dt
 VS
-VS
-VS
 TT
 TT
 TT
@@ -1733,6 +1750,7 @@ Qx
 Qx
 Qx
 Qx
+Dt
 Qx
 Qx
 Qx
@@ -1746,19 +1764,18 @@ Qx
 Qx
 Qx
 Qx
+Dt
+Dt
 Qx
 Qx
 Qx
 Qx
 Qx
-Qx
-Qx
-Qx
+TT
 TT
 "}
 (35,1,1) = {"
 TT
-TT
 VS
 TT
 TT
@@ -1778,6 +1795,16 @@ Qx
 Qx
 Qx
 Qx
+Dt
+Qx
+Qx
+Qx
+Dt
+Qx
+Qx
+Qx
+Dt
+Dt
 Qx
 Qx
 Qx
@@ -1785,22 +1812,12 @@ Qx
 Qx
 Qx
 Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
-Qx
+TT
 TT
 TT
 "}
 (36,1,1) = {"
 TT
-TT
 VS
 TT
 TT
@@ -1827,6 +1844,7 @@ Qx
 Qx
 Qx
 Qx
+Dt
 Qx
 Qx
 Qx
@@ -1836,7 +1854,7 @@ Qx
 Qx
 Qx
 Qx
-Qx
+TT
 TT
 TT
 "}
@@ -1846,7 +1864,6 @@ TT
 TT
 TT
 TT
-TT
 VS
 TT
 TT
@@ -1879,6 +1896,7 @@ Qx
 Qx
 Qx
 Qx
+TT
 TT
 TT
 "}
@@ -1894,8 +1912,7 @@ TT
 TT
 TT
 TT
-TT
-TT
+yq
 TT
 TT
 TT
@@ -1918,6 +1935,7 @@ Qx
 Qx
 Qx
 Qx
+TT
 TT
 TT
 TT
@@ -1925,48 +1943,6 @@ TT
 TT
 "}
 (39,1,1) = {"
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-TT
-"}
-(40,1,1) = {"
 TT
 TT
 TT

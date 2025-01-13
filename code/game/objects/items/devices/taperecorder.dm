@@ -5,7 +5,7 @@
 	icon_state = "taperecorder_empty"
 	item_state = "analyzer"
 	w_class = WEIGHT_CLASS_SMALL
-	slot_flags = SLOT_FLAG_BELT
+	slot_flags = ITEM_SLOT_BELT
 	materials = list(MAT_METAL = 180, MAT_GLASS = 90)
 	force = 2
 	throwforce = 0
@@ -59,7 +59,7 @@
 	else
 		soundloop.start()
 
-/obj/item/taperecorder/attackby(obj/item/I, mob/user)
+/obj/item/taperecorder/attackby__legacy__attackchain(obj/item/I, mob/user)
 	if(!mytape && istype(I, /obj/item/tape))
 		if(user.drop_item())
 			I.forceMove(src)
@@ -75,7 +75,7 @@
 /obj/item/taperecorder/attack_hand(mob/user)
 	if(loc == user)
 		if(mytape)
-			if(user.l_hand != src && user.r_hand != src)
+			if(!user.is_holding(src))
 				..()
 				return
 			eject(user)
@@ -106,7 +106,7 @@
 		mytape.timestamp += mytape.used_capacity
 		mytape.storedinfo += "\[[time2text(mytape.used_capacity * 10,"mm:ss")]\] [M.name] [msg]"
 
-/obj/item/taperecorder/attack_self(mob/user)
+/obj/item/taperecorder/attack_self__legacy__attackchain(mob/user)
 	if(!mytape || mytape.ruined)
 		return
 	if(recording)
@@ -116,10 +116,11 @@
 
 /obj/item/taperecorder/AltClick(mob/user)
 	if(in_range(user, src) && mytape && !HAS_TRAIT(user, TRAIT_HANDS_BLOCKED))
-		var/list/options = list( "Playback Tape" = image(icon = 'icons/obj/device.dmi', icon_state = "taperecorder_playing"),
-						"Print Transcript" = image(icon = 'icons/obj/bureaucracy.dmi', icon_state = "paper_words"),
-						"Eject Tape" = image(icon = 'icons/obj/device.dmi', icon_state = "[mytape.icon_state]")
-						)
+		var/list/options = list(
+			"Playback Tape" = image(icon = 'icons/obj/device.dmi', icon_state = "taperecorder_playing"),
+			"Print Transcript" = image(icon = 'icons/obj/bureaucracy.dmi', icon_state = "paper_words"),
+			"Eject Tape" = image(icon = 'icons/obj/device.dmi', icon_state = "[mytape.icon_state]")
+		)
 		var/choice = show_radial_menu(user, src, options)
 		if(user.incapacitated())
 			return
@@ -210,14 +211,10 @@
 			atom_say("End of recording.")
 			break
 		atom_say("[mytape.storedinfo[i]]")
-		if(length(mytape.storedinfo) < i + 1)
+		if(length(mytape.storedinfo) < i + 1 || playsleepseconds > 1.4 SECONDS)
 			playsleepseconds = 1 SECONDS
 		else
 			playsleepseconds = (mytape.timestamp[i + 1] - mytape.timestamp[i]) SECONDS
-		if(playsleepseconds > 1.4 SECONDS)
-			sleep(10)
-			atom_say("Skipping [playsleepseconds / 10] seconds of silence.")
-			playsleepseconds = 1 SECONDS
 		i++
 
 	stop(TRUE)
@@ -235,7 +232,7 @@
 	playsound(loc, 'sound/goonstation/machines/printer_thermal.ogg', 50, 1)
 	var/obj/item/paper/P = new /obj/item/paper(get_turf(src))
 	var/t1 = "<B>Transcript:</B><BR><BR>"
-	for(var/i = 1, mytape.storedinfo.len >= i, i++)
+	for(var/i = 1, length(mytape.storedinfo) >= i, i++)
 		t1 += "[mytape.storedinfo[i]]<BR>"
 	P.info = t1
 	P.name = "paper- 'Transcript'"
@@ -306,7 +303,7 @@
 	..()
 	ruin()
 
-/obj/item/tape/attack_self(mob/user)
+/obj/item/tape/attack_self__legacy__attackchain(mob/user)
 	if(!ruined)
 		ruin(user)
 
@@ -321,6 +318,7 @@
 
 	to_chat(user, "<span class='notice'>You erase the data from [src].</span>")
 	used_capacity = 0
+	remaining_capacity = max_capacity
 	storedinfo.Cut()
 	timestamp.Cut()
 
@@ -338,7 +336,7 @@
 	ruined = TRUE
 	update_icon(UPDATE_OVERLAYS)
 
-/obj/item/tape/attackby(obj/item/I, mob/user)
+/obj/item/tape/attackby__legacy__attackchain(obj/item/I, mob/user)
 	if(is_pen(I))
 		rename_interactive(user, I)
 

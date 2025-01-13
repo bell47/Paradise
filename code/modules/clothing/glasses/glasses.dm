@@ -3,7 +3,7 @@
 	if(prescription_upgradable && prescription)
 		upgrade_prescription()
 
-/obj/item/clothing/glasses/attackby(obj/item/I, mob/user)
+/obj/item/clothing/glasses/attackby__legacy__attackchain(obj/item/I, mob/user)
 	if(!prescription_upgradable || user.stat || user.restrained() || !ishuman(user))
 		return ..()
 	var/mob/living/carbon/human/H = user
@@ -13,7 +13,7 @@
 		if(prescription)
 			to_chat(H, "<span class='warning'>You can't possibly imagine how adding more lenses would improve [src].</span>")
 			return
-		H.unEquip(I)
+		H.drop_item_to_ground(I)
 		upgrade_prescription(I)
 		to_chat(H, "<span class='notice'>You fit [src] with lenses from [I].</span>")
 
@@ -103,7 +103,7 @@
 
 /obj/item/clothing/glasses/meson/equipped(mob/user, slot, initial)
 	. = ..()
-	if(active_on_equip && slot == SLOT_HUD_GLASSES)
+	if(active_on_equip && slot == ITEM_SLOT_EYES)
 		ADD_TRAIT(user, TRAIT_MESON_VISION, "meson_glasses[UID()]")
 
 /obj/item/clothing/glasses/meson/dropped(mob/user)
@@ -118,6 +118,13 @@
 	origin_tech = "magnets=4;engineering=5;plasmatech=4"
 	see_in_dark = 8
 	lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE
+
+/obj/item/clothing/glasses/meson/sunglasses
+	name = "meson HUD sunglasses"
+	desc = "Sunglasses with an inbuilt scanner that can see through both walls and flooring."
+	icon_state = "sunhudmeson"
+	flash_protect = FLASH_PROTECTION_FLASH
+	tint = FLASH_PROTECTION_FLASH
 
 /obj/item/clothing/glasses/meson/prescription
 	prescription = TRUE
@@ -150,7 +157,7 @@
 	item_state = "glasses"
 	origin_tech = "magnets=2;engineering=1"
 	prescription_upgradable = TRUE
-	scan_reagents = 1 //You can see reagents while wearing science goggles
+	scan_reagents = TRUE // You can see reagents while wearing science goggles
 	resistance_flags = ACID_PROOF
 	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, RAD = 0, FIRE = 200, ACID = INFINITY)
 	sprite_sheets = list(
@@ -162,8 +169,8 @@
 	actions_types = list(/datum/action/item_action/toggle_research_scanner)
 
 /obj/item/clothing/glasses/science/item_action_slot_check(slot)
-	if(slot == SLOT_HUD_GLASSES)
-		return 1
+	if(slot == ITEM_SLOT_EYES)
+		return TRUE
 
 /obj/item/clothing/glasses/science/night
 	name = "night vision science goggles"
@@ -359,12 +366,12 @@
 	desc = "Somehow these seem even more out-of-date than normal sunglasses."
 	actions_types = list(/datum/action/item_action/noir)
 
-/obj/item/clothing/glasses/sunglasses/noir/attack_self(mob/user)
+/obj/item/clothing/glasses/sunglasses/noir/attack_self__legacy__attackchain(mob/user)
 	toggle_noir(user)
 
 /obj/item/clothing/glasses/sunglasses/noir/item_action_slot_check(slot)
-	if(slot == SLOT_HUD_GLASSES)
-		return 1
+	if(slot == ITEM_SLOT_EYES)
+		return TRUE
 
 /obj/item/clothing/glasses/sunglasses/noir/proc/toggle_noir(mob/user)
 	color_view = color_view ? null : MATRIX_GREYSCALE //Toggles between null and grayscale, with null being the default option.
@@ -374,9 +381,9 @@
 	name = "agreeable glasses"
 	desc = "H.C Limited edition."
 	var/punused = FALSE
-	actions_types = list(/datum/action/item_action/YEEEAAAAAHHHHHHHHHHHHH)
+	actions_types = list(/datum/action/item_action/yeeeaaaaahhhhhhhhhhhhh)
 
-/obj/item/clothing/glasses/sunglasses/yeah/attack_self(mob/user)
+/obj/item/clothing/glasses/sunglasses/yeah/attack_self__legacy__attackchain(mob/user)
 	pun(user)
 
 /obj/item/clothing/glasses/sunglasses/yeah/proc/pun(mob/user)
@@ -392,12 +399,12 @@
 
 /obj/item/clothing/glasses/sunglasses/reagent
 	name = "sunscanners"
-	desc = "Strangely ancient technology used to help provide rudimentary eye cover. Outfitted with an apparatus to scan individual reagents, tech potentials, and machines internal components."
-	scan_reagents = 1
+	desc = "Strangely ancient technology used to help provide rudimentary eye cover. Outfitted with an apparatus to scan individual reagents, tech potentials, and the internal components of machines."
+	scan_reagents = TRUE
 	actions_types = list(/datum/action/item_action/toggle_research_scanner)
 
 /obj/item/clothing/glasses/sunglasses/reagent/item_action_slot_check(slot)
-	if(slot == SLOT_HUD_GLASSES)
+	if(slot == ITEM_SLOT_EYES)
 		return TRUE
 
 /obj/item/clothing/glasses/virussunglasses
@@ -422,7 +429,7 @@
 	flags = NODROP
 
 /obj/item/clothing/glasses/sunglasses/lasers/equipped(mob/user, slot) //grant them laser eyes upon equipping it.
-	if(slot == SLOT_HUD_GLASSES)
+	if(slot == ITEM_SLOT_EYES)
 		ADD_TRAIT(user, TRAIT_LASEREYES, "admin_zapglasses")
 		user.regenerate_icons()
 	..(user, slot)
@@ -444,7 +451,7 @@
 		"Kidan" = 'icons/mob/clothing/species/kidan/eyes.dmi'
 		)
 
-/obj/item/clothing/glasses/welding/attack_self(mob/user)
+/obj/item/clothing/glasses/welding/attack_self__legacy__attackchain(mob/user)
 	weldingvisortoggle(user)
 
 /obj/item/clothing/glasses/welding/superior
@@ -507,13 +514,13 @@
 
 /obj/item/clothing/glasses/thermal/eyepatch
 	name = "optical thermal eyepatch"
-	desc = "An eyepatch with built-in thermal optics"
+	desc = "An eyepatch with built-in thermal optics."
 	icon_state = "eyepatch"
 	item_state = "eyepatch"
 
 /obj/item/clothing/glasses/thermal/jensen
 	name = "optical thermal implant"
-	desc = "A set of implantable lenses designed to augment your vision"
+	desc = "A set of implantable lenses designed to augment your vision."
 	icon_state = "thermalimplants"
 	item_state = "syringe_kit"
 
@@ -523,51 +530,3 @@
 	icon_state = "cybereye-red"
 	item_state = "eyepatch"
 	flags = NODROP
-
-/obj/item/clothing/glasses/tajblind
-	name = "embroidered veil"
-	desc = "An Ahdominian made veil that allows the user to see while obscuring their eyes."
-	icon_state = "tajblind"
-	item_state = "tajblind"
-	flags_cover = GLASSESCOVERSEYES
-	actions_types = list(/datum/action/item_action/toggle)
-	up = FALSE
-	tint = FLASH_PROTECTION_NONE
-	prescription_upgradable = TRUE
-
-	sprite_sheets = list(
-		"Vox" = 'icons/mob/clothing/species/vox/eyes.dmi',
-		"Grey" = 'icons/mob/clothing/species/grey/eyes.dmi',
-		"Drask" = 'icons/mob/clothing/species/drask/eyes.dmi'
-		)
-
-/obj/item/clothing/glasses/tajblind/eng
-	name = "industrial veil"
-	icon_state = "tajblind_engi"
-	item_state = "tajblind_engi"
-
-/obj/item/clothing/glasses/tajblind/sci
-	name = "hi-tech veil"
-	icon_state = "tajblind_sci"
-	item_state = "tajblind_sci"
-
-/obj/item/clothing/glasses/tajblind/cargo
-	name = "khaki veil"
-	icon_state = "tajblind_cargo"
-	item_state = "tajblind_cargo"
-
-/obj/item/clothing/glasses/tajblind/attack_self()
-	toggle_veil()
-
-/obj/item/clothing/glasses/proc/toggle_veil()
-	if(HAS_TRAIT(usr, TRAIT_HANDS_BLOCKED) || usr.incapacitated())
-		return
-	up = !up
-	if(up)
-		tint = 3
-	else
-		tint = initial(tint)
-	to_chat(usr, up ? "You deactivate [src], obscuring your vision." : "You activate [src], allowing you to see.")
-	var/mob/living/carbon/user = usr
-	user.update_tint()
-	user.update_inv_glasses()

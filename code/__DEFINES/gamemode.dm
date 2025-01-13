@@ -1,15 +1,18 @@
 //objective defines
-#define TARGET_INVALID_IS_OWNER		1
-#define TARGET_INVALID_NOT_HUMAN	2
-#define TARGET_INVALID_DEAD			3
-#define TARGET_INVALID_NOCKEY		4
-#define TARGET_INVALID_UNREACHABLE	5
-#define TARGET_INVALID_GOLEM		6
-#define TARGET_INVALID_EVENT		7
-#define TARGET_INVALID_IS_TARGET	8
-#define TARGET_INVALID_BLACKLISTED	9
-#define TARGET_INVALID_CHANGELING	10
-#define TARGET_INVALID_NOTHEAD		11
+#define TARGET_INVALID_IS_OWNER			1
+#define TARGET_INVALID_NOT_HUMAN		2
+#define TARGET_INVALID_DEAD				3
+#define TARGET_INVALID_NOCKEY			4
+#define TARGET_INVALID_UNREACHABLE		5
+#define TARGET_INVALID_GOLEM			6
+#define TARGET_INVALID_EVENT			7
+#define TARGET_INVALID_IS_TARGET		8
+#define TARGET_INVALID_BLACKLISTED		9
+#define TARGET_INVALID_CHANGELING		10
+#define TARGET_INVALID_NOTHEAD			11
+#define TARGET_INVALID_CULTIST			12
+#define TARGET_INVALID_CULT_CONVERTABLE	13
+#define TARGET_CRYOING					14
 
 //gamemode istype helpers
 #define GAMEMODE_IS_CULT		(SSticker && istype(SSticker.mode, /datum/game_mode/cult))
@@ -43,6 +46,7 @@
 #define SPECIAL_ROLE_SYNDICATE_DEATHSQUAD "Syndicate Commando"
 #define SPECIAL_ROLE_TRAITOR "Traitor"
 #define SPECIAL_ROLE_VAMPIRE "Vampire"
+#define SPECIAL_ROLE_MIND_FLAYER "Mind Flayer"
 #define SPECIAL_ROLE_VAMPIRE_THRALL "Vampire Thrall"
 #define SPECIAL_ROLE_WIZARD "Wizard"
 #define SPECIAL_ROLE_WIZARD_APPRENTICE "Wizard Apprentice"
@@ -52,6 +56,8 @@
 #define SPECIAL_ROLE_XENOMORPH_DRONE "Xenomorph Drone"
 #define SPECIAL_ROLE_XENOMORPH_SENTINEL "Xenomorph Sentinel"
 #define SPECIAL_ROLE_XENOMORPH_LARVA "Xenomorph Larva"
+#define SPECIAL_ROLE_ZOMBIE "Zombie"
+#define SPECIAL_ROLE_TOURIST "Tourist"
 #define SPECIAL_ROLE_EVENTMISC "Event Role"
 
 // Constants used by code which checks the status of nuclear blasts during a

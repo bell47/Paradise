@@ -1,11 +1,11 @@
 /turf/simulated/wall/mineral
 	name = "mineral wall"
-	desc = "This shouldn't exist"
+	desc = "If you can see this, please make an issue report on GitHub."
 	icon_state = ""
-	var/last_event = 0
-	var/active = FALSE
 	smoothing_flags = SMOOTH_BITMASK
 	canSmoothWith = null
+	var/last_event = 0
+	var/active = FALSE
 
 /turf/simulated/wall/mineral/shuttleRotate(rotation)
 	return //This override is needed to properly rotate the object when on a shuttle that is rotated.
@@ -87,9 +87,11 @@
 	radiate()
 	..()
 
-/turf/simulated/wall/mineral/uranium/attackby(obj/item/W as obj, mob/user as mob, params)
+/turf/simulated/wall/mineral/uranium/attack_by(obj/item/attacking, mob/user, params)
+	if(..())
+		return FINISH_ATTACK
+
 	radiate()
-	..()
 
 /turf/simulated/wall/mineral/uranium/Bumped(AM as mob|obj)
 	radiate()
@@ -106,14 +108,17 @@
 	smoothing_groups = list(SMOOTH_GROUP_SIMULATED_TURFS, SMOOTH_GROUP_WALLS, SMOOTH_GROUP_PLASMA_WALLS)
 	canSmoothWith = list(SMOOTH_GROUP_PLASMA_WALLS)
 
-/turf/simulated/wall/mineral/plasma/attackby(obj/item/W, mob/user)
-	if(W.get_heat() > 300)//If the temperature of the object is over 300, then ignite
-		message_admins("Plasma wall ignited by [key_name_admin(user)] in ([x], [y], [z] - <a href='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
+/turf/simulated/wall/mineral/plasma/attack_by(obj/item/attacking, mob/user, params)
+	if(..())
+		return FINISH_ATTACK
+
+	if(attacking.get_heat() > 300)//If the temperature of the object is over 300, then ignite
+		message_admins("Plasma wall ignited by [key_name_admin(user)] in ([x], [y], [z] - <a href='byond://?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
 		log_game("Plasma wall ignited by [key_name(user)] in ([x], [y], [z])")
 		investigate_log("was <font color='red'><b>ignited</b></font> by [key_name(user)]","atmos")
-		ignite(W.get_heat())
-		return
-	..()
+		ignite(attacking.get_heat())
+
+		return FINISH_ATTACK
 
 /turf/simulated/wall/mineral/plasma/welder_act(mob/user, obj/item/I)
 	if(I.tool_enabled)
@@ -121,7 +126,7 @@
 		user.visible_message("<span class='danger'>[user] sets [src] on fire!</span>",\
 							"<span class='danger'>[src] disintegrates into a cloud of plasma!</span>",\
 							"<span class='warning'>You hear a 'whoompf' and a roar.</span>")
-		message_admins("Plasma wall ignited by [key_name_admin(user)] in ([x], [y], [z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
+		message_admins("Plasma wall ignited by [key_name_admin(user)] in ([x], [y], [z] - <A href='byond://?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
 		log_game("Plasma wall ignited by [key_name(user)] in ([x], [y], [z])")
 		investigate_log("was <font color='red'><b>ignited</b></font> by [key_name(user)]","atmos")
 
@@ -171,15 +176,18 @@
 	smoothing_groups = list(SMOOTH_GROUP_SIMULATED_TURFS, SMOOTH_GROUP_WALLS, SMOOTH_GROUP_WOOD_WALLS)
 	canSmoothWith = list(SMOOTH_GROUP_WOOD_WALLS)
 
-/turf/simulated/wall/mineral/wood/attackby(obj/item/W, mob/user)
-	if(W.sharp && W.force)
-		var/duration = (48 / W.force) * 2 //In seconds, for now.
-		if(istype(W, /obj/item/hatchet) || istype(W, /obj/item/fireaxe))
+/turf/simulated/wall/mineral/wood/attack_by(obj/item/attacking, mob/user, params)
+	if(..())
+		return FINISH_ATTACK
+
+	if(attacking.sharp && attacking.force)
+		var/duration = (48 / attacking.force) * 2 //In seconds, for now.
+		if(istype(attacking, /obj/item/hatchet) || istype(attacking, /obj/item/fireaxe))
 			duration /= 4 //Much better with hatchets and axes.
 		if(do_after(user, duration * 10, target = src)) //Into deciseconds.
 			dismantle_wall(FALSE, FALSE)
-			return
-	return ..()
+			return FINISH_ATTACK
+
 
 /turf/simulated/wall/mineral/wood/nonmetal
 	desc = "A solidly wooden wall. It's a bit weaker than a wall made with metal."
@@ -212,14 +220,15 @@
 
 /////////////////////Titanium walls/////////////////////
 
-/turf/simulated/wall/mineral/titanium //has to use this path due to how building walls works
+/// has to use this path due to how building walls works
+/turf/simulated/wall/mineral/titanium
 	name = "wall"
 	desc = "A light-weight titanium wall used in shuttles."
 	icon = 'icons/turf/walls/plastinum_wall.dmi'
 	icon_state = "plastinum_wall-0"
 	base_icon_state = "plastinum_wall"
 	explosion_block = 3
-	flags_2 = CHECK_RICOCHET_2
+	flags_ricochet = RICOCHET_SHINY | RICOCHET_HARD
 	sheet_type = /obj/item/stack/sheet/mineral/titanium
 	smoothing_flags = SMOOTH_BITMASK | SMOOTH_DIAGONAL_CORNERS
 	smoothing_groups = list(SMOOTH_GROUP_TITANIUM_WALLS, SMOOTH_GROUP_WINDOW_FULLTILE_SHUTTLE)
@@ -242,7 +251,7 @@
 /turf/simulated/wall/mineral/titanium/interior/copyTurf(turf/T)
 	if(T.type != type)
 		T.ChangeTurf(type)
-		if(underlays.len)
+		if(length(underlays))
 			T.underlays = underlays
 	if(T.icon_state != icon_state)
 		T.icon_state = icon_state
@@ -278,36 +287,6 @@
 
 /turf/simulated/wall/mineral/titanium/survival/pod
 
-//undeconstructable type for derelict
-//these walls are undeconstructable/unthermitable
-/turf/simulated/wall/mineral/titanium/nodecon
-	name = "russian wall"
-	desc = "Like regular titanium, but able to deflect capitalist aggressors."
-
-/turf/simulated/wall/mineral/titanium/nodecon/tileblend
-	fixed_underlay = list("icon"='icons/turf/floors.dmi', "icon_state"="darkredfull")
-
-/turf/simulated/wall/mineral/titanium/nodecon/nodiagonal
-	icon_state = "map-shuttle_nd"
-	smoothing_flags = SMOOTH_BITMASK
-
-/turf/simulated/wall/mineral/titanium/nodecon/nosmooth
-	icon_state = "plastinum_wall"
-	smoothing_flags = NONE
-
-//properties for derelict sub-type to prevent said deconstruction/thermiting
-/turf/simulated/wall/mineral/titanium/nodecon/try_decon(obj/item/I, mob/user, params)
-	return
-
-/turf/simulated/wall/mineral/titanium/nodecon/thermitemelt(mob/user as mob, speed)
-	return
-
-/turf/simulated/wall/mineral/titanium/nodecon/burn_down()
-	return
-
-/turf/simulated/wall/mineral/titanium/nodecon/welder_act()
-	return
-
 /////////////////////Plastitanium walls/////////////////////
 
 /turf/simulated/wall/mineral/plastitanium
@@ -341,7 +320,7 @@
 /turf/simulated/wall/mineral/plastitanium/interior/copyTurf(turf/T)
 	if(T.type != type)
 		T.ChangeTurf(type)
-		if(underlays.len)
+		if(length(underlays))
 			T.underlays = underlays
 	if(T.icon_state != icon_state)
 		T.icon_state = icon_state

@@ -15,6 +15,7 @@ GLOBAL_LIST_EMPTY(celltimers_list) // list of all cell timers
 GLOBAL_LIST_EMPTY(cell_logs)
 GLOBAL_LIST_EMPTY(navigation_computers)
 GLOBAL_LIST_EMPTY(hierophant_walls)
+GLOBAL_LIST_EMPTY(pandemics)
 
 GLOBAL_LIST_EMPTY(all_areas)
 GLOBAL_LIST_EMPTY(all_unique_areas) // List of all unique areas. AKA areas with there_can_be_many = FALSE
@@ -34,6 +35,9 @@ GLOBAL_LIST_EMPTY(beacons)
 GLOBAL_LIST_EMPTY(shuttle_caller_list)  		//list of all communication consoles, comms consoles circuit and AIs, for automatic shuttle calls when there are none.
 GLOBAL_LIST_EMPTY(tracked_implants)			//list of all current implants that are tracked to work out what sort of trek everyone is on. Sadly not on lavaworld not implemented...
 GLOBAL_LIST_EMPTY(pinpointer_list)			//list of all pinpointers. Used to change stuff they are pointing to all at once.
+GLOBAL_LIST_EMPTY(nuke_list)				//list of (real) nukes
+GLOBAL_LIST_EMPTY(syndi_nuke_list)			//list of syndicate nukes
+GLOBAL_LIST_EMPTY(nad_list)					//list of (real) nuclear authentication disks
 GLOBAL_LIST_EMPTY(nuclear_uplink_list)			//list of all existing nuke ops uplinks
 GLOBAL_LIST_EMPTY(abductor_equipment)			//list of all abductor equipment
 GLOBAL_LIST_EMPTY(global_intercoms)			//list of all intercomms, across all z-levels
@@ -42,7 +46,6 @@ GLOBAL_LIST_EMPTY(global_radios)				//list of all radios, across all z-levels
 GLOBAL_LIST_EMPTY(meteor_list)				//list of all meteors
 GLOBAL_LIST_EMPTY(poi_list)					//list of points of interest for observe/follow
 GLOBAL_LIST_EMPTY(active_jammers)             // List of active radio jammers
-GLOBAL_LIST_EMPTY(ladders)
 GLOBAL_LIST_EMPTY(mirrors) //list of all mirrors and mirror shields.
 GLOBAL_LIST_EMPTY(arc_emitters) 					//list of all arc emitters
 

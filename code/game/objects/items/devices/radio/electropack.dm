@@ -5,7 +5,7 @@
 	icon_state = "electropack0"
 	item_state = "electropack"
 	flags = CONDUCT
-	slot_flags = SLOT_FLAG_BACK
+	slot_flags = ITEM_SLOT_BACK
 	w_class = WEIGHT_CLASS_HUGE
 	materials = list(MAT_METAL = 10000, MAT_GLASS = 2500)
 	/// The integrated signaler
@@ -38,26 +38,25 @@
 
 	..()
 
-/obj/item/electropack/attack_self(mob/user)
+/obj/item/electropack/attack_self__legacy__attackchain(mob/user)
 	ui_interact(user)
 
-/obj/item/electropack/attackby(obj/item/W, mob/user, params)
+/obj/item/electropack/attackby__legacy__attackchain(obj/item/W, mob/user, params)
 	..()
 
 	if(istype(W, /obj/item/clothing/head/helmet))
 		var/obj/item/assembly/shock_kit/A = new /obj/item/assembly/shock_kit(user)
 		A.icon = 'icons/obj/assemblies.dmi'
 
-		if(!user.unEquip(W))
+		if(!user.unequip(W))
 			to_chat(user, "<span class='notice'>\the [W] is stuck to your hand, you cannot attach it to \the [src]!</span>")
 			return
 
-		W.loc = A
+		W.forceMove(A)
 		W.master = A
 		A.part1 = W
 
-		user.unEquip(src)
-		loc = A
+		user.transfer_item_to(src, A)
 		master = A
 		A.part2 = src
 
@@ -74,25 +73,19 @@
 
 	if(isliving(loc))
 		var/mob/living/M = loc
-		var/turf/T = M.loc
-		if(isturf(T))
-			if(!M.moved_recently && M.last_move)
-				M.moved_recently = 1
-				step(M, M.last_move)
-				sleep(50)
-				if(M)
-					M.moved_recently = 0
-
 		to_chat(M, "<span class='danger'>You feel a sharp shock!</span>")
 		do_sparks(3, 1, M)
 
 		M.Weaken(10 SECONDS)
 
 // This should honestly just proxy the UI to the internal signaler
-/obj/item/electropack/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = TRUE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.inventory_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/item/electropack/ui_state(mob/user)
+	return GLOB.inventory_state
+
+/obj/item/electropack/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "Electropack", name, 360, 150, master_ui, state)
+		ui = new(user, src, "Electropack", name)
 		ui.open()
 
 /obj/item/electropack/ui_data(mob/user)

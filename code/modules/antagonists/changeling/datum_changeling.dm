@@ -1,3 +1,5 @@
+RESTRICT_TYPE(/datum/antagonist/changeling)
+
 /datum/antagonist/changeling
 	name = "Changeling"
 	roundend_category = "changelings"
@@ -40,15 +42,14 @@
 	var/is_absorbing = FALSE
 	/// The amount of points available to purchase changeling abilities.
 	var/genetic_points = 20
-	/// A name that will display in place of the changeling's real name when speaking.
-	var/mimicing = ""
 	/// If the changeling can respec their purchased abilities.
 	var/can_respec = FALSE
 	/// The current sting power the changeling has active.
 	var/datum/action/changeling/sting/chosen_sting
 	/// If the changeling is in the process of regenerating from their fake death.
 	var/regenerating = FALSE
-
+	blurb_text_color = COLOR_PURPLE
+	blurb_text_outline_width = 1
 
 /datum/antagonist/changeling/New()
 	..()
@@ -78,18 +79,18 @@
 
 /datum/antagonist/changeling/Destroy()
 	SSticker.mode.changelings -= owner
-	chosen_sting = null
 	QDEL_LIST_CONTENTS(acquired_powers)
 	STOP_PROCESSING(SSobj, src)
+	chosen_sting = null
 	return ..()
 
 /datum/antagonist/changeling/greet()
 	. = ..()
 	SEND_SOUND(owner.current, sound('sound/ambience/antag/ling_alert.ogg'))
-	return . += "<span class='danger'>Remember: you get all of their absorbed DNA if you absorb a fellow changeling.</span>"
+	. += "<span class='danger'>Use say \":g message\" to communicate with your fellow changelings. Remember: you get all of their absorbed DNA if you absorb a fellow changeling.</span>"
 
 /datum/antagonist/changeling/farewell()
-	to_chat(owner.current, "<span class='biggerdanger'><B>You grow weak and lose your powers! You are no longer a changeling and are stuck in your current form!</span>")
+	to_chat(owner.current, "<span class='biggerdanger'><b>You grow weak and lose your powers! You are no longer a changeling and are stuck in your current form!</b></span>")
 
 /datum/antagonist/changeling/apply_innate_effects(mob/living/mob_override)
 	var/mob/living/L = ..()
@@ -97,6 +98,7 @@
 		START_PROCESSING(SSobj, src)
 	add_new_languages(L.languages) // Absorb the languages of the new body.
 	update_languages() // But also, give the changeling the languages they've already absorbed before this.
+	L.add_language("Changeling")
 	// If there's a mob_override, this is a body transfer, and therefore we should give them back their powers they had while in the old body.
 	if(mob_override)
 		for(var/datum/action/changeling/power in acquired_powers)
@@ -124,6 +126,7 @@
 	if(L.hud_used?.lingstingdisplay)
 		L.hud_used.lingstingdisplay.invisibility = 101
 		L.hud_used.lingchemdisplay.invisibility = 101
+	L.remove_language("Changeling")
 	remove_unnatural_languages(L)
 	UnregisterSignal(L, COMSIG_MOB_DEATH)
 	// If there's a mob_override, this is a body transfer, and therefore we should only remove their powers from the old body.
@@ -218,7 +221,7 @@
 	chem_recharge_rate = initial(chem_recharge_rate)
 	chem_charges = min(chem_charges, chem_storage)
 	chem_recharge_slowdown = initial(chem_recharge_slowdown)
-	mimicing = null
+	mimicking = null
 
 /**
  * Removes a changeling's abilities.
@@ -240,12 +243,24 @@
  * * power_type - should be a define related to [/datum/action/changeling/var/power_type].
  */
 /datum/antagonist/changeling/proc/get_powers_of_type(power_type)
+	var/list/station_trait_restrictions = list(
+		// "Station trait" = Replace 1st with 2nd when trait active
+		STATION_TRAIT_CYBERNETIC_REVOLUTION = list(/datum/action/changeling/dissonant_shriek, /datum/action/changeling/dissonant_shriek/cyberrev)
+	)
+
 	var/list/powers = list()
 	for(var/power_path in subtypesof(/datum/action/changeling))
 		var/datum/action/changeling/power = power_path
 		if(initial(power.power_type) != power_type)
 			continue
 		powers += power_path
+
+	for(var/trait in station_trait_restrictions)
+		if(HAS_TRAIT(SSstation, trait))
+			powers -= station_trait_restrictions[trait][1]
+		else
+			powers -= station_trait_restrictions[trait][2]
+
 	return powers
 
 /**
@@ -261,6 +276,22 @@
 		genetic_points -= power.dna_cost
 	acquired_powers += power
 	power.on_purchase(changeling || owner.current, src)
+
+/**
+ * Removes all `power_type` abilities that the changeling has. Refunds the cost of the power from our genetic points.
+ *
+ * Arugments:
+ * * datum/action/changeling/power - the typepath power to remove from the changeling.
+ * * refund_cost - if we should refund genetic points when giving the power
+ */
+/datum/antagonist/changeling/proc/remove_specific_power(datum/action/changeling/power_type, refund_cost = TRUE)
+	for(var/datum/action/changeling/power in acquired_powers)
+		if(!istype(power, power_type))
+			continue
+		if(refund_cost)
+			genetic_points -= power.dna_cost
+		acquired_powers -= power
+		qdel(power)
 
 /**
  * Store the languages from the `new_languages` list into the `absorbed_languages` list. Teaches the changeling the new languages.
@@ -410,8 +441,7 @@
 		to_chat(user, "<span class='warning'>This creature does not have DNA!</span>")
 		return FALSE
 	if(get_dna(target.dna))
-		to_chat(user, "<span class='warning'>We already have this DNA in storage!</span>")
-		return FALSE
+		to_chat(user, "<span class='warning'>We already have this DNA in storage.</span>")
 	return TRUE
 
 /datum/antagonist/changeling/proc/on_death(mob/living/L, gibbed)
@@ -427,5 +457,5 @@
 	else
 		to_chat(L, "<span class='notice'>While our current form may be lifeless, this is not the end for us as we can still regenerate!</span>")
 
-/proc/ischangeling(mob/M)
-	return M.mind?.has_antag_datum(/datum/antagonist/changeling)
+/datum/antagonist/changeling/custom_blurb()
+	return "We awaken on the [station_name()], [get_area_name(owner.current, TRUE)]...\nWe have our tasks to attend to..."

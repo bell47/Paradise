@@ -223,7 +223,7 @@
 		sleep(30)
 
 /obj/machinery/transformer/xray/proc/scan_rec(obj/item/I)
-	if(istype(I, /obj/item/gun))
+	if(isgun(I))
 		return TRUE
 	if(istype(I, /obj/item/transfer_valve))
 		return TRUE
@@ -253,7 +253,7 @@
 
 	if(prestrip)
 		for(var/obj/item/I in H)
-			if(istype(I, /obj/item/implant))
+			if(istype(I, /obj/item/bio_chip))
 				continue
 			qdel(I)
 
@@ -313,7 +313,7 @@
 	domutcheck(H, MUTCHK_FORCED)
 	H.update_mutations()
 
-/obj/machinery/transformer/gene_applier/attackby(obj/item/I, mob/living/user, params)
+/obj/machinery/transformer/gene_applier/attackby__legacy__attackchain(obj/item/I, mob/living/user, params)
 	if(istype(I, /obj/item/disk/data))
 		if(locked)
 			to_chat(user, "<span class='warning'>Access Denied.</span>")

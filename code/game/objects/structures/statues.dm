@@ -9,7 +9,7 @@
 	var/oreAmount = 5
 	var/material_drop_type = /obj/item/stack/sheet/metal
 
-/obj/structure/statue/attackby(obj/item/W, mob/living/user, params)
+/obj/structure/statue/attackby__legacy__attackchain(obj/item/W, mob/living/user, params)
 	add_fingerprint(user)
 	if(!(flags & NODECONSTRUCT))
 		if(default_unfasten_wrench(user, W))
@@ -27,7 +27,6 @@
 			return
 	return ..()
 
-
 /obj/structure/statue/welder_act(mob/user, obj/item/I)
 	if(anchored)
 		return
@@ -38,7 +37,6 @@
 	if(I.use_tool(src, user, 40, volume = I.tool_volume))
 		WELDER_SLICING_SUCCESS_MESSAGE
 		deconstruct(TRUE)
-
 
 /obj/structure/statue/attack_hand(mob/living/user)
 	user.changeNext_move(CLICK_CD_MELEE)
@@ -73,7 +71,7 @@
 	desc = "This statue has a sickening green colour."
 	icon_state = "eng"
 
-/obj/structure/statue/uranium/attackby(obj/item/W, mob/user, params)
+/obj/structure/statue/uranium/attackby__legacy__attackchain(obj/item/W, mob/user, params)
 	radiate()
 	return ..()
 
@@ -124,7 +122,7 @@
 			PlasmaBurn()
 	..()
 
-/obj/structure/statue/plasma/attackby(obj/item/W, mob/user, params)
+/obj/structure/statue/plasma/attackby__legacy__attackchain(obj/item/W, mob/user, params)
 	if(W.get_heat() > 300)//If the temperature of the object is over 300, then ignite
 		message_admins("[key_name_admin(user)] ignited a plasma statue at [COORD(loc)]")
 		log_game("[key_name(user)] ignited plasma a statue at [COORD(loc)]")
@@ -242,7 +240,7 @@
 	honk()
 	..()
 
-/obj/structure/statue/bananium/attackby(obj/item/W, mob/user, params)
+/obj/structure/statue/bananium/attackby__legacy__attackchain(obj/item/W, mob/user, params)
 	honk()
 	return ..()
 
@@ -266,7 +264,8 @@
 	desc = "A cheap statue of sandstone for a greyshirt."
 	icon_state = "assist"
 
-/obj/structure/statue/sandstone/venus //call me when we add marble i guess
+/// call me when we add marble i guess
+/obj/structure/statue/sandstone/venus
 	name = "statue of a pure maiden"
 	desc = "An ancient marble statue. The subject is depicted with a floor-length braid and is wielding a toolbox. By Jove, it's easily the most gorgeous depiction of a woman you've ever seen. The artist must truly be a master of his craft. Shame about the broken arm, though."
 	icon = 'icons/obj/statuelarge.dmi'
@@ -309,11 +308,11 @@
 	anchored = TRUE
 	oreAmount = 0
 
-/obj/structure/statue/russian_mulebot
+/obj/structure/statue/soviet_mulebot
 	name = "OXENbot"
-	desc = "Like a MULEbot, but more Russian and less functional.";
-	icon = 'icons/obj/aibots.dmi';
-	icon_state = "mulebot0";
+	desc = "Like a MULEbot, but more socialist and less functional."
+	icon = 'icons/obj/aibots.dmi'
+	icon_state = "mulebot0"
 	anchored = TRUE
 	oreAmount = 10
 
@@ -332,12 +331,12 @@
 	desc = "Just like the ones you remember from childhood!"
 
 /obj/structure/snowman/built/Destroy()
-	new /obj/item/reagent_containers/food/snacks/grown/carrot(drop_location())
+	new /obj/item/food/grown/carrot(drop_location())
 	new /obj/item/grown/log(drop_location())
 	new /obj/item/grown/log(drop_location())
 	return ..()
 
-/obj/structure/snowman/built/attackby(obj/item/I, mob/user)
+/obj/structure/snowman/built/attackby__legacy__attackchain(obj/item/I, mob/user)
 	if(istype(I, /obj/item/snowball) && obj_integrity < max_integrity)
 		to_chat(user, "<span class='notice'>You patch some of the damage on [src] with [I].</span>")
 		obj_integrity = max_integrity

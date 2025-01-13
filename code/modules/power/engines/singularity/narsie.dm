@@ -1,7 +1,9 @@
-/obj/singularity/narsie //Moving narsie to a child object of the singularity so it can be made to function differently. --NEO
+/// Moving narsie to a child object of the singularity so it can be made to function differently. --NEO
+/obj/singularity/narsie
 	name = "Nar'sie's Avatar"
 	desc = "Your mind begins to bubble and ooze as it tries to comprehend what it sees."
 	icon = 'icons/obj/magic_terror.dmi'
+	icon_state = null
 	pixel_x = -89
 	pixel_y = -85
 	current_size = 9 //It moves/eats like a max-size singulo, aside from range. --NEO
@@ -17,6 +19,7 @@
 /obj/singularity/narsie/large
 	name = "Nar'Sie"
 	icon = 'icons/obj/narsie.dmi'
+	icon_state = "narsie"
 	// Pixel stuff centers Narsie.
 	pixel_x = -236
 	pixel_y = -256
@@ -27,8 +30,8 @@
 
 /obj/singularity/narsie/large/Initialize(mapload, starting_energy)
 	. = ..()
-	icon_state = SSticker.cultdat?.entity_icon_state
-	name = SSticker.cultdat?.entity_name
+	icon_state = GET_CULT_DATA(entity_icon_state, initial(icon_state))
+	name = GET_CULT_DATA(entity_name, initial(name))
 
 	var/sound/cry = sound(pick('sound/hallucinations/im_here1.ogg', 'sound/hallucinations/im_here2.ogg'))
 
@@ -39,9 +42,7 @@
 		to_chat(player, "<font size='15' color='red'><b> [uppertext(name)] HAS RISEN</b></font>")
 		SEND_SOUND(player, cry)
 
-	var/datum/game_mode/gamemode = SSticker.mode
-	if(gamemode)
-		gamemode.cult_objs.succesful_summon()
+	SSticker.mode?.cult_team?.successful_summon()
 
 	var/area/A = get_area(src)
 	if(A)
@@ -58,14 +59,8 @@
 /obj/singularity/narsie/large/Destroy()
 	to_chat(world, "<font size='15' color='red'><b> [uppertext(name)] HAS FALLEN</b></font>")
 	SEND_SOUND(world, sound('sound/hallucinations/wail.ogg'))
-	var/datum/game_mode/gamemode = SSticker.mode
-	if(gamemode)
-		gamemode.cult_objs.narsie_death()
-		for(var/datum/mind/cult_mind in SSticker.mode.cult)
-			if(cult_mind && cult_mind.current)
-				to_chat(cult_mind.current, "<span class='cultlarge'>RETRIBUTION!</span>")
-				to_chat(cult_mind.current, "<span class='cult'>Current goal: Slaughter the heretics!</span>")
-	..()
+	SSticker.mode?.cult_team?.narsie_death()
+	return ..()
 
 /obj/singularity/narsie/large/attack_ghost(mob/dead/observer/user as mob)
 	user.forceMove(get_turf(src)) //make_new_construct spawns harvesters at observers locations, could be used to get into admin rooms/CC
@@ -91,7 +86,7 @@
 /obj/singularity/narsie/proc/godsmack(atom/A)
 	if(isobj(A))
 		var/obj/O = A
-		O.ex_act(1)
+		O.ex_act(EXPLODE_DEVASTATE)
 		if(O) qdel(O)
 
 	else if(isturf(A))
@@ -101,7 +96,7 @@
 /obj/singularity/narsie/mezzer()
 	for(var/mob/living/carbon/M in oviewers(8, src))
 		if(M.stat == CONSCIOUS)
-			if(!iscultist(M))
+			if(!IS_CULTIST(M))
 				to_chat(M, "<span class='warning'>You feel your sanity crumble away in an instant as you gaze upon [src.name]...</span>")
 				M.Stun(6 SECONDS)
 
@@ -119,7 +114,6 @@
 	return
 
 /obj/singularity/narsie/proc/pickcultist() //Narsie rewards his cultists with being devoured first, then picks a ghost to follow. --NEO
-	var/list/cultists = list()
 	var/list/noncultists = list()
 	for(var/mob/living/carbon/food in GLOB.alive_mob_list) //we don't care about constructs or cult-Ians or whatever. cult-monkeys are fair game i guess
 		var/turf/pos = get_turf(food)
@@ -128,18 +122,12 @@
 		if(pos.z != src.z)
 			continue
 
-		if(iscultist(food))
-			cultists += food
-		else
+		if(!IS_CULTIST(food))
 			noncultists += food
 
-		if(length(cultists)) //cultists get higher priority
-			acquire(pick(cultists))
-			return
-
-		if(length(noncultists))
-			acquire(pick(noncultists))
-			return
+	if(length(noncultists))
+		acquire(pick(noncultists))
+		return
 
 	//no living humans, follow a ghost instead.
 	for(var/mob/dead/observer/ghost in GLOB.player_list)
@@ -148,10 +136,9 @@
 		var/turf/pos = get_turf(ghost)
 		if(pos.z != src.z)
 			continue
-		cultists += ghost
-	if(length(cultists))
-		acquire(pick(cultists))
-		return
+		noncultists += ghost
+	if(length(noncultists))
+		acquire(pick(noncultists))
 
 
 /obj/singularity/narsie/proc/acquire(mob/food)
@@ -159,12 +146,12 @@
 		return
 	if(!target)
 		return
-	to_chat(target, "<span class='cultlarge'>[uppertext(SSticker.cultdat.entity_name)] HAS LOST INTEREST IN YOU</span>")
+	to_chat(target, "<span class='cultlarge'>[uppertext(GET_CULT_DATA(entity_name, name))] HAS LOST INTEREST IN YOU</span>")
 	target = food
 	if(ishuman(target))
-		to_chat(target, "<span class ='cultlarge'>[uppertext(SSticker.cultdat.entity_name)] HUNGERS FOR YOUR SOUL</span>")
+		to_chat(target, "<span class ='cultlarge'>[uppertext(GET_CULT_DATA(entity_name, name))] HUNGERS FOR YOUR SOUL</span>")
 	else
-		to_chat(target, "<span class ='cultlarge'>[uppertext(SSticker.cultdat.entity_name)] HAS CHOSEN YOU TO LEAD HER TO HER NEXT MEAL</span>")
+		to_chat(target, "<span class ='cultlarge'>[uppertext(GET_CULT_DATA(entity_name, name))] HAS CHOSEN YOU TO LEAD HER TO HER NEXT MEAL</span>")
 
 //Wizard narsie
 /obj/singularity/narsie/wizard
@@ -181,7 +168,7 @@
 	icon = 'icons/obj/narsie_spawn_anim.dmi'
 	dir = SOUTH
 	move_self = FALSE
-	flick(SSticker.cultdat?.entity_spawn_animation, src)
+	flick(GET_CULT_DATA(entity_spawn_animation, "narsie_spawn_anim"), src)
 	sleep(11)
 	move_self = TRUE
 	icon = initial(icon)

@@ -25,11 +25,11 @@
 	new T(loc)
 	qdel(src)
 
-/obj/item/reagent_containers/food/drinks/bottle/random_drink
+/obj/item/reagent_containers/drinks/bottle/random_drink
 	name = "unlabelled drink"
 	icon = 'icons/obj/drinks.dmi'
 
-/obj/item/reagent_containers/food/drinks/bottle/random_drink/Initialize(mapload)
+/obj/item/reagent_containers/drinks/bottle/random_drink/Initialize(mapload)
 	. = ..()
 	var/list/possible_drinks = GLOB.drinks.Copy()
 	if(prob(50))
@@ -39,19 +39,18 @@
 	reagents.add_reagent(R, volume)
 	name = "unlabelled bottle"
 	icon_state = pick("alco-white","alco-green","alco-blue","alco-clear","alco-red")
-	pixel_x = rand(-5, 5)
-	pixel_y = rand(-5, 5)
+	scatter_atom()
 
 /obj/item/storage/pill_bottle/random_meds
 	name = "unlabelled pillbottle"
 	desc = "The sheer recklessness of this bottle's existence astounds you."
 	allow_wrap = FALSE
 	var/labelled = FALSE
+	scatter_distance = 10
 
 /obj/item/storage/pill_bottle/random_meds/Initialize(mapload)
 	. = ..()
-	pixel_x = rand(-10, 10)
-	pixel_y = rand(-10, 10)
+	scatter_atom()
 
 /obj/item/storage/pill_bottle/random_meds/populate_contents()
 	var/list/possible_meds_standard = GLOB.standard_medicines.Copy()
@@ -85,7 +84,7 @@
 /obj/item/storage/box/grenades
 	name = "tactical grenades"
 	desc = "A box with 6 tactical grenades."
-	icon_state = "flashbang"
+	icon_state = "grenade_box"
 
 /obj/item/storage/box/grenades/populate_contents()
 	var/static/list/grenadelist = list(

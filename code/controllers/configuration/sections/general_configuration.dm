@@ -8,15 +8,17 @@
 	var/server_features = "Medium RP, varied species/jobs"
 	/// Allow character OOC notes
 	var/allow_character_metadata = TRUE
-	/// Time in seconds for the pregame lobby
+	/// Time in seconds for the pregame lobby. Measured in seconds
 	var/lobby_time = 240
+	/// Default timeout for world reboot. Measured in seconds
+	var/restart_timeout = 75
 	/// Ban all Guest BYOND accounts
 	var/guest_ban = TRUE
 	/// Allow players to use AntagHUD?
 	var/allow_antag_hud = TRUE
 	/// Forbid players from rejoining if they use AntagHUD?
 	var/restrict_antag_hud_rejoin = TRUE
-	/// Enable respanws by default?
+	/// Enable respawns by default?
 	var/respawn_enabled = FALSE
 	/// Enable CID randomiser buster?
 	var/enabled_cid_randomiser_buster = FALSE
@@ -44,6 +46,8 @@
 	var/base_loadout_points = 5
 	/// Respawnability loss penalty for eary cryoing (minutes)
 	var/cryo_penalty_period = 30
+	/// Observers count as roundstart if they join from the main menu before this time (in minutes). Set to 0 to allow only-pregame start observers.
+	var/roundstart_observer_period = 5
 	/// Enable OOC emojis?
 	var/enable_ooc_emoji = TRUE
 	/// Auto start the game if on a local test server
@@ -80,6 +84,9 @@
 	var/revival_brain_life = 10 MINUTES
 	/// Enable random AI lawsets from the default=TRUE pool
 	var/random_ai_lawset = TRUE
+	/// Enable weather events initialized by SSweather. New weather events can still
+	/// be added during the round if this is disabled.
+	var/enable_default_weather_events = TRUE
 
 /datum/configuration_section/general_configuration/load_data(list/data)
 	// Use the load wrappers here. That way the default isnt made 'null' if you comment out the config line
@@ -89,8 +96,8 @@
 	CONFIG_LOAD_BOOL(guest_ban, data["guest_ban"])
 	CONFIG_LOAD_BOOL(allow_antag_hud, data["allow_antag_hud"])
 	CONFIG_LOAD_BOOL(restrict_antag_hud_rejoin, data["restrict_antag_hud_rejoin"])
-	CONFIG_LOAD_BOOL(respawn_enabled, data["respawn_enabled"])
 	CONFIG_LOAD_BOOL(enabled_cid_randomiser_buster, data["enable_cid_randomiser_buster"])
+	CONFIG_LOAD_BOOL(respawn_enabled, data["respawn_enabled"])
 	CONFIG_LOAD_BOOL(forbid_singulo_possession, data["prevent_admin_singlo_possession"])
 	CONFIG_LOAD_BOOL(popup_admin_pm, data["popup_admin_pm"])
 	CONFIG_LOAD_BOOL(allow_holidays, data["allow_holidays"])
@@ -113,11 +120,14 @@
 	CONFIG_LOAD_BOOL(enable_night_shifts, data["enable_night_shifts"])
 	CONFIG_LOAD_BOOL(reactionary_explosions, data["reactionary_explosions"])
 	CONFIG_LOAD_BOOL(random_ai_lawset, data["random_ai_lawset"])
+	CONFIG_LOAD_BOOL(enable_default_weather_events, data["enable_default_weather_events"])
 
 	// Numbers
 	CONFIG_LOAD_NUM(lobby_time, data["lobby_time"])
+	CONFIG_LOAD_NUM(restart_timeout, data["restart_timeout"])
 	CONFIG_LOAD_NUM(base_loadout_points, data["base_loadout_points"])
 	CONFIG_LOAD_NUM(cryo_penalty_period, data["cryo_penalty_period"])
+	CONFIG_LOAD_NUM(roundstart_observer_period, data["roundstart_observer_period"])
 	CONFIG_LOAD_NUM(minimum_client_build, data["minimum_client_build"])
 	CONFIG_LOAD_NUM(byond_account_age_threshold, data["byond_account_age_threshold"])
 	CONFIG_LOAD_NUM(max_client_cid_history, data["max_client_cid_history"])

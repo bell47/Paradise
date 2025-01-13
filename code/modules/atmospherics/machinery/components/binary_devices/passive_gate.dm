@@ -5,13 +5,23 @@
 	icon_state = "map"
 
 	name = "passive gate"
-	desc = "A one-way air valve that does not require power"
+	desc = "A one-way air valve that does not require power."
 
 	can_unwrench = TRUE
+	can_unwrench_while_on = FALSE
 
 	target_pressure = ONE_ATMOSPHERE
 
 	var/id = null
+
+/obj/machinery/atmospherics/binary/passive_gate/can_be_pulled(user, grab_state, force, show_message)
+	return FALSE
+
+/obj/machinery/atmospherics/binary/passive_gate/CtrlClick(mob/living/user)
+	if(can_use_shortcut(user))
+		toggle(user)
+		investigate_log("was turned [on ? "on" : "off"] by [key_name(user)]", "atmos")
+	return ..()
 
 /obj/machinery/atmospherics/binary/passive_gate/examine(mob/user)
 	. = ..()
@@ -30,7 +40,6 @@
 		add_underlay(T, node2, dir)
 
 /obj/machinery/atmospherics/binary/passive_gate/process_atmos()
-	..()
 	if(!on)
 		return 0
 
@@ -47,11 +56,11 @@
 		return 1
 
 	//Calculate necessary moles to transfer using PV = nRT
-	if((air1.total_moles() > 0) && (air1.temperature > 0))
+	if((air1.total_moles() > 0) && (air1.temperature() > 0))
 		var/pressure_delta = min(target_pressure - output_starting_pressure, (input_starting_pressure - output_starting_pressure) / 2)
 		//Can not have a pressure delta that would cause output_pressure > input_pressure
 
-		var/transfer_moles = pressure_delta * air2.volume/(air1.temperature * R_IDEAL_GAS_EQUATION)
+		var/transfer_moles = pressure_delta * air2.volume / (air1.temperature() * R_IDEAL_GAS_EQUATION)
 
 		//Actually transfer the gas
 		var/datum/gas_mixture/removed = air1.remove(transfer_moles)
@@ -76,10 +85,13 @@
 /obj/machinery/atmospherics/binary/passive_gate/attack_ghost(mob/user)
 	ui_interact(user)
 
-/obj/machinery/atmospherics/binary/passive_gate/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = FALSE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/machinery/atmospherics/binary/passive_gate/ui_state(mob/user)
+	return GLOB.default_state
+
+/obj/machinery/atmospherics/binary/passive_gate/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "AtmosPump", name, 310, 110, master_ui, state)
+		ui = new(user, src, "AtmosPump", name)
 		ui.open()
 
 /obj/machinery/atmospherics/binary/passive_gate/ui_data(mob/user)
@@ -115,11 +127,3 @@
 			. = TRUE
 	if(.)
 		investigate_log("was set to [target_pressure] kPa by [key_name(usr)]", "atmos")
-
-/obj/machinery/atmospherics/binary/passive_gate/attackby(obj/item/W, mob/user, params)
-	if(!istype(W, /obj/item/wrench))
-		return ..()
-	if(on)
-		to_chat(user, "<span class='alert'>You cannot unwrench this [src], turn it off first.</span>")
-		return 1
-	return ..()

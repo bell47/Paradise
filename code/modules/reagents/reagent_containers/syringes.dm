@@ -8,7 +8,6 @@
 	amount_per_transfer_from_this = 5
 	possible_transfer_amounts = null
 	volume = 15
-	sharp = TRUE
 	var/busy = FALSE
 	var/mode = SYRINGE_DRAW
 	var/projectile_type = /obj/item/projectile/bullet/dart/syringe
@@ -23,6 +22,11 @@
 		mode = SYRINGE_INJECT
 		update_icon()
 
+	var/static/list/loc_connections = list(
+		COMSIG_ATOM_ENTERED = PROC_REF(on_atom_entered),
+	)
+	AddElement(/datum/element/connect_loc, loc_connections)
+
 /obj/item/reagent_containers/syringe/on_reagent_change()
 	update_icon()
 
@@ -34,7 +38,7 @@
 	..()
 	update_icon()
 
-/obj/item/reagent_containers/syringe/attack_self(mob/user)
+/obj/item/reagent_containers/syringe/attack_self__legacy__attackchain(mob/user)
 	mode = !mode
 	update_icon()
 
@@ -42,14 +46,14 @@
 	..()
 	update_icon()
 
-/obj/item/reagent_containers/syringe/attack(mob/living/M, mob/living/user, def_zone)
+/obj/item/reagent_containers/syringe/attack__legacy__attackchain(mob/living/M, mob/living/user, def_zone)
 	return
 
-/obj/item/reagent_containers/syringe/attackby(obj/item/I, mob/user, params)
+/obj/item/reagent_containers/syringe/attackby__legacy__attackchain(obj/item/I, mob/user, params)
 	if(istype(I, /obj/item/storage/bag))
 		..()
 
-/obj/item/reagent_containers/syringe/afterattack(atom/target, mob/user , proximity)
+/obj/item/reagent_containers/syringe/afterattack__legacy__attackchain(atom/target, mob/user , proximity)
 	if(!proximity)
 		return
 	if(!target.reagents)
@@ -136,7 +140,7 @@
 
 				add_attack_logs(user, L, "Injected with [name] containing [contained], transfered [amount_per_transfer_from_this] units", reagents.harmless_helper() ? ATKLOG_ALMOSTALL : null)
 
-			if(istype(target, /obj/item/reagent_containers/food))
+			if(isfood(target))
 
 				var/list/chemicals = list()
 				for(var/datum/reagent/chem in reagents.reagent_list)
@@ -182,11 +186,14 @@
 		M.update_inv_l_hand()
 		M.update_inv_r_hand()
 
-/obj/item/reagent_containers/syringe/Crossed(mob/living/carbon/human/H, oldloc)
+/obj/item/reagent_containers/syringe/proc/on_atom_entered(datum/source, atom/movable/entered)
+	SIGNAL_HANDLER // COMSIG_ATOM_ENTERED
+
+	var/mob/living/carbon/human/H = entered
 	if(!istype(H) || !H.reagents || HAS_TRAIT(H, TRAIT_PIERCEIMMUNE) || ismachineperson(H))
 		return
 
-	if(H.floating || H.flying || H.buckled)
+	if(H.floating || HAS_TRAIT(H, TRAIT_FLYING) || H.buckled)
 		return
 
 	if(!IS_HORIZONTAL(H) && (H.shoes || (H.wear_suit && (H.wear_suit.body_parts_covered & FEET)) || (H.w_uniform && (H.w_uniform.body_parts_covered & FEET))))
@@ -272,3 +279,4 @@
 	amount_per_transfer_from_this = 50
 	volume = 50
 	list_reagents = list("toxin" = 15, "pancuronium" = 10, "cyanide" = 5, "facid" = 10, "fluorine" = 10)
+

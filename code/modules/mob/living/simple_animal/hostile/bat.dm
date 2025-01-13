@@ -1,5 +1,5 @@
 /mob/living/simple_animal/hostile/scarybat
-	name = "\improper space bats"
+	name = "space bats"
 	desc = "A swarm of cute little blood sucking bats that looks pretty pissed."
 	icon = 'icons/mob/bats.dmi'
 	icon_state = "bat"
@@ -9,7 +9,7 @@
 	mob_biotypes = MOB_ORGANIC | MOB_BEAST
 	speak_chance = 0
 	turns_per_move = 3
-	butcher_results = list(/obj/item/reagent_containers/food/snacks/meat = 1)
+	butcher_results = list(/obj/item/food/meat = 1)
 	response_help = "pets"
 	response_disarm = "gently pushes aside"
 	response_harm = "hits"
@@ -17,7 +17,6 @@
 	maxHealth = 20
 	health = 20
 	mob_size = MOB_SIZE_TINY
-	flying = TRUE
 	harm_intent_damage = 8
 	melee_damage_lower = 10
 	melee_damage_upper = 10
@@ -34,6 +33,8 @@
 
 	faction = list("scarybat")
 	gold_core_spawnable = HOSTILE_SPAWN
+
+	initial_traits = list(TRAIT_FLYING)
 
 /mob/living/simple_animal/hostile/scarybat/Initialize(mapload, mob/living/L)
 	. = ..()

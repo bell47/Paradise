@@ -1,6 +1,6 @@
 /obj/machinery/camera
 	name = "security camera"
-	desc = "It's used to monitor rooms."
+	desc = "Used by security teams and annoying AIs to watch over you."
 	icon = 'icons/obj/monitors.dmi'
 	icon_state = "camera"
 	power_state = ACTIVE_POWER_USE
@@ -36,6 +36,13 @@
 
 	var/toggle_sound = 'sound/items/wirecutter.ogg'
 	blocks_emissive = EMISSIVE_BLOCK_GENERIC
+	var/list/localMotionTargets = list()
+	var/detectTime = 0
+	var/area/station/ai_monitored/area_motion = null
+	var/alarm_delay = 30 // Don't forget, there's another 3 seconds in queueAlarm()
+	var/datum/proximity_monitor/proximity_monitor
+	/// If this camera doesnt add to camera chunks. Used by camera bugs.
+	var/non_chunking_camera = FALSE
 
 /obj/machinery/camera/Initialize(mapload, should_add_to_cameranet = TRUE)
 	. = ..()
@@ -50,13 +57,20 @@
 	if(part_of_camera_network)
 		GLOB.cameranet.addCamera(src)
 	if(isturf(loc))
-		LAZYADD(get_area(src).cameras, UID())
+		var/area/our_area = get_area(src)
+		LAZYADD(our_area.cameras, UID())
 	if(is_station_level(z) && prob(3) && !start_active)
 		turn_off(null, FALSE)
 		wires.cut_all()
 
 /obj/machinery/camera/proc/set_area_motion(area/A)
 	area_motion = A
+	create_prox_monitor()
+
+/obj/machinery/camera/proc/create_prox_monitor()
+	if(!proximity_monitor)
+		proximity_monitor = new(src, 1)
+		RegisterSignal(proximity_monitor, COMSIG_PARENT_QDELETING, PROC_REF(proximity_deleted))
 
 /obj/machinery/camera/Moved(atom/OldLoc, Dir, Forced)
 	. = ..()
@@ -67,9 +81,11 @@
 	kick_out_watchers()
 	QDEL_NULL(assembly)
 	QDEL_NULL(wires)
+	GLOB.cameranet.removeCamera(src)
 	GLOB.cameranet.cameras -= src
-	if(isarea(get_area(src)))
-		LAZYREMOVE(get_area(src).cameras, UID())
+	var/area/our_area = get_area(src)
+	if(our_area) // We should probably send out the warning alarms if this doesn't exist, because this should always have an area!
+		LAZYREMOVE(our_area.cameras, UID())
 	var/area/station/ai_monitored/A = get_area(src)
 	if(istype(A))
 		A.motioncameras -= src
@@ -112,6 +128,10 @@
 		return
 	..()
 
+/obj/machinery/camera/proc/proximity_deleted()
+	SIGNAL_HANDLER // COMSIG_PARENT_QDELETING
+	proximity_monitor = null
+
 /obj/machinery/camera/proc/setViewRange(num = CAMERA_VIEW_DISTANCE)
 	view_range = num
 	GLOB.cameranet.updateVisibility(src, 0)
@@ -121,12 +141,12 @@
 		toggle_cam(null, 0)
 	..()
 
-/obj/machinery/camera/attackby(obj/item/I, mob/living/user, params)
+/obj/machinery/camera/attackby__legacy__attackchain(obj/item/I, mob/living/user, params)
 	var/msg = "<span class='notice'>You attach [I] into the assembly inner circuits.</span>"
 	var/msg2 = "<span class='notice'>The camera already has that upgrade!</span>"
 
 	if(istype(I, /obj/item/stack/sheet/mineral/plasma) && panel_open)
-		if(!user.drop_item())
+		if(!user.canUnEquip(I, FALSE))
 			to_chat(user, "<span class='warning'>[I] is stuck to your hand!</span>")
 			return
 		if(!isEmpProof())
@@ -137,7 +157,7 @@
 		else
 			to_chat(user, "[msg2]")
 	else if(istype(I, /obj/item/assembly/prox_sensor) && panel_open)
-		if(!user.drop_item())
+		if(!user.canUnEquip(I, FALSE))
 			to_chat(user, "<span class='warning'>[I] is stuck to your hand!</span>")
 			return
 		if(!isMotion())
@@ -177,13 +197,13 @@
 				if(AI.control_disabled || (AI.stat == DEAD))
 					return
 				if(U.name == "Unknown")
-					to_chat(AI, "<b>[U]</b> holds <a href='?_src_=usr;show_paper=1;'>\a [itemname]</a> up to one of your cameras ...")
+					to_chat(AI, "<b>[U]</b> holds <a href='byond://?_src_=usr;show_paper=1;'>\a [itemname]</a> up to one of your cameras ...")
 				else
-					to_chat(AI, "<b><a href='?src=[AI.UID()];track=[html_encode(U.name)]'>[U]</a></b> holds <a href='?_src_=usr;show_paper=1;'>\a [itemname]</a> up to one of your cameras ...")
-				AI.last_paper_seen = "<HTML><HEAD><TITLE>[itemname]</TITLE></HEAD><BODY><TT>[info]</TT></BODY></HTML>"
+					to_chat(AI, "<b><a href='byond://?src=[AI.UID()];track=[html_encode(U.name)]'>[U]</a></b> holds <a href='byond://?_src_=usr;show_paper=1;'>\a [itemname]</a> up to one of your cameras ...")
+				AI.last_paper_seen = "<html><meta charset='utf-8'><head><title>[itemname]</title></head><body><tt>[info]</tt></body></html>"
 			else if(O.client && O.client.eye == src)
 				to_chat(O, "[U] holds \a [itemname] up to one of the cameras ...")
-				O << browse("<HTML><HEAD><TITLE>[itemname]</TITLE></HEAD><BODY><TT>[info]</TT></BODY></HTML>", "window=[itemname]")
+				O << browse("<html><meta charset='utf-8'><head><title>[itemname]</title></head><body><tt>[info]</tt></body></html>", "window=[itemname]")
 
 	else if(istype(I, /obj/item/laser_pointer))
 		var/obj/item/laser_pointer/L = I
@@ -271,7 +291,8 @@
 		return
 	status = TRUE
 	if(!emp_recover && isturf(loc))
-		LAZYADD(get_area(src).cameras, UID())
+		var/area/our_area = get_area(src)
+		LAZYADD(our_area.cameras, UID())
 
 	if(display_message)
 		if(user)
@@ -289,8 +310,9 @@
 
 	if(!emped)
 		status = FALSE
-		if(isarea(get_area(src)))
-			LAZYREMOVE(get_area(src).cameras, UID())
+		var/area/our_area = get_area(src)
+		if(our_area)
+			LAZYREMOVE(our_area.cameras, UID())
 
 	set_light(0)
 
@@ -390,7 +412,7 @@
 
 /obj/machinery/camera/get_remote_view_fullscreens(mob/user)
 	if(view_range == short_range) //unfocused
-		user.overlay_fullscreen("remote_view", /obj/screen/fullscreen/impaired, 2)
+		user.overlay_fullscreen("remote_view", /atom/movable/screen/fullscreen/stretch/impaired, 2)
 
 /obj/machinery/camera/update_remote_sight(mob/living/user)
 	if(isXRay() && isAI(user))
@@ -405,7 +427,8 @@
 	..()
 	return TRUE
 
-/obj/machinery/camera/portable //Cameras which are placed inside of things, such as helmets.
+/// Cameras which are placed inside of things, such as helmets.
+/obj/machinery/camera/portable
 	start_active = TRUE // theres no real way to reactivate these, so never break them when they init
 	var/turf/prev_turf
 

@@ -1,5 +1,6 @@
 /obj/item/paper_bin
 	name = "paper bin"
+	desc = "The second-most important part of bureaucracy, after the pen of course."
 	icon = 'icons/obj/bureaucracy.dmi'
 	icon_state = "paper_bin1"
 	item_state = "sheet-metal"
@@ -36,18 +37,18 @@
 
 	if(over_object == M)
 		if(!remove_item_from_storage(M))
-			M.unEquip(src)
+			M.drop_item_to_ground(src)
 		M.put_in_hands(src)
 
-	else if(istype(over_object, /obj/screen))
+	else if(is_screen_atom(over_object))
 		switch(over_object.name)
 			if("r_hand")
 				if(!remove_item_from_storage(M))
-					M.unEquip(src)
+					M.drop_item_to_ground(src)
 				M.put_in_r_hand(src)
 			if("l_hand")
 				if(!remove_item_from_storage(M))
-					M.unEquip(src)
+					M.drop_item_to_ground(src)
 				M.put_in_l_hand(src)
 
 	add_fingerprint(M)
@@ -68,14 +69,24 @@
 			update_icon()
 
 		var/obj/item/paper/P
-		if(papers.len > 0)	//If there's any custom paper on the stack, use that instead of creating a new paper.
-			P = papers[papers.len]
+		if(length(papers) > 0)	//If there's any custom paper on the stack, use that instead of creating a new paper.
+			P = papers[length(papers)]
 			papers.Remove(P)
 		else
-			if(letterhead_type && alert("Choose a style",,"Letterhead","Blank")=="Letterhead")
-				P = new letterhead_type
-			else
-				P = new /obj/item/paper
+			var/choice = letterhead_type ? tgui_alert(user, "Choose a style", "Paperbin", list("Letterhead", "Blank", "Cancel")) : "Blank"
+			if(isnull(choice) || !Adjacent(user))
+				return
+			switch(choice)
+				if("Letterhead")
+					P = new letterhead_type
+				if("Blank")
+					P = new /obj/item/paper
+				if("Cancel")
+					return
+
+			if(isnull(P))
+				return
+
 			if(SSholiday.holidays && SSholiday.holidays[APRIL_FOOLS])
 				if(prob(30))
 					P.info = "<font face=\"[P.crayonfont]\" color=\"red\"><b>HONK HONK HONK HONK HONK HONK HONK<br>HOOOOOOOOOOOOOOOOOOOOOONK<br>APRIL FOOLS</b></font>"
@@ -85,8 +96,7 @@
 		P.loc = user.loc
 		user.put_in_hands(P)
 		P.add_fingerprint(user)
-		P.pixel_x = rand(-9, 9) // Random position
-		P.pixel_y = rand(-8, 8)
+		P.scatter_atom()
 		to_chat(user, "<span class='notice'>You take [P] out of [src].</span>")
 	else
 		to_chat(user, "<span class='notice'>[src] is empty!</span>")
@@ -95,7 +105,7 @@
 	return
 
 
-/obj/item/paper_bin/attackby(obj/item/paper/i as obj, mob/user as mob, params)
+/obj/item/paper_bin/attackby__legacy__attackchain(obj/item/paper/i as obj, mob/user as mob, params)
 	if(istype(i))
 		user.drop_item()
 		i.loc = src
@@ -132,8 +142,8 @@
 			update_icon()
 
 		var/obj/item/paper/carbon/P
-		if(papers.len > 0)	//If there's any custom paper on the stack, use that instead of creating a new paper.
-			P = papers[papers.len]
+		if(length(papers) > 0)	//If there's any custom paper on the stack, use that instead of creating a new paper.
+			P = papers[length(papers)]
 			papers.Remove(P)
 		else
 			P = new /obj/item/paper/carbon

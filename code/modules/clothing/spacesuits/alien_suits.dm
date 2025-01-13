@@ -32,6 +32,7 @@
 //Unathi space gear. Huge and restrictive.
 /obj/item/clothing/head/helmet/space/unathi
 	icon = 'icons/obj/clothing/species/unathi/hats.dmi'
+	icon_state = null
 	species_restricted = list("Unathi")
 	sprite_sheets = list(
 		"Unathi" = 'icons/mob/clothing/species/unathi/helmet.dmi'
@@ -46,6 +47,7 @@
 
 /obj/item/clothing/suit/space/unathi
 	icon = 'icons/obj/clothing/species/unathi/suits.dmi'
+	icon_state = null
 	species_restricted = list("Unathi")
 	sprite_sheets = list(
 		"Unathi" = 'icons/mob/clothing/species/unathi/suit.dmi'
@@ -79,7 +81,9 @@
 	armor = list(MELEE = 35, BULLET = 35, LASER = 20, ENERGY = 10, BOMB = 20, RAD = 20, FIRE = 200, ACID = 285)
 	heat_protection = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
 	max_heat_protection_temperature = SPACE_SUIT_MAX_TEMP_PROTECT
+	dyeable = FALSE
 	icon = 'icons/obj/clothing/species/vox/suits.dmi'
+	icon_state = null
 	species_restricted = list("Vox")
 	sprite_sheets = list(
 		"Vox" = 'icons/mob/clothing/species/vox/suit.dmi')
@@ -89,6 +93,7 @@
 	flags = STOPSPRESSUREDMAGE
 	flags_cover = HEADCOVERSEYES
 	icon = 'icons/obj/clothing/species/vox/hats.dmi'
+	icon_state = null
 	species_restricted = list("Vox")
 	sprite_sheets = list(
 		"Vox" = 'icons/mob/clothing/species/vox/head.dmi')
@@ -207,12 +212,11 @@
 	species_restricted = list("Vox")
 	sprite_sheets = list(
 		"Vox" = 'icons/mob/clothing/species/vox/feet.dmi')
+	multiple_icons = FALSE
 
-/obj/item/clothing/shoes/magboots/vox/attack_self(mob/user)
+/obj/item/clothing/shoes/magboots/vox/attack_self__legacy__attackchain(mob/user)
 	if(magpulse)
-		flags &= ~NOSLIP
-		magpulse = FALSE
-		flags |= NODROP
+		flags &= ~NODROP
 		to_chat(user, "You relax your deathgrip on the flooring.")
 	else
 		//make sure these can only be used when equipped.
@@ -220,22 +224,20 @@
 			return
 		var/mob/living/carbon/human/H = user
 		if(H.shoes != src)
-			to_chat(user, "<span class='warning>You will have to put on [src] before you can do that.</span>")
+			to_chat(user, "<span class='warning'>You will have to put on [src] before you can do that.</span>")
 			return
-
-		flags |= NOSLIP
-		magpulse = TRUE
-		flags &= ~NODROP	//kinda hard to take off magclaws when you are gripping them tightly.
+		flags |= NODROP	//kinda hard to take off magclaws when you are gripping them tightly.
 		to_chat(user, "You dig your claws deeply into the flooring, bracing yourself.")
 		to_chat(user, "It would be hard to take off [src] without relaxing your grip first.")
+	return ..()
 
 //In case they somehow come off while enabled.
 /obj/item/clothing/shoes/magboots/vox/dropped(mob/user as mob)
 	..()
 	if(magpulse)
 		user.visible_message("[src] go limp as they are removed from [usr]'s feet.", "[src] go limp as they are removed from your feet.")
-		flags &= ~NOSLIP
 		magpulse = FALSE
+		no_slip = FALSE
 		flags &= ~NODROP
 
 /obj/item/clothing/shoes/magboots/vox/examine(mob/user)

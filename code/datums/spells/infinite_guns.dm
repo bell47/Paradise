@@ -1,19 +1,18 @@
-/obj/effect/proc_holder/spell/infinite_guns
+/datum/spell/infinite_guns
 	name = "Lesser Summon Guns"
 	desc = "Why reload when you have infinite guns? Summons an unending stream of bolt action rifles. Requires both hands free to use."
 	invocation_type = "none"
 
-	school = "conjuration"
 	base_cooldown = 600
 	clothes_req = TRUE
 	cooldown_min = 10 //Gun wizard
 	action_icon_state = "bolt_action"
 	var/gun_type = /obj/item/gun/projectile/shotgun/boltaction/enchanted
 
-/obj/effect/proc_holder/spell/infinite_guns/create_new_targeting()
+/datum/spell/infinite_guns/create_new_targeting()
 	return new /datum/spell_targeting/self
 
-/obj/effect/proc_holder/spell/infinite_guns/cast(list/targets, mob/user = usr)
+/datum/spell/infinite_guns/cast(list/targets, mob/user = usr)
 	for(var/mob/living/carbon/C in targets)
 		C.drop_item()
 		C.swap_hand()
@@ -21,11 +20,10 @@
 		var/obj/item/gun/projectile/shotgun/boltaction/enchanted/GUN = new gun_type()
 		C.put_in_hands(GUN)
 
-/obj/effect/proc_holder/spell/infinite_guns/fireball
+/datum/spell/infinite_guns/fireball
 	name = "Rapid-fire Fireball"
 	desc = "Multiple Fireballs. Need I explain more? Requires both hands free to use."
 
-	school = "evocation"
 	base_cooldown = 30 SECONDS
 	clothes_req = FALSE
 	invocation = "ONI SOMA-SOMA-SOMA"

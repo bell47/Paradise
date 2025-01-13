@@ -57,17 +57,17 @@
 	. = ..()
 	if(!.)
 		return
-	mod.boots.flags |= NOSLIP
+	ADD_TRAIT(mod.wearer, TRAIT_NOSLIP, UID())
 	mod.slowdown += slowdown_active
-	mod.boots.magbooted = TRUE
+	ADD_TRAIT(mod.wearer, TRAIT_MAGPULSE, "magbooted")
 
 /obj/item/mod/module/magboot/on_deactivation(display_message = TRUE, deleting = FALSE)
 	. = ..()
 	if(!.)
 		return
-	mod.boots.flags ^= NOSLIP
+	REMOVE_TRAIT(mod.wearer, TRAIT_NOSLIP, UID())
 	mod.slowdown -= slowdown_active
-	mod.boots.magbooted = FALSE
+	REMOVE_TRAIT(mod.wearer, TRAIT_MAGPULSE, "magbooted")
 
 /obj/item/mod/module/magboot/advanced
 	name = "MOD advanced magnetic stability module"
@@ -114,13 +114,16 @@
 	return ..()
 
 /obj/item/mod/module/tether/on_select_use(atom/target)
+	if(get_turf(target) == get_turf(src)) // Put this check before the parent call so the cooldown won't start if it fails
+		return FALSE
+
 	. = ..()
 	if(!.)
 		return
 	var/obj/item/projectile/tether = new /obj/item/projectile/tether(get_turf(mod.wearer))
 	tether.original = target
 	tether.firer = mod.wearer
-	tether.preparePixelProjectile(target, get_turf(target), mod.wearer)
+	tether.preparePixelProjectile(target, mod.wearer)
 	tether.fire()
 	playsound(src, 'sound/weapons/batonextend.ogg', 25, TRUE)
 	INVOKE_ASYNC(tether, TYPE_PROC_REF(/obj/item/projectile/tether, make_chain))
@@ -130,22 +133,25 @@
 	name = "tether"
 	icon_state = "tether_projectile"
 	icon = 'icons/obj/clothing/modsuit/mod_modules.dmi'
+	var/chain_icon_state = "line"
 	speed = 2
 	damage = 5
 	range = 15
 	hitsound = 'sound/weapons/batonextend.ogg'
 	hitsound_wall = 'sound/weapons/batonextend.ogg'
+	///How fast the tether will throw the user at the target
+	var/yank_speed = 1
 
 /obj/item/projectile/tether/proc/make_chain()
 	if(firer)
-		chain = Beam(firer, icon_state = "line", icon = 'icons/obj/clothing/modsuit/mod_modules.dmi', time = 10 SECONDS, maxdistance = 15)
+		chain = Beam(firer, chain_icon_state, icon, time = 10 SECONDS, maxdistance = range)
 
 /obj/item/projectile/tether/on_hit(atom/target)
 	. = ..()
 	if(firer && isliving(firer))
 		var/mob/living/L = firer
 		L.apply_status_effect(STATUS_EFFECT_IMPACT_IMMUNE)
-		L.throw_at(target, 15, 1, L, FALSE, FALSE, callback = CALLBACK(L, TYPE_PROC_REF(/mob/living, remove_status_effect), STATUS_EFFECT_IMPACT_IMMUNE))
+		L.throw_at(target, 15, yank_speed, L, FALSE, FALSE, callback = CALLBACK(L, TYPE_PROC_REF(/mob/living, remove_status_effect), STATUS_EFFECT_IMPACT_IMMUNE), block_movement = FALSE)
 
 /obj/item/projectile/tether/Destroy()
 	QDEL_NULL(chain)
@@ -174,7 +180,6 @@
 	item_state = "nozzleatmos"
 	safety = 0
 	max_water = 500
-	power = 8
 	precision = 1
 	cooling_power = 5
 	w_class = WEIGHT_CLASS_HUGE
@@ -183,7 +188,7 @@
 	var/metal_synthesis_charge = 5
 	COOLDOWN_DECLARE(nanofrost_cooldown)
 
-/obj/item/extinguisher/mini/mod/attack_self(mob/user)
+/obj/item/extinguisher/mini/mod/attack_self__legacy__attackchain(mob/user)
 	switch(nozzle_mode)
 		if(EXTINGUISHER)
 			nozzle_mode = NANOFROST
@@ -215,7 +220,7 @@
 		if(METAL_FOAM)
 			. += "<span class='notice'>[src] is currently set to metal foam mode.</span>"
 
-/obj/item/extinguisher/mini/mod/afterattack(atom/target, mob/user)
+/obj/item/extinguisher/mini/mod/afterattack__legacy__attackchain(atom/target, mob/user)
 	var/is_adjacent = user.Adjacent(target)
 	if(is_adjacent && AttemptRefill(target, user))
 		return
@@ -249,8 +254,8 @@
 			if(reagents.total_volume < 10)
 				to_chat(user, "<span class='warning'>You need at least 10 units of water to use the metal foam synthesizer!</span>")
 				return
-			var/obj/effect/particle_effect/foam/F = new/obj/effect/particle_effect/foam(get_turf(target), 1)
-			F.amount = 0
+			var/obj/effect/particle_effect/foam/metal/F = new /obj/effect/particle_effect/foam/metal(get_turf(target), TRUE)
+			F.spread_amount = 0
 			reagents.remove_any(10)
 			metal_synthesis_charge--
 			addtimer(CALLBACK(src, PROC_REF(decrease_metal_charge)), 5 SECONDS)

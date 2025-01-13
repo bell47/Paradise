@@ -8,22 +8,16 @@ GLOBAL_DATUM_INIT(global_prizes, /datum/prizes, new())
 		prizes += new itempath()
 
 /datum/prizes/proc/PlaceOrder(obj/machinery/prize_counter/prize_counter, itemID)
-	if(!prize_counter.Adjacent(usr))
-		to_chat(usr, "<span class='warning'>You need to be closer!</span>")
-		return
-	if(!prize_counter)
-		return 0
 	var/datum/prize_item/item = GLOB.global_prizes.prizes[itemID]
+	if(!prize_counter || prize_counter.tickets < item.cost)
+		return
 	if(!item)
-		return 0
-	if(prize_counter.tickets >= item.cost)
-		new item.typepath(prize_counter.loc)
-		prize_counter.tickets -= item.cost
-		to_chat(usr, "<span class='notice'>Enjoy your prize!</span>")
-		return TRUE
-	else
-		to_chat(usr, "<span class='warning'>Not enough tickets!</span>")
-		return FALSE
+		return
+
+	new item.typepath(prize_counter.loc)
+	prize_counter.tickets -= item.cost
+	to_chat(usr, "<span class='notice'>Enjoy your prize!</span>")
+	playsound(prize_counter, 'sound/machines/machine_vend.ogg', 50, TRUE)
 
 //////////////////////////////////////
 //			prize_item datum		//
@@ -116,6 +110,12 @@ GLOBAL_DATUM_INIT(global_prizes, /datum/prizes, new())
 	desc = "Reload your toy revolver with style."
 	typepath = /obj/item/ammo_box/caps
 	cost = 30
+
+/datum/prize_item/firecracker
+	name = "Firecracker Grenade"
+	desc = "A loud and obnoxious firecracker. Hold away from ears and small children."
+	typepath = /obj/item/grenade/firecracker
+	cost = 50
 
 /datum/prize_item/wallet
 	name = "Cheap Wallet"
@@ -236,13 +236,13 @@ GLOBAL_DATUM_INIT(global_prizes, /datum/prizes, new())
 /datum/prize_item/action_figure
 	name = "Random Action Figure"
 	desc = "A random action figure, collect them all!"
-	typepath = /obj/item/toy/prizeball/figure
+	typepath = /obj/item/toy/prizeball/action_figure
 	cost = 75
 
-/datum/prize_item/AI
+/datum/prize_item/ai
 	name = "Toy AI Unit"
 	desc = "Law 1: Maximize fun for crew."
-	typepath = /obj/item/toy/AI
+	typepath = /obj/item/toy/ai
 	cost = 75
 
 /datum/prize_item/capgun
@@ -280,12 +280,6 @@ GLOBAL_DATUM_INIT(global_prizes, /datum/prizes, new())
 	desc = "A cool-looking turtleneck."
 	typepath = /obj/item/clothing/under/syndicate/tacticool
 	cost = 90
-
-/datum/prize_item/nanomob_booster
-	name = "Nano-Mob Hunter Trading Card Booster Pack"
-	desc = "Contains 6 random Nano-Mob Hunter Trading Cards. May contain a holographic card!"
-	typepath = /obj/item/storage/box/nanomob_booster_pack
-	cost = 100
 
 /datum/prize_item/fakespell
 	name = "Fake Spellbook"
@@ -399,4 +393,4 @@ GLOBAL_DATUM_INIT(global_prizes, /datum/prizes, new())
 	name = "Awesome Bike!"
 	desc = "WOAH."
 	typepath = /obj/vehicle/bike
-	cost = 10000	//max stack + 1 tickets.
+	cost = 7000

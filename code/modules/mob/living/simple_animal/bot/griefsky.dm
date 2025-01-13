@@ -1,4 +1,5 @@
-/mob/living/simple_animal/bot/secbot/griefsky //This bot is powerful. If you managed to get 4 eswords somehow, you deserve this horror. Emag him for best results.
+/// This bot is powerful. If you managed to get 4 eswords somehow, you deserve this horror. Emag him for best results.
+/mob/living/simple_animal/bot/secbot/griefsky
 	name = "\improper General Griefsky"
 	desc = "Is that a secbot with four eswords in its arms...?"
 	icon_state = "griefsky0"
@@ -6,7 +7,8 @@
 	maxHealth = 100
 	base_icon = "griefsky"
 	window_name = "Automatic Security Unit v3.0"
-
+	bot_type = GRIEF_BOT
+	model = "Griefsky"
 	var/spin_icon = "griefsky-c"  // griefsky and griefsky junior have dif icons
 	var/weapon = /obj/item/melee/energy/sword/saber
 	var/block_chance = 50   //block attacks
@@ -18,9 +20,10 @@
 	var/spam_flag = 0
 	var/frustration_number = 15
 
-/mob/living/simple_animal/bot/secbot/griefsky/toy  //A toy version of general griefsky!
+/// A toy version of general griefsky!
+/mob/living/simple_animal/bot/secbot/griefsky/toy
 	name = "Genewul Giftskee"
-	desc = "An adorable looking secbot with four toy swords taped to its arms"
+	desc = "An adorable looking secbot with four toy swords taped to its arms."
 	spin_icon = "griefskyj-c"
 	health = 50
 	maxHealth = 50
@@ -39,16 +42,15 @@
 
 /mob/living/simple_animal/bot/secbot/griefsky/back_to_idle()
 	..()
-	playsound(loc, 'sound/weapons/saberoff.ogg', 50, 1, -1)
+	playsound(loc, 'sound/weapons/saberoff.ogg', 50, TRUE, -1)
 
 /mob/living/simple_animal/bot/secbot/griefsky/emag_act(mob/user)
 	..()
 	light_color = LIGHT_COLOR_PURE_RED //if you see a red one. RUN!!
 
-/mob/living/simple_animal/bot/secbot/griefsky/Crossed(atom/movable/AM, oldloc)
-	..()
-	if(ismob(AM) && AM == target)
-		var/mob/living/carbon/C = AM
+/mob/living/simple_animal/bot/secbot/griefsky/on_atom_entered(datum/source, atom/movable/entered)
+	if(iscarbon(entered) && entered == target)
+		var/mob/living/carbon/C = entered
 		visible_message("[src] flails his swords and pushes [C] out of it's way!" )
 		C.KnockDown(4 SECONDS)
 
@@ -71,13 +73,13 @@
 	retaliate(P.firer)
 	if((icon_state == spin_icon) && (prob(block_chance_ranged))) //only when the eswords are on
 		visible_message("[src] deflects [P] with its energy swords!")
-		playsound(loc, 'sound/weapons/blade1.ogg', 50, 1, 0)
+		playsound(loc, 'sound/weapons/blade1.ogg', 50, TRUE, 0)
 	else
 		..()
 
 /mob/living/simple_animal/bot/secbot/griefsky/proc/sword_attack(mob/living/carbon/C)     // esword attack
 	do_attack_animation(C)
-	playsound(loc, 'sound/weapons/blade1.ogg', 50, 1, -1)
+	playsound(loc, 'sound/weapons/blade1.ogg', 50, TRUE, -1)
 	addtimer(CALLBACK(src, PROC_REF(do_sword_attack), C), 2)
 
 /mob/living/simple_animal/bot/secbot/griefsky/proc/do_sword_attack(mob/living/carbon/C)
@@ -110,49 +112,50 @@
 			icon_state = "griefsky1"
 			walk_to(src,0)
 			set_path(null)
-			look_for_perp()	// see if any criminals are in range
+			if(find_new_target())
+				return	// see if any criminals are in range
 			if(!mode && auto_patrol)	// still idle, and set to patrol
 				mode = BOT_START_PATROL	// switch to patrol mode
 		if(BOT_HUNT)		// hunting for perp
 			icon_state = spin_icon
-			playsound(loc,'sound/effects/spinsabre.ogg',50,1,-1)
+			playsound(loc,'sound/effects/spinsabre.ogg',50, TRUE,-1)
 			if(frustration >= frustration_number) // general beepsky doesn't give up so easily, jedi scum
 				walk_to(src,0)
 				set_path(null)
 				back_to_idle()
 				return
-			if(target)		// make sure target exists
-				if(target.stat == !DEAD)
-					if(Adjacent(target) && isturf(target.loc))	// if right next to perp
-						target_lastloc = target.loc
-						sword_attack(target)
-						anchored = TRUE
-						frustration++
-						return
-					else								// not next to perp
-						var/turf/olddist = get_dist(src, target)
-						walk_to(src, target,1,3) //he's a fast fucker
-						if((get_dist(src, target)) >= (olddist))
-							frustration++
-						else
-							frustration = 0
-				else
-					back_to_idle()
-					speak("You fool")
-			else
+
+			if(!target)		// make sure target exists
 				back_to_idle()
+				speak("You fool")
+				return
+
+			if(target.stat == DEAD)
+				back_to_idle()
+				return
+
+			if(Adjacent(target) && isturf(target.loc))	// if right next to perp
+				target_lastloc = target.loc
+				sword_attack(target)
+				anchored = TRUE
+				frustration++
+				return							// not next to perp
+
+			try_chasing_target(target)
 
 		if(BOT_START_PATROL)
-			look_for_perp()
+			if(find_new_target())
+				return
 			start_patrol()
 
 		if(BOT_PATROL)
 			icon_state = "griefsky1"
-			look_for_perp()
+			if(find_new_target())
+				return
 			bot_patrol()
 	return
 
-/mob/living/simple_animal/bot/secbot/griefsky/look_for_perp()
+/mob/living/simple_animal/bot/secbot/griefsky/find_new_target()
 	anchored = FALSE
 	for(var/mob/living/carbon/C in view(7,src)) //Let's find us a criminal
 		if((C.stat) || (C.handcuffed))
@@ -163,26 +166,24 @@
 
 		threatlevel = C.assess_threat(src)
 
-		if(!threatlevel)
+		if(!threatlevel || threatlevel < 4)
 			continue
 
-		else if(threatlevel >= 4)
-			target = C
-			oldtarget_name = C.name
-			speak("You are a bold one")
-			playsound(src,'sound/weapons/saberon.ogg',50,TRUE,-1)
-			visible_message("[src] ignites his energy swords!")
-			icon_state = "griefsky-c"
-			visible_message("<b>[src]</b> points at [C.name]!")
-			mode = BOT_HUNT
-			INVOKE_ASYNC(src, PROC_REF(handle_automated_action))
-			break
-		else
-			continue
+		target = C
+		oldtarget_name = C.name
+		speak("You are a bold one")
+		playsound(src,'sound/weapons/saberon.ogg', 50, TRUE, -1)
+		visible_message("[src] ignites his energy swords!")
+		icon_state = "griefsky-c"
+		visible_message("<b>[src]</b> points at [C.name]!")
+		mode = BOT_HUNT
+		INVOKE_ASYNC(src, PROC_REF(handle_automated_action))
+		return TRUE
+	return FALSE
 
 /mob/living/simple_animal/bot/secbot/griefsky/explode()
 	walk_to(src,0)
-	visible_message("<span class='boldannounce'>[src] lets out a huge cough as it blows apart!</span>")
+	visible_message("<span class='boldannounceic'>[src] lets out a huge cough as it blows apart!</span>")
 	var/turf/Tsec = get_turf(src)
 	new /obj/item/assembly/prox_sensor(Tsec)
 	var/obj/item/secbot_assembly/Sa = new /obj/item/secbot_assembly(Tsec)
@@ -205,18 +206,7 @@
 
 //this section is blocking attack
 
-/mob/living/simple_animal/bot/secbot/griefsky/bullet_act(obj/item/projectile/P) //so uncivilized
-	retaliate(P.firer)
-	if((icon_state == spin_icon) && (prob(block_chance_ranged))) //only when the eswords are on
-		visible_message("[src] deflects [P] with its energy swords!")
-		playsound(loc, 'sound/weapons/blade1.ogg', 50, 1, 0)
-	else
-		..()
-
-/mob/living/simple_animal/bot/secbot/griefsky/proc/special_retaliate_after_attack(mob/user) //allows special actions to take place after being attacked.
-	return
-
-/mob/living/simple_animal/bot/secbot/griefsky/special_retaliate_after_attack(mob/user)
+/mob/living/simple_animal/bot/secbot/griefsky/proc/special_retaliate_after_attack(mob/user)
 	if(icon_state != spin_icon)
 		return
 	if(prob(block_chance_melee))
@@ -231,7 +221,7 @@
 			return
 	return ..()
 
-/mob/living/simple_animal/bot/secbot/griefsky/attackby(obj/item/W, mob/user, params) //cant touch or attack him while spinning
+/mob/living/simple_animal/bot/secbot/griefsky/attackby__legacy__attackchain(obj/item/W, mob/user, params) //cant touch or attack him while spinning
 	if(src.icon_state == spin_icon)
 		if(prob(block_chance_melee))
 			user.changeNext_move(CLICK_CD_MELEE)

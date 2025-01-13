@@ -13,13 +13,6 @@
 	var/gravity_check = TRUE
 	hud_possible = list(JANI_HUD)
 
-/obj/effect/decal/cleanable/Initialize(mapload)
-	. = ..()
-	var/datum/atom_hud/data/janitor/jani_hud = GLOB.huds[DATA_HUD_JANITOR]
-	prepare_huds()
-	jani_hud.add_to_hud(src)
-	jani_hud_set_sign()
-
 /obj/effect/decal/cleanable/proc/replace_decal(obj/effect/decal/cleanable/C) // Returns true if we should give up in favor of the pre-existing decal
 	if(mergeable_decal)
 		return TRUE
@@ -34,17 +27,15 @@
 
 //Add "bloodiness" of this blood's type, to the human's shoes
 //This is on /cleanable because fuck this ancient mess
-/obj/effect/decal/cleanable/blood/Crossed(atom/movable/O)
-	..()
-
-	if(!ishuman(O))
+/obj/effect/decal/cleanable/blood/proc/on_atom_entered(datum/source, atom/movable/entered)
+	if(!ishuman(entered))
 		return
 
-	if(!gravity_check && ishuman(O))
-		bloodyify_human(O)
+	if(!gravity_check && ishuman(entered))
+		bloodyify_human(entered)
 
 	if(!off_floor)
-		var/mob/living/carbon/human/H = O
+		var/mob/living/carbon/human/H = entered
 		var/obj/item/organ/external/l_foot = H.get_organ("l_foot")
 		var/obj/item/organ/external/r_foot = H.get_organ("r_foot")
 		var/hasfeet = TRUE
@@ -63,7 +54,7 @@
 			bloodiness -= add_blood
 			S.bloody_shoes[blood_state] = min(MAX_SHOE_BLOODINESS, S.bloody_shoes[blood_state] + add_blood)
 			S.bloody_shoes[BLOOD_BASE_ALPHA] = BLOODY_FOOTPRINT_BASE_ALPHA * (alpha/255)
-			if(blood_DNA && blood_DNA.len)
+			if(blood_DNA && length(blood_DNA))
 				S.add_blood(H.blood_DNA, basecolor)
 			S.blood_state = blood_state
 			S.blood_color = basecolor
@@ -94,8 +85,12 @@
 
 /obj/effect/decal/cleanable/Initialize(mapload)
 	. = ..()
-	if(try_merging_decal())
-		return TRUE
+	prepare_huds()
+	if(should_merge_decal(loc))
+		return INITIALIZE_HINT_QDEL
+	var/datum/atom_hud/data/janitor/jani_hud = GLOB.huds[DATA_HUD_JANITOR]
+	jani_hud.add_to_hud(src)
+	jani_hud_set_sign()
 	if(random_icon_states && length(src.random_icon_states) > 0)
 		src.icon_state = pick(src.random_icon_states)
 	if(smoothing_flags)
@@ -107,16 +102,17 @@
 /obj/effect/decal/cleanable/Destroy()
 	if(smoothing_flags)
 		QUEUE_SMOOTH_NEIGHBORS(src)
+	var/datum/atom_hud/data/janitor/jani_hud = GLOB.huds[DATA_HUD_JANITOR]
+	jani_hud.remove_from_hud(src)
 	return ..()
 
-/obj/effect/decal/cleanable/proc/try_merging_decal(turf/T)
+/obj/effect/decal/cleanable/proc/should_merge_decal(turf/T)
 	if(!T)
 		T = loc
 	if(isturf(T))
 		for(var/obj/effect/decal/cleanable/C in T)
 			if(C != src && C.type == type && !QDELETED(C))
 				if(C.gravity_check && replace_decal(C))
-					qdel(src)
 					return TRUE
 	return FALSE
 

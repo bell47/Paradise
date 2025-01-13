@@ -5,9 +5,15 @@
  */
 
 const createBabelConfig = (options) => {
-  const { presets = [], plugins = [], removeConsole } = options;
+  const { mode, presets = [], plugins = [] } = options;
   return {
     presets: [
+      [
+        require.resolve('@babel/preset-typescript'),
+        {
+          allowDeclareFields: true,
+        },
+      ],
       [
         require.resolve('@babel/preset-env'),
         {
@@ -19,21 +25,21 @@ const createBabelConfig = (options) => {
           targets: [],
         },
       ],
-      require.resolve('@babel/preset-react'),
       ...presets,
-    ].filter(Boolean),
+    ],
     plugins: [
       [
-        require.resolve('@babel/plugin-proposal-class-properties'),
+        require.resolve('@babel/plugin-transform-class-properties'),
         {
           loose: true,
         },
       ],
       require.resolve('@babel/plugin-transform-jscript'),
       require.resolve('babel-plugin-inferno'),
-      removeConsole && require.resolve('babel-plugin-transform-remove-console'),
+      require.resolve('babel-plugin-transform-remove-console'),
+      require.resolve('common/string.babel-plugin.cjs'),
       ...plugins,
-    ].filter(Boolean),
+    ],
   };
 };
 

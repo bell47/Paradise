@@ -43,7 +43,7 @@
 	to_chat(user, "<span class='warning'>The station AI is not to interact with these devices.</span>")
 	return
 
-/obj/machinery/keycard_auth/attackby(obj/item/W, mob/user, params)
+/obj/machinery/keycard_auth/attackby__legacy__attackchain(obj/item/W, mob/user, params)
 	if(stat & (NOPOWER|BROKEN))
 		to_chat(user, "This device is not powered.")
 		return
@@ -86,10 +86,13 @@
 		return TRUE
 	ui_interact(user)
 
-/obj/machinery/keycard_auth/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = TRUE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/machinery/keycard_auth/ui_state(mob/user)
+	return GLOB.physical_state
+
+/obj/machinery/keycard_auth/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "KeycardAuth", name, 540, 300, master_ui, state)
+		ui = new(user, src, "KeycardAuth", name)
 		ui.open()
 
 
@@ -117,7 +120,7 @@
 	. = TRUE
 	switch(action)
 		if("ert")
-			ert_reason = input(usr, "Reason for ERT Call:", "", "") // we strip this later in ERT_Announce
+			ert_reason = tgui_input_text(usr, "Reason for ERT Call:", "Call ERT", encode = FALSE) // we strip this later in ERT_Announce
 		if("reset")
 			reset()
 		if("triggerevent")
@@ -174,13 +177,13 @@
 		if("Red Alert")
 			INVOKE_ASYNC(SSsecurity_level, TYPE_PROC_REF(/datum/controller/subsystem/security_level, set_level), SEC_LEVEL_RED)
 		if("Grant Emergency Maintenance Access")
-			make_maint_all_access()
+			SSmapping.make_maint_all_access()
 		if("Revoke Emergency Maintenance Access")
-			revoke_maint_all_access()
+			SSmapping.revoke_maint_all_access()
 		if("Activate Station-Wide Emergency Access")
-			make_station_all_access()
+			SSmapping.make_station_all_access()
 		if("Deactivate Station-Wide Emergency Access")
-			revoke_station_all_access()
+			SSmapping.revoke_station_all_access()
 		if("Emergency Response Team")
 			if(is_ert_blocked())
 				atom_say("All Emergency Response Teams are dispatched and can not be called at this time.")
@@ -212,43 +215,3 @@
 
 /obj/machinery/keycard_auth/proc/is_ert_blocked()
 	return SSticker.mode && SSticker.mode.ert_disabled
-
-GLOBAL_VAR_INIT(maint_all_access, 0)
-GLOBAL_VAR_INIT(station_all_access, 0)
-
-// Why are these global procs?
-/proc/make_maint_all_access()
-	for(var/area/station/maintenance/A in world) // Why are these global lists? AAAAAAAAAAAAAA
-		for(var/obj/machinery/door/airlock/D in A)
-			D.emergency = 1
-			D.update_icon()
-	GLOB.minor_announcement.Announce("Access restrictions on maintenance and external airlocks have been removed.")
-	GLOB.maint_all_access = 1
-	SSblackbox.record_feedback("nested tally", "keycard_auths", 1, list("emergency maintenance access", "enabled"))
-
-/proc/revoke_maint_all_access()
-	for(var/area/station/maintenance/A in world)
-		for(var/obj/machinery/door/airlock/D in A)
-			D.emergency = 0
-			D.update_icon()
-	GLOB.minor_announcement.Announce("Access restrictions on maintenance and external airlocks have been re-added.")
-	GLOB.maint_all_access = 0
-	SSblackbox.record_feedback("nested tally", "keycard_auths", 1, list("emergency maintenance access", "disabled"))
-
-/proc/make_station_all_access()
-	for(var/obj/machinery/door/airlock/D in GLOB.airlocks)
-		if(is_station_level(D.z))
-			D.emergency = 1
-			D.update_icon()
-	GLOB.minor_announcement.Announce("Access restrictions on all station airlocks have been removed due to an ongoing crisis. Trespassing laws still apply unless ordered otherwise by Command staff.")
-	GLOB.station_all_access = 1
-	SSblackbox.record_feedback("nested tally", "keycard_auths", 1, list("emergency station access", "enabled"))
-
-/proc/revoke_station_all_access()
-	for(var/obj/machinery/door/airlock/D in GLOB.airlocks)
-		if(is_station_level(D.z))
-			D.emergency = 0
-			D.update_icon()
-	GLOB.minor_announcement.Announce("Access restrictions on all station airlocks have been re-added. Seek station AI or a colleague's assistance if you are stuck.")
-	GLOB.station_all_access = 0
-	SSblackbox.record_feedback("nested tally", "keycard_auths", 1, list("emergency station access", "disabled"))

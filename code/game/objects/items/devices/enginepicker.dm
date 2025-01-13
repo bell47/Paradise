@@ -18,7 +18,7 @@
 	list_enginebeacons.Cut()
 	return ..()
 
-/obj/item/enginepicker/attack_self(mob/living/carbon/user)
+/obj/item/enginepicker/attack_self__legacy__attackchain(mob/living/carbon/user)
 	if(user.incapacitated())
 		return
 
@@ -38,18 +38,18 @@
 //This proc re-assigns all of engine beacons in the global list to a local list.
 /obj/item/enginepicker/proc/locatebeacons()
 	LAZYCLEARLIST(list_enginebeacons)
-	for(var/obj/item/radio/beacon/engine/B in GLOB.engine_beacon_list)
+	for(var/obj/item/beacon/engine/B in GLOB.engine_beacon_list)
 		if(B && !QDELETED(B))	//This ensures that the input pop-up won't have any qdeleted beacons
 			list_enginebeacons += B
 
 //Spawns and logs / announces the appropriate engine based on the choice made
-/obj/item/enginepicker/proc/processchoice(obj/item/radio/beacon/engine/choice, mob/living/carbon/user)
+/obj/item/enginepicker/proc/processchoice(obj/item/beacon/engine/choice, mob/living/carbon/user)
 	var/issuccessful = FALSE	//Check for a successful choice
 	var/engtype					//Engine type
 	var/G						//Generator that will be spawned
 	var/turf/T = get_turf(choice)
 
-	if(choice.enginetype.len > 1)	//If the beacon has multiple engine types
+	if(length(choice.enginetype) > 1)	//If the beacon has multiple engine types
 		var/E = tgui_input_list(user, "You have selected a combined beacon, which option would you prefer?", "[src]", choice.enginetype)
 		if(E)
 			engtype = E
@@ -74,9 +74,9 @@
 		new G(T)		//Spawns the switch-selected engine on the chosen beacon's turf
 
 		var/ailist[] = list()
-		for(var/mob/living/silicon/ai/A in GLOB.alive_mob_list)
+		for(var/mob/living/silicon/ai/A in GLOB.ai_list)
 			ailist += A
-		if(ailist.len)
+		if(length(ailist))
 			var/mob/living/silicon/ai/announcer = pick(ailist)
 			announcer.say(";Engine delivery detected. Type: [engtype].")	//Let's announce the terrible choice to everyone
 

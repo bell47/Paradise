@@ -71,7 +71,7 @@
 	icon_state = "crutches0"
 	return ..()
 
-/obj/item/crutches/attackby(obj/item/I, mob/user, params)
+/obj/item/crutches/attackby__legacy__attackchain(obj/item/I, mob/user, params)
 	. = ..()
 	if(!is_open)
 		return
@@ -81,7 +81,7 @@
 			return
 		if(I.flags & ABSTRACT)
 			return
-		if(!user.unEquip(I))
+		if(!user.unequip(I))
 			to_chat(user, "<span class='notice'>[I] doesn't seem to want to go into [src]!</span>")
 			return
 		I.forceMove(src)
@@ -113,7 +113,10 @@
 	desc = "A tube... of cardboard."
 	icon = 'icons/obj/stacks/miscellaneous.dmi'
 	icon_state = "c_tube"
+	hitsound = 'sound/items/cardboard_tube.ogg'
 	throwforce = 1
+	force = 1
+	attack_verb = list("bonked", "thunked")
 	w_class = WEIGHT_CLASS_TINY
 	throw_speed = 4
 	throw_range = 5
@@ -126,18 +129,6 @@
 	icon_state = "fan"
 	desc = "A small desktop fan. The button seems to be stuck in the 'on' position."
 
-/*
-/obj/item/game_kit
-	name = "Gaming Kit"
-	icon = 'icons/obj/items.dmi'
-	icon_state = "game_kit"
-	var/selected = null
-	var/board_stat = null
-	var/data = ""
-	var/base_url = "http://svn.slurm.us/public/spacestation13/misc/game_kit"
-	item_state = "sheet-metal"
-	w_class = WEIGHT_CLASS_HUGE
-*/
 
 /obj/item/gift
 	name = "gift"
@@ -163,13 +154,13 @@
 	name = "lightning"
 	icon = 'icons/obj/lightning.dmi'
 	icon_state = "lightning"
-	desc = "test lightning"
+	desc = "test lightning."
 
 /obj/item/lightning/New()
 	..()
 	icon_state = "1"
 
-/obj/item/lightning/afterattack(atom/A as mob|obj|turf|area, mob/living/user as mob|obj, flag, params)
+/obj/item/lightning/afterattack__legacy__attackchain(atom/A as mob|obj|turf|area, mob/living/user as mob|obj, flag, params)
 	var/angle = get_angle(A, user)
 	//to_chat(world, angle)
 	angle = round(angle) + 45
@@ -213,7 +204,7 @@
 	hitsound = 'sound/weapons/ring.ogg'
 	var/cooldown = 0
 
-/obj/item/phone/attack_self(mob/user)
+/obj/item/phone/attack_self__legacy__attackchain(mob/user)
 	if(cooldown < world.time - 20)
 		playsound(user.loc, 'sound/weapons/ring.ogg', 50, 1)
 		cooldown = world.time

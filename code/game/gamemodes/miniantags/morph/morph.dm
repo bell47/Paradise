@@ -17,7 +17,7 @@
 	status_flags = CANPUSH
 	pass_flags = PASSTABLE
 	move_resist = MOVE_FORCE_STRONG // Fat being
-	ventcrawler = 2
+	ventcrawler = VENTCRAWLER_ALWAYS
 
 	atmos_requirements = list("min_oxy" = 0, "max_oxy" = 0, "min_tox" = 0, "max_tox" = 0, "min_co2" = 0, "max_co2" = 0, "min_n2" = 0, "max_n2" = 0)
 
@@ -34,7 +34,7 @@
 	wander = FALSE
 	attacktext = "glomps"
 	attack_sound = 'sound/effects/blobattack.ogg'
-	butcher_results = list(/obj/item/reagent_containers/food/snacks/meat/slab = 2)
+	butcher_results = list(/obj/item/food/meat/slab = 2)
 
 	/// If the morph is disguised or not
 	var/morphed = FALSE
@@ -45,11 +45,11 @@
 	/// How much weaken a successful ambush attack applies
 	var/ambush_weaken = 6 SECONDS
 	/// The spell the morph uses to morph
-	var/obj/effect/proc_holder/spell/mimic/morph/mimic_spell
+	var/datum/spell/mimic/morph/mimic_spell
 	/// The ambush action used by the morph
-	var/obj/effect/proc_holder/spell/morph_spell/ambush/ambush_spell
+	var/datum/spell/morph_spell/ambush/ambush_spell
 	/// The spell the morph uses to pass through airlocks
-	var/obj/effect/proc_holder/spell/morph_spell/pass_airlock/pass_airlock_spell
+	var/datum/spell/morph_spell/pass_airlock/pass_airlock_spell
 
 	/// How much the morph has gathered in terms of food. Used to reproduce and such
 	var/gathered_food = 20 // Start with a bit to use abilities
@@ -60,8 +60,8 @@
 	AddSpell(mimic_spell)
 	ambush_spell = new
 	AddSpell(ambush_spell)
-	AddSpell(new /obj/effect/proc_holder/spell/morph_spell/reproduce)
-	AddSpell(new /obj/effect/proc_holder/spell/morph_spell/open_vent)
+	AddSpell(new /datum/spell/morph_spell/reproduce)
+	AddSpell(new /datum/spell/morph_spell/open_vent)
 	pass_airlock_spell = new
 	AddSpell(pass_airlock_spell)
 
@@ -71,11 +71,10 @@
 	QDEL_NULL(pass_airlock_spell)
 	return ..()
 
-/mob/living/simple_animal/hostile/morph/Stat(Name, Value)
-	..()
-	if(statpanel("Status"))
-		stat(null, "Food Stored: [gathered_food]")
-		return TRUE
+/mob/living/simple_animal/hostile/morph/get_status_tab_items()
+	var/list/status_tab_data = ..()
+	. = status_tab_data
+	status_tab_data[++status_tab_data.len] = list("Food Stored:", "[gathered_food]")
 
 /mob/living/simple_animal/hostile/morph/wizard
 	name = "magical morph"
@@ -84,8 +83,8 @@
 
 /mob/living/simple_animal/hostile/morph/wizard/Initialize(mapload)
 	. = ..()
-	AddSpell(new /obj/effect/proc_holder/spell/smoke)
-	AddSpell(new /obj/effect/proc_holder/spell/forcewall)
+	AddSpell(new /datum/spell/smoke)
+	AddSpell(new /datum/spell/forcewall)
 
 
 /mob/living/simple_animal/hostile/morph/proc/try_eat(atom/movable/A)
@@ -114,6 +113,7 @@
 			var/obj/item/clothing/under/U = H.w_uniform
 			U.turn_sensors_off()
 
+		A.pulledby?.stop_pulling()
 		A.extinguish_light()
 		A.forceMove(src)
 		var/food_value = calc_food_gained(A)
@@ -146,7 +146,7 @@
 /mob/living/simple_animal/hostile/morph/proc/add_food(amount)
 	gathered_food += amount
 	for(var/datum/action/spell_action/action in actions)
-		action.UpdateButtonIcon()
+		action.UpdateButtons()
 
 
 /mob/living/simple_animal/hostile/morph/proc/assume()
@@ -156,8 +156,8 @@
 	melee_damage_lower = 5
 	melee_damage_upper = 5
 	speed = MORPHED_SPEED
-	ambush_spell.updateButtonIcon()
-	pass_airlock_spell.updateButtonIcon()
+	ambush_spell.UpdateButtons()
+	pass_airlock_spell.UpdateButtons()
 	move_resist = MOVE_FORCE_DEFAULT // They become more fragile and easier to move
 
 /mob/living/simple_animal/hostile/morph/proc/restore()
@@ -172,7 +172,7 @@
 	if(ambush_prepared)
 		to_chat(src, "<span class='warning'>The ambush potential has faded as you take your true form.</span>")
 	failed_ambush()
-	pass_airlock_spell.updateButtonIcon()
+	pass_airlock_spell.UpdateButtons()
 	move_resist = MOVE_FORCE_STRONG // Return to their fatness
 
 
@@ -184,23 +184,24 @@
 
 /mob/living/simple_animal/hostile/morph/proc/failed_ambush()
 	ambush_prepared = FALSE
-	ambush_spell.updateButtonIcon()
+	ambush_spell.UpdateButtons()
 	mimic_spell.perfect_disguise = FALSE // Reset the perfect disguise
 	remove_status_effect(/datum/status_effect/morph_ambush)
 	UnregisterSignal(src, COMSIG_MOVABLE_MOVED)
+	add_to_all_human_data_huds()
 
 /mob/living/simple_animal/hostile/morph/proc/perfect_ambush()
 	mimic_spell.perfect_disguise = TRUE // Reset the perfect disguise
 	to_chat(src, "<span class='sinister'>You've perfected your disguise. Making you indistinguishable from the real form!</span>")
-
+	remove_from_all_data_huds()
 
 /mob/living/simple_animal/hostile/morph/proc/on_move()
 	failed_ambush()
 	to_chat(src, "<span class='warning'>You moved out of your ambush spot!</span>")
 
-
 /mob/living/simple_animal/hostile/morph/death(gibbed)
 	. = ..()
+	add_to_all_human_data_huds()
 	if(stat == DEAD && gibbed)
 		for(var/atom/movable/AM in src)
 			AM.forceMove(loc)
@@ -219,7 +220,7 @@
 
 #define MORPH_ATTACKED if((. = ..()) && morphed) mimic_spell.restore_form(src)
 
-/mob/living/simple_animal/hostile/morph/attackby(obj/item/O, mob/living/user)
+/mob/living/simple_animal/hostile/morph/attackby__legacy__attackchain(obj/item/O, mob/living/user)
 	if(user.a_intent == INTENT_HELP && ambush_prepared)
 		to_chat(user, "<span class='warning'>You try to use [O] on [src]... it seems different than no-</span>")
 		ambush_attack(user, TRUE)
@@ -273,9 +274,11 @@
 	. = ..()
 	if(. && !morphed)
 		var/list/things = list()
-		for(var/atom/movable/A in view(src))
+		for(var/atom/movable/A in oview(src))
 			if(mimic_spell.valid_target(A, src))
 				things += A
+		if(!length(things))
+			return
 		var/atom/movable/T = pick(things)
 		mimic_spell.take_form(new /datum/mimic_form(T, src), src)
 		prepare_ambush() // They cheat okay
@@ -306,10 +309,10 @@
 	var/list/messages = list()
 	messages.Add("<b><font size=3 color='red'>You are a morph.</font><br></b>")
 	messages.Add("<span class='sinister'>You hunger for living beings and desire to procreate. Achieve this goal by ambushing unsuspecting pray using your abilities.</span>")
-	messages.Add("<span class='specialnotice'>As an abomination created primarily with changeling cells you may take the form of anything nearby by using your <span class='specialnoticebold'>Mimic ability.</span></span>")
+	messages.Add("<span class='specialnotice'>As an abomination created primarily with changeling cells you may take the form of anything nearby by using your <span class='specialnotice bold'>Mimic ability.</span></span>")
 	messages.Add("<span class='specialnotice'>The transformation will not go unnoticed for bystanding observers.</span>")
-	messages.Add("<span class='specialnoticebold'>While morphed</span><span class='specialnotice'>, you move slower and do less damage. In addition, anyone within three tiles will note an uncanny wrongness if examining you.</span>")
-	messages.Add("<span class='specialnotice'>From this form you can however <span class='specialnoticebold'>Prepare an Ambush</span> using your ability.</span>")
+	messages.Add("<span class='specialnotice bold'>While morphed</span><span class='specialnotice'>, you move slower and do less damage. In addition, anyone within three tiles will note an uncanny wrongness if examining you.</span>")
+	messages.Add("<span class='specialnotice'>From this form you can however <span class='specialnotice bold'>Prepare an Ambush</span> using your ability.</span>")
 	messages.Add("<span class='specialnotice'>This will allow you to deal a lot of damage the first hit. And if they touch you then even more.</span>")
 	messages.Add("<span class='specialnotice'>Finally, you can attack any item or dead creature to consume it - creatures will restore 1/3 of your max health and will add to your stored food while eating items will reduce your stored food.</span>")
 	messages.Add("<span class='motd'>For more information, check the wiki page: ([GLOB.configuration.url.wiki_url]/index.php/Morph)</span>")

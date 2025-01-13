@@ -30,8 +30,8 @@
 
 //Enforcer//
 /obj/item/gun/projectile/automatic/pistol/enforcer
-	name = "\improper Enforcer"
-	desc = "A pistol of modern design."
+	name = "\improper NF10 'Enforcer' pistol"
+	desc = "A 9mm sidearm commonly used by Nanotrasen Asset Protection."
 	icon_state = "enforcer_grey"
 	force = 10
 	mag_type = /obj/item/ammo_box/magazine/enforcer
@@ -95,9 +95,9 @@
 	item_state = "deagleg"
 
 //APS Pistol//
-/obj/item/gun/projectile/automatic/pistol/APS
+/obj/item/gun/projectile/automatic/pistol/aps
 	name = "stechkin APS pistol"
-	desc = "The original russian version of a widely used Syndicate sidearm. Uses 10mm ammo."
+	desc = "A deadly automatic pistol produced by the USSP's State Armory. Uses 10mm ammo."
 	icon_state = "aps"
 	w_class = WEIGHT_CLASS_NORMAL
 	origin_tech = "combat=3;materials=2;syndicate=3"

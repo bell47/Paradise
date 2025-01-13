@@ -64,7 +64,6 @@
 	// List of vending_product items available.
 	var/list/product_records = list()
 	var/list/hidden_records = list()
-	var/list/imagelist = list()
 
 	/// Unimplemented list of ads that are meant to show up somewhere, but don't.
 	var/list/ads_list = list()
@@ -140,6 +139,11 @@
 	/// The category of this vendor. Used for announcing brand intelligence.
 	var/category = VENDOR_TYPE_GENERIC
 
+	/// How often will the vendor tip when you walk by it when aggressive is true?
+	var/aggressive_tilt_chance = 25
+
+	var/datum/proximity_monitor/proximity_monitor
+
 /obj/machinery/economy/vending/Initialize(mapload)
 	. = ..()
 	var/build_inv = FALSE
@@ -157,10 +161,6 @@
 	if(build_inv) //non-constructable vending machine
 		build_inventory(products, product_records)
 		build_inventory(contraband, hidden_records)
-	for(var/datum/data/vending_product/R in (product_records + hidden_records))
-		var/obj/item/I = R.product_path
-		var/pp = replacetext(replacetext("[R.product_path]", "/obj/item/", ""), "/", "-")
-		imagelist[pp] = "[icon2base64(icon(initial(I.icon), initial(I.icon_state), SOUTH, 1))]"
 
 	if(LAZYLEN(slogan_list))
 		// So not all machines speak at the exact same time.
@@ -176,6 +176,8 @@
 	power_change()
 	RegisterSignal(src, COMSIG_MOVABLE_UNTILTED, PROC_REF(on_untilt))
 	RegisterSignal(src, COMSIG_MOVABLE_TRY_UNTILT, PROC_REF(on_try_untilt))
+	if(aggressive)
+		proximity_monitor = new(src, 1)
 
 /obj/machinery/economy/vending/Destroy()
 	SStgui.close_uis(wires)
@@ -238,12 +240,10 @@
 
 	for(var/i in 1 to amount)
 		force_no_power_icon_state = TRUE
-		set_light(0)
 		update_icon(UPDATE_OVERLAYS)
 		sleep(rand(1, 3))
 
 		force_no_power_icon_state = FALSE
-		set_light(light_range_on, light_power_on)
 		update_icon(UPDATE_OVERLAYS)
 		sleep(rand(1, 10))
 	update_icon(UPDATE_OVERLAYS)
@@ -338,7 +338,7 @@
 	if(user && (!Adjacent(user) || HAS_TRAIT(user, TRAIT_HANDS_BLOCKED)))
 		return COMPONENT_BLOCK_UNTILT
 
-/obj/machinery/economy/vending/attackby(obj/item/I, mob/user, params)
+/obj/machinery/economy/vending/attackby__legacy__attackchain(obj/item/I, mob/user, params)
 	if(tilted)
 		if(user.a_intent == INTENT_HELP)
 			to_chat(user, "<span class='warning'>[src] is tipped over and non-functional! You'll need to right it first.</span>")
@@ -416,7 +416,10 @@
 	if(!aggressive || tilted || !tiltable)
 		return
 
-	if(isliving(AM) && prob(25))
+	if(isliving(AM) && prob(aggressive_tilt_chance))
+		var/mob/living/to_be_tipped = AM
+		if(to_be_tipped.incorporeal_move) // OooOooOoo spooky ghosts
+			return
 		AM.visible_message(
 			"<span class='danger'>[src] suddenly topples over onto [AM]!</span>",
 			"<span class='userdanger'>[src] topples over onto you without warning!</span>"
@@ -552,6 +555,7 @@
 /obj/machinery/economy/vending/emag_act(mob/user)
 	emagged = TRUE
 	to_chat(user, "You short out the product lock on [src]")
+	return TRUE
 
 /obj/machinery/economy/vending/ex_act(severity)
 	. = ..()
@@ -589,13 +593,13 @@
 	ui_interact(user)
 	wires.Interact(user)
 
-/obj/machinery/economy/vending/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = TRUE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/machinery/economy/vending/ui_state(mob/user)
+	return GLOB.default_state
+
+/obj/machinery/economy/vending/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		var/estimated_height = 100 + min(length(product_records) * 34, 500)
-		if(length(prices) > 0)
-			estimated_height += 100 // to account for the "current user" interface
-		ui = new(user, src, ui_key, "Vending",  name, 470, estimated_height, master_ui, state)
+		ui = new(user, src, "Vending",  name)
 		ui.open()
 
 /obj/machinery/economy/vending/ui_data(mob/user)
@@ -638,10 +642,12 @@
 	data["product_records"] = list()
 	var/i = 1
 	for(var/datum/data/vending_product/R in product_records)
+		var/obj/item = R.product_path
 		var/list/data_pr = list(
-			path = replacetext(replacetext("[R.product_path]", "/obj/item/", ""), "/", "-"),
 			name = R.name,
-			price = (R.product_path in prices) ? prices[R.product_path] : 0,
+			price = (item in prices) ? prices[item] : 0,
+			icon = item.icon,
+			icon_state = item.icon_state,
 			max_amount = R.max_amount,
 			is_hidden = FALSE,
 			inum = i++
@@ -649,17 +655,18 @@
 		data["product_records"] += list(data_pr)
 	data["hidden_records"] = list()
 	for(var/datum/data/vending_product/R in hidden_records)
+		var/obj/item = R.product_path
 		var/list/data_hr = list(
-			path = replacetext(replacetext("[R.product_path]", "/obj/item/", ""), "/", "-"),
 			name = R.name,
-			price = (R.product_path in prices) ? prices[R.product_path] : 0,
+			price = (item in prices) ? prices[item] : 0,
+			icon = item.icon,
+			icon_state = item.icon_state,
 			max_amount = R.max_amount,
 			is_hidden = TRUE,
 			inum = i++,
 			premium = TRUE
 		)
 		data["hidden_records"] += list(data_hr)
-	data["imagelist"] = imagelist
 	return data
 
 /obj/machinery/economy/vending/ui_act(action, params, datum/tgui/ui)
@@ -818,8 +825,7 @@
 		if(put_on_turf)
 			var/turf/T = get_turf(src)
 			vended.forceMove(T)
-			vended.pixel_x = rand(-5, 5)
-			vended.pixel_y = rand(-5, 5)
+			vended.scatter_atom()
 		return TRUE
 	return FALSE
 
@@ -938,8 +944,9 @@
 	throw_item.throw_at(target, 16, 3)
 	visible_message("<span class='danger'>[src] launches [throw_item.name] at [target.name]!</span>")
 
-/obj/machinery/economy/vending/onTransitZ()
-	return
+/obj/machinery/economy/vending/on_changed_z_level(turf/old_turf, turf/new_turf, notify_contents = FALSE)
+	// Don't bother notifying contents (for some reason (probably historical reasons (probably for no reason)))
+	return ..()
 
 /obj/machinery/economy/vending/proc/tilt(atom/victim, crit = FALSE, from_combat = FALSE, from_anywhere = FALSE)
 	if(QDELETED(src) || !has_gravity(src) || !tiltable || tilted)
@@ -961,6 +968,7 @@
 		. = fall_and_crush(get_turf(victim), damage, should_crit, crit_damage_factor, null, from_combat ? 4 SECONDS : 6 SECONDS, 12 SECONDS, FALSE, picked_angle)
 		if(.)
 			tilted = TRUE
+			anchored = FALSE
 			layer = ABOVE_MOB_LAYER
 
 	var/should_throw_at_target = TRUE
@@ -980,20 +988,25 @@
 	if(!HAS_TRAIT(attacker, TRAIT_PACIFISM))
 		add_attack_logs(attacker, target, "shoved into a vending machine ([src])")
 		tilt(target, from_combat = TRUE)
+		target.visible_message("<span class='danger'>[attacker] slams [target] into [src]!</span>", \
+								"<span class='userdanger'>You get slammed into [src] by [attacker]!</span>", \
+								"<span class='danger'>You hear a loud crunch.</span>")
 	else if(HAS_TRAIT_FROM(attacker, TRAIT_PACIFISM, GHOST_ROLE))  // should only apply to the ghost bar
 		add_attack_logs(attacker, target, "shoved into a vending machine ([src]), but flattened themselves.")
 		tilt(attacker, crit = TRUE, from_anywhere = TRUE) // get fucked
+		target.visible_message("<span class='warning'>[attacker] tries to slam [target] into [src], but falls face first into [src]!</span>", \
+								"<span class='userdanger'>You get pushed into [src] by [attacker], but narrowly move out of the way as it tips over on top of [attacker]!</span>", \
+								"<span class='danger'>You hear a loud crunch.</span>")
 	else
 		attacker.visible_message("<span class='notice'>[attacker] lightly presses [target] against [src].</span>", "<span class='warning'>You lightly press [target] against [src], you don't want to hurt [target.p_them()]!</span>")
 	return TRUE
 
-/obj/machinery/economy/vending/hit_by_thrown_carbon(mob/living/carbon/human/C, datum/thrownthing/throwingdatum, damage, mob_hurt, self_hurt)
+/obj/machinery/economy/vending/hit_by_thrown_mob(mob/living/C, datum/thrownthing/throwingdatum, damage, mob_hurt, self_hurt)
 	if(HAS_TRAIT(C, TRAIT_FLATTENED))
 		return ..()
 	tilt(C, from_combat = TRUE)
 	mob_hurt = TRUE
 	return ..()
-
 
 /*
  * Vending machine types

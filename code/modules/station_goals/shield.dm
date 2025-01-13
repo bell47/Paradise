@@ -32,7 +32,7 @@
 		if(!A.active || !is_station_level(A.z))
 			continue
 		coverage |= view(A.kill_range, A)
-	return coverage.len
+	return length(coverage)
 
 /obj/item/circuitboard/computer/sat_control
 	board_name = "Satellite Network Control"
@@ -52,10 +52,13 @@
 		return 1
 	ui_interact(user)
 
-/obj/machinery/computer/sat_control/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = FALSE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/machinery/computer/sat_control/ui_state(mob/user)
+	return GLOB.default_state
+
+/obj/machinery/computer/sat_control/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "SatelliteControl", name, 475, 400)
+		ui = new(user, src, "SatelliteControl", name)
 		ui.open()
 
 /obj/machinery/computer/sat_control/ui_data(mob/user)
@@ -140,7 +143,7 @@
 /obj/machinery/satellite/update_icon_state()
 	icon_state = active ? "sat_active" : "sat_inactive"
 
-/obj/machinery/satellite/attackby(obj/item/I, mob/user, params)
+/obj/machinery/satellite/attackby__legacy__attackchain(obj/item/I, mob/user, params)
 	if(istype(I, /obj/item/multitool))
 		to_chat(user, "<span class='notice'>// NTSAT-[id] // Mode : [active ? "PRIMARY" : "STANDBY"] //[emagged ? "DEBUG_MODE //" : ""]</span>")
 	else
@@ -148,7 +151,7 @@
 
 /obj/machinery/satellite/meteor_shield
 	name = "Meteor Shield Satellite"
-	desc = "Meteor Point Defense Satellite"
+	desc = "Meteor Point Defense Satellite."
 	mode = "M-SHIELD"
 	speed_process = TRUE
 	var/kill_range = 14
@@ -170,7 +173,7 @@
 		if(!emagged && space_los(M))
 			Beam(get_turf(M), icon_state = "sat_beam", time = 5, maxdistance = kill_range)
 			if(istype(M, /obj/effect/space_dust/meaty))
-				new /obj/item/reagent_containers/food/snacks/meatsteak(get_turf(M))
+				new /obj/item/food/meatsteak(get_turf(M))
 			qdel(M)
 
 /obj/machinery/satellite/meteor_shield/toggle(user)
@@ -199,3 +202,4 @@
 		emagged = TRUE
 		if(active)
 			change_meteor_chance(2)
+		return TRUE

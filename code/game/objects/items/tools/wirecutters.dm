@@ -5,7 +5,7 @@
 	icon_state = "cutters"
 	belt_icon = "wirecutters_red"
 	flags = CONDUCT
-	slot_flags = SLOT_FLAG_BELT
+	slot_flags = ITEM_SLOT_BELT
 	force = 6
 	throw_speed = 3
 	throw_range = 7
@@ -31,21 +31,32 @@
 		belt_icon = "wirecutters_[param_color]"
 		icon_state = "cutters_[param_color]"
 
-/obj/item/wirecutters/attack(mob/living/carbon/C, mob/user)
+/obj/item/wirecutters/attack__legacy__attackchain(mob/living/carbon/C, mob/user)
 	if(istype(C) && C.handcuffed && istype(C.handcuffed, /obj/item/restraints/handcuffs/cable))
 		user.visible_message("<span class='notice'>[user] cuts [C]'s restraints with [src]!</span>")
 		QDEL_NULL(C.handcuffed)
 		if(C.buckled && C.buckled.buckle_requires_restraints)
-			C.buckled.unbuckle_mob(C)
+			C.unbuckle()
 		C.update_handcuffed()
 		return
 	else
 		return ..()
 
 /obj/item/wirecutters/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is cutting at [user.p_their()] arteries with [src]! It looks like [user.p_theyre()] trying to commit suicide!</span>")
-	playsound(loc, usesound, 50, 1, -1)
+	user.visible_message("<span class='suicide'>[user] is cutting at [user.p_their()] [is_robotic_suicide(user) ? "wiring" : "arteries"] with [src]! It looks like [user.p_theyre()] trying to commit suicide!</span>")
+	playsound(loc, usesound, 50, TRUE, -1)
 	return BRUTELOSS
+
+/obj/item/wirecutters/proc/is_robotic_suicide(mob/user)
+	if(!ishuman(user))
+		return FALSE
+
+	var/mob/living/carbon/human/H = user
+	var/obj/item/organ/external/chest/chest = H.bodyparts_by_name["chest"]
+	if(!chest)
+		return FALSE
+
+	return chest.is_robotic()
 
 /obj/item/wirecutters/security
 	name = "security wirecutters"
@@ -74,7 +85,7 @@
 	new /obj/item/restraints/handcuffs/cable/zipties/used(user.loc)
 
 	for(var/obj/item/W in user)
-		user.unEquip(W)
+		user.drop_item_to_ground(W)
 
 	user.dust()
 	return OBLITERATION
@@ -83,22 +94,10 @@
 	name = "brass wirecutters"
 	desc = "A pair of wirecutters made of brass. The handle feels freezing cold to the touch."
 	icon_state = "cutters_brass"
+	belt_icon = "wirecutters_brass"
 	toolspeed = 0.5
 	random_color = FALSE
 	resistance_flags = FIRE_PROOF | ACID_PROOF
-
-/obj/item/wirecutters/abductor
-	name = "alien wirecutters"
-	desc = "Extremely sharp wirecutters, made out of a silvery-green metal."
-	icon = 'icons/obj/abductor.dmi'
-	icon_state = "cutters"
-	toolspeed = 0.1
-	origin_tech = "materials=5;engineering=4;abductor=3"
-	random_color = FALSE
-
-/obj/item/wirecutters/abductor/Initialize(mapload)
-	. = ..()
-	ADD_TRAIT(src, TRAIT_SHOW_WIRE_INFO, ROUNDSTART_TRAIT)
 
 /obj/item/wirecutters/cyborg
 	name = "wirecutters"
@@ -125,17 +124,29 @@
 	random_color = FALSE
 
 /obj/item/wirecutters/power/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is wrapping \the [src] around [user.p_their()] neck. It looks like [user.p_theyre()] trying to rip [user.p_their()] head off!</span>")
-	playsound(loc, 'sound/items/jaws_cut.ogg', 50, 1, -1)
-	if(ishuman(user))
-		var/mob/living/carbon/human/H = user
-		var/obj/item/organ/external/head/head = H.bodyparts_by_name["head"]
-		if(head)
-			head.droplimb(0, DROPLIMB_BLUNT, FALSE, TRUE)
-			playsound(loc,pick('sound/misc/desceration-01.ogg','sound/misc/desceration-02.ogg','sound/misc/desceration-01.ogg') ,50, 1, -1)
-	return BRUTELOSS
+	user.visible_message("<span class='suicide'>[user] is wrapping [src] around [user.p_their()] neck. It looks like [user.p_theyre()] trying to rip [user.p_their()] head off!</span>")
 
-/obj/item/wirecutters/power/attack_self(mob/user)
+	if(!use_tool(user, user, 3 SECONDS, volume = tool_volume))
+		return SHAME
+
+	if(!ishuman(user))
+		return BRUTELOSS
+
+	var/mob/living/carbon/human/H = user
+	var/obj/item/organ/external/head/head = H.bodyparts_by_name["head"]
+	if(!head)
+		user.visible_message("<span class='suicide'>...but [user.p_they()] [user.p_are()] already headless! How embarassing.</span>")
+		return SHAME
+
+	head.droplimb(FALSE, DROPLIMB_SHARP, FALSE, TRUE)
+
+	if(user.stat != DEAD)
+		user.visible_message("<span class='suicide'>...but [user.p_they()] didn't need it anyway! How embarassing.</span>")
+		return SHAME
+
+	return OXYLOSS
+
+/obj/item/wirecutters/power/attack_self__legacy__attackchain(mob/user)
 	playsound(get_turf(user), 'sound/items/change_jaws.ogg', 50, 1)
 	var/obj/item/crowbar/power/pryjaws = new /obj/item/crowbar/power
 	to_chat(user, "<span class='notice'>You attach the pry jaws to [src].</span>")

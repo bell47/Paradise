@@ -77,7 +77,7 @@
 			else
 				set_mode(CLAMPED_OFF)
 				visible_message("<span class='notice'>[user] attaches [src] to the cable!</span>")
-				message_admins("Power sink activated by [key_name_admin(user)] at ([x],[y],[z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)")
+				message_admins("Power sink activated by [key_name_admin(user)] at ([x],[y],[z] - <A href='byond://?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)")
 				log_game("Power sink activated by [key_name(user)] at ([x],[y],[z])")
 		else
 			to_chat(user, "Device must be placed over an exposed cable to attach to it.")
@@ -99,6 +99,7 @@
 				"<span class='italics'>You hear a click.</span>")
 			message_admins("Power sink activated by [ADMIN_LOOKUPFLW(user)] at [ADMIN_VERBOSEJMP(src)]")
 			log_game("Power sink activated by [key_name(user)] at [AREACOORD(src)]")
+			notify_ghosts("[user] has activated a [name]!", title = "An electrifying occurrence! (Click to follow)", source = src, flashwindow = FALSE, action = NOTIFY_FOLLOW)
 			set_mode(OPERATING)
 
 		if(OPERATING)
@@ -140,8 +141,9 @@
 	if(power_drained > max_power * 0.98)
 		if(!admins_warned)
 			admins_warned = TRUE
-			message_admins("Power sink at ([x],[y],[z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>) is 95% full. Explosion imminent.")
-		playsound(src, 'sound/effects/screech.ogg', 100, 1, 1)
+			message_admins("Power sink at ([x],[y],[z] - <A href='byond://?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>) is 95% full. Explosion imminent.")
+			notify_ghosts("A [name] is almost at max capacity, and is about to explode!", title = "An electrifying occurrence! (Click to follow)", source = src, flashwindow = FALSE, action = NOTIFY_FOLLOW)
+		playsound(src, 'sound/effects/screech.ogg', 100, TRUE, 1)
 
 	if(power_drained >= max_power)
 		STOP_PROCESSING(SSobj, src)

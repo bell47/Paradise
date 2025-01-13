@@ -28,56 +28,56 @@
 		available_recipes = list()
 		acceptable_items = list()
 		//These are going to be acceptable even if they aren't in a recipe
-		acceptable_items |= /obj/item/reagent_containers/food/snacks
-		acceptable_items |= /obj/item/reagent_containers/food/drinks/cans
+		acceptable_items |= /obj/item/food
+		acceptable_items |= /obj/item/reagent_containers/drinks/cans
 		//the rest is based on what is used in recipes so we don't have people destroying the nuke disc
 		for(var/type in subtypesof(/datum/bottler_recipe))
 			var/datum/bottler_recipe/recipe = new type
 			if(recipe.result) // Ignore recipe subtypes that lack a result
 				available_recipes += recipe
-				for(var/i = 1, i <= recipe.ingredients.len, i++)
+				for(var/i = 1, i <= length(recipe.ingredients), i++)
 					acceptable_items |= recipe.ingredients[i]
 			else
 				qdel(recipe)
 
-/obj/machinery/bottler/attackby(obj/item/O, mob/user, params)
+/obj/machinery/bottler/attackby__legacy__attackchain(obj/item/O, mob/user, params)
 	if(!user.canUnEquip(O, 0))
 		to_chat(user, "<span class='warning'>[O] is stuck to your hand, you can't seem to put it down!</span>")
 		return 0
 	if(is_type_in_list(O,acceptable_items))
-		if(istype(O, /obj/item/reagent_containers/food/snacks))
-			var/obj/item/reagent_containers/food/snacks/S = O
-			user.unEquip(S)
+		if(istype(O, /obj/item/food))
+			var/obj/item/food/S = O
+			user.drop_item_to_ground(S)
 			if(S.reagents && !S.reagents.total_volume)		//This prevents us from using empty foods, should one occur due to some sort of error
 				to_chat(user, "<span class='warning'>[S] is gone, oh no!</span>")
 				qdel(S)			//Delete the food object because it is useless even as food due to the lack of reagents
 			else
 				insert_item(S, user)
 			return 1
-		else if(istype(O, /obj/item/reagent_containers/food/drinks/cans))
-			var/obj/item/reagent_containers/food/drinks/cans/C = O
+		else if(istype(O, /obj/item/reagent_containers/drinks/cans))
+			var/obj/item/reagent_containers/drinks/cans/C = O
 			if(C.reagents)
 				if(C.can_opened && C.reagents.total_volume)		//This prevents us from using opened cans that still have something in them
 					to_chat(user, "<span class='warning'>Only unopened cans and bottles can be processed to ensure product integrity.</span>")
 					return 0
-				user.unEquip(C)
+				user.drop_item_to_ground(C)
 				if(!C.reagents.total_volume)		//Empty cans get recycled, even if they have somehow remained unopened due to some sort of error
 					recycle_container(C)
 				else								//Full cans that are unopened get inserted for processing as ingredients
 					insert_item(C, user)
 			return 1
 		else
-			user.unEquip(O)
+			user.drop_item_to_ground(O)
 			insert_item(O, user)
 			return 1
 	else if(istype(O, /obj/item/trash/can))			//Crushed cans (and bottles) are returnable still
 		var/obj/item/trash/can/C = O
-		user.unEquip(C)
+		user.drop_item_to_ground(C)
 		recycle_container(C)
 		return 1
 	else if(istype(O, /obj/item/stack/sheet))		//Sheets of materials can replenish the machine's supply of drink containers (when people inevitably don't return them)
 		var/obj/item/stack/sheet/S = O
-		user.unEquip(S)
+		user.drop_item_to_ground(S)
 		process_sheets(S)
 		return 1
 	else		//If it doesn't qualify in the above checks, we don't want it. Inform the person so they (ideally) stop trying to put the nuke disc in.
@@ -95,7 +95,7 @@
 		to_chat(user, "<span class='warning'>[src] is full, please remove or process the contents first.</span>")
 		return
 	var/slot_inserted = 0
-	for(var/i = 1, i <= slots.len, i++)
+	for(var/i = 1, i <= length(slots), i++)
 		if(!slots[i])
 			slots[i] = O
 			slot_inserted = i
@@ -111,7 +111,7 @@
 /obj/machinery/bottler/proc/eject_items(slot)
 	var/obj/item/O = null
 	if(!slot)
-		for(var/i = 1, i <= slots.len, i++)
+		for(var/i = 1, i <= length(slots), i++)
 			if(slots[i])
 				O = slots[i]
 				O.forceMove(loc)
@@ -141,8 +141,8 @@
 		else
 			con_type = "metal can"
 			max_define = MAX_METAL
-	else if(istype(O, /obj/item/reagent_containers/food/drinks/cans))
-		var/obj/item/reagent_containers/food/drinks/cans/C = O
+	else if(istype(O, /obj/item/reagent_containers/drinks/cans))
+		var/obj/item/reagent_containers/drinks/cans/C = O
 		if(C.is_glass)
 			con_type = "glass bottle"
 			max_define = MAX_GLASS
@@ -205,7 +205,7 @@
 /obj/machinery/bottler/proc/select_recipe()
 	for(var/datum/bottler_recipe/recipe in available_recipes)
 		var/number_matches = 0
-		for(var/i = 1, i <= slots.len, i++)
+		for(var/i = 1, i <= length(slots), i++)
 			var/obj/item/O = slots[i]
 			if(istype(O, recipe.ingredients[i]))
 				number_matches++
@@ -215,17 +215,17 @@
 
 /obj/machinery/bottler/proc/dispense_empty_container(container)
 	var/con_type
-	var/obj/item/reagent_containers/food/drinks/cans/bottler/drink_container
+	var/obj/item/reagent_containers/drinks/cans/bottler/drink_container
 	switch(container)
 		if(1)	//glass bottle
 			con_type = "glass bottle"
-			drink_container = /obj/item/reagent_containers/food/drinks/cans/bottler/glass_bottle
+			drink_container = /obj/item/reagent_containers/drinks/cans/bottler/glass_bottle
 		if(2)	//plastic bottle
 			con_type = "plastic bottle"
-			drink_container = /obj/item/reagent_containers/food/drinks/cans/bottler/plastic_bottle
+			drink_container = /obj/item/reagent_containers/drinks/cans/bottler/plastic_bottle
 		if(3)	//metal can
 			con_type = "metal can"
-			drink_container = /obj/item/reagent_containers/food/drinks/cans/bottler/metal_can
+			drink_container = /obj/item/reagent_containers/drinks/cans/bottler/metal_can
 	if(containers[con_type])
 		//empties aren't sealed, so let's open it quietly
 		drink_container = new drink_container()
@@ -240,18 +240,18 @@
 		visible_message("<span class='warning'>There are no ingredients to process! Please insert some first.</span>")
 		return
 	//prep a container
-	var/obj/item/reagent_containers/food/drinks/cans/bottler/drink_container
+	var/obj/item/reagent_containers/drinks/cans/bottler/drink_container
 	var/con_type
 	switch(container)
 		if(1)	//glass bottle
 			con_type = "glass bottle"
-			drink_container = /obj/item/reagent_containers/food/drinks/cans/bottler/glass_bottle
+			drink_container = /obj/item/reagent_containers/drinks/cans/bottler/glass_bottle
 		if(2)	//plastic bottle
 			con_type = "plastic bottle"
-			drink_container = /obj/item/reagent_containers/food/drinks/cans/bottler/plastic_bottle
+			drink_container = /obj/item/reagent_containers/drinks/cans/bottler/plastic_bottle
 		if(3)	//metal can
 			con_type = "metal can"
-			drink_container = /obj/item/reagent_containers/food/drinks/cans/bottler/metal_can
+			drink_container = /obj/item/reagent_containers/drinks/cans/bottler/metal_can
 
 	if(!con_type)
 		visible_message("<span class='warning'>Error 404: Drink Container Not Found.</span>")
@@ -270,7 +270,7 @@
 		//bad recipe, ruins the drink
 		var/contents = pick("thick goop", "pungent sludge", "unspeakable slurry", "gross-looking concoction", "eldritch abomination of liquids")
 		visible_message("<span class='warning'>The [con_type] fills with \an [contents]...</span>")
-		drink_container.reagents.add_reagent(pick("????", "toxic_slurry", "meatslurry", "glowing_slury", "fishwater"), pick(30, 50))
+		drink_container.reagents.add_reagent(pick("????", "toxic_slurry", "meatslurry", "glowing_slurry", "fishwater"), pick(30, 50))
 		drink_container.name = "Liquid Mistakes"
 		drink_container.desc = "WARNING: CONTENTS MAY BE AWFUL, DRINK AT OWN RISK."
 	else
@@ -315,15 +315,15 @@
 		dat += "</tr>"
 		dat += "<tr>"
 		if(containers["glass bottle"])
-			dat += "<td><A href='?src=[UID()];dispense=1'>Dispense</a></td>"
+			dat += "<td><A href='byond://?src=[UID()];dispense=1'>Dispense</a></td>"
 		else
 			dat += "<td>Out of stock</td>"
 		if(containers["plastic bottle"])
-			dat += "<td><A href='?src=[UID()];dispense=2'>Dispense</a></td>"
+			dat += "<td><A href='byond://?src=[UID()];dispense=2'>Dispense</a></td>"
 		else
 			dat += "<td>Out of stock</td>"
 		if(containers["metal can"])
-			dat += "<td><A href='?src=[UID()];dispense=3'>Dispense</a></td>"
+			dat += "<td><A href='byond://?src=[UID()];dispense=3'>Dispense</a></td>"
 		else
 			dat += "<td>Out of stock</td>"
 		dat += "</tr>"
@@ -335,7 +335,7 @@
 		dat += "</tr>"
 
 		dat += "<tr>"
-		for(var/i = 1, i <= slots.len, i++)
+		for(var/i = 1, i <= length(slots), i++)
 			var/obj/O = slots[i]
 			if(O)
 				dat += "<td>[bicon(O)]<br>[O.name]</td>"
@@ -343,18 +343,18 @@
 				dat += "<td>Tray Empty</td>"
 
 		if(slots[1] && slots[2] && slots[3])
-			dat += "<td><A href='?src=[UID()];process=1'>Process Ingredients</a></td>"
+			dat += "<td><A href='byond://?src=[UID()];process=1'>Process Ingredients</a></td>"
 		else
 			dat += "<td>Insufficient Ingredients</td>"
 		dat += "</tr>"
 
 		dat += "<tr>"
-		for(var/i = 1, i <= slots.len, i++)
+		for(var/i = 1, i <= length(slots), i++)
 			if(slots[i])
-				dat += "<td><A href='?src=[UID()];eject=[i]'>Eject</a></td>"
+				dat += "<td><A href='byond://?src=[UID()];eject=[i]'>Eject</a></td>"
 			else
 				dat += "<td>N/A</td>"
-		dat += "<td><A href='?src=[UID()];eject=0'>Eject All</a></td>"
+		dat += "<td><A href='byond://?src=[UID()];eject=0'>Eject All</a></td>"
 		dat += "</tr>"
 		dat += "</table>"
 		dat += "<hr>"
@@ -404,3 +404,10 @@
 /obj/machinery/bottler/proc/resetSlots()
 	QDEL_LIST_ASSOC_VAL(slots)
 	slots.len = 3
+
+#undef MAX_GLASS
+#undef MAX_PLAST
+#undef MAX_METAL
+#undef RATIO_GLASS
+#undef RATIO_PLAST
+#undef RATIO_METAL

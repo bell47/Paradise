@@ -19,7 +19,8 @@
 	name = "armor"
 	desc = "An armored vest that protects against some damage."
 	sprite_sheets = list(
-		"Grey" = 'icons/mob/clothing/species/grey/suit.dmi'
+		"Grey" = 'icons/mob/clothing/species/grey/suit.dmi',
+		"Vox" = 'icons/mob/clothing/species/vox/suit.dmi'
 	)
 	icon_state = "armor"
 	item_state = "armor"
@@ -44,15 +45,16 @@
 	name = "security armor"
 	desc = "An armored vest that protects against some damage. This one has a clip for a holobadge."
 	sprite_sheets = list(
-		"Grey" = 'icons/mob/clothing/species/grey/suit.dmi'
+		"Grey" = 'icons/mob/clothing/species/grey/suit.dmi',
+		"Vox" = 'icons/mob/clothing/species/vox/suit.dmi'
 	)
 	icon_state = "armor"
 	item_state = "armor"
 	var/obj/item/clothing/accessory/holobadge/attached_badge
 
-/obj/item/clothing/suit/armor/vest/security/attackby(obj/item/I, mob/user, params)
+/obj/item/clothing/suit/armor/vest/security/attackby__legacy__attackchain(obj/item/I, mob/user, params)
 	if(istype(I, /obj/item/clothing/accessory/holobadge))
-		if(user.unEquip(I))
+		if(user.drop_item_to_ground(I))
 			add_fingerprint(user)
 			I.forceMove(src)
 			attached_badge = I
@@ -65,7 +67,7 @@
 		return
 	..()
 
-/obj/item/clothing/suit/armor/vest/security/attack_self(mob/user)
+/obj/item/clothing/suit/armor/vest/security/attack_self__legacy__attackchain(mob/user)
 	if(attached_badge)
 		add_fingerprint(user)
 		user.put_in_hands(attached_badge)
@@ -86,11 +88,18 @@
 	desc = "Perfect for when you're looking to send a message rather than performing your actual duties."
 	icon_state = "streetjudgearmor"
 
+	sprite_sheets = list(
+		"Vox" = 'icons/mob/clothing/species/vox/suit.dmi',
+		"Drask" = 'icons/mob/clothing/species/drask/suit.dmi',
+		"Grey" = 'icons/mob/clothing/species/grey/suit.dmi'
+	)
+
 /obj/item/clothing/suit/armor/vest/blueshield
 	name = "blueshield's security armor"
-	desc = "An armored vest with the badge of a Blueshield Lieutenant."
+	desc = "An armored vest with the badge of a Blueshield."
 	sprite_sheets = list(
-		"Grey" = 'icons/mob/clothing/species/grey/suit.dmi'
+		"Grey" = 'icons/mob/clothing/species/grey/suit.dmi',
+		"Vox" = 'icons/mob/clothing/species/vox/suit.dmi'
 	)
 	icon_state = "blueshield"
 	item_state = "blueshield"
@@ -115,6 +124,21 @@
 	suit_adjusted = 1
 	actions_types = list(/datum/action/item_action/openclose)
 	adjust_flavour = "unzip"
+	sprite_sheets = list(
+		"Vox" = 'icons/mob/clothing/species/vox/suit.dmi',
+		"Drask" = 'icons/mob/clothing/species/drask/suit.dmi',
+		"Grey" = 'icons/mob/clothing/species/grey/suit.dmi'
+		)
+
+/obj/item/clothing/suit/armor/secponcho
+	name = "security poncho"
+	desc = "A stylish black and red poncho made with reinforced fabric."
+	icon_state = "security_poncho"
+	item_state = "security_poncho"
+	body_parts_covered = UPPER_TORSO|LOWER_TORSO|ARMS
+	armor = list(MELEE = 10, BULLET = 5, LASER = 10, ENERGY = 5, BOMB = 10, RAD = 0, FIRE = 20, ACID = 20)
+	cold_protection = UPPER_TORSO|LOWER_TORSO|ARMS
+	heat_protection = UPPER_TORSO|LOWER_TORSO|ARMS
 	sprite_sheets = list(
 		"Vox" = 'icons/mob/clothing/species/vox/suit.dmi',
 		"Drask" = 'icons/mob/clothing/species/drask/suit.dmi',
@@ -190,7 +214,7 @@
 	armor = list(MELEE = 50, BULLET = 35, LASER = 50, ENERGY = 5, BOMB = 15, RAD = 0, FIRE = INFINITY, ACID = 450)
 	dog_fashion = null
 	resistance_flags = FIRE_PROOF
-	allowed = list(/obj/item/disk, /obj/item/stamp, /obj/item/reagent_containers/food/drinks/flask, /obj/item/melee, /obj/item/storage/lockbox/medal, /obj/item/flash, /obj/item/storage/box/matches, /obj/item/lighter, /obj/item/clothing/mask/cigarette, /obj/item/storage/fancy/cigarettes, /obj/item/tank/internals/emergency_oxygen, /obj/item/gun/energy, /obj/item/gun/projectile)
+	allowed = list(/obj/item/disk, /obj/item/stamp, /obj/item/reagent_containers/drinks/flask, /obj/item/melee, /obj/item/storage/lockbox/medal, /obj/item/flash, /obj/item/storage/fancy/matches, /obj/item/lighter, /obj/item/clothing/mask/cigarette, /obj/item/storage/fancy/cigarettes, /obj/item/tank/internals/emergency_oxygen, /obj/item/gun/energy, /obj/item/gun/projectile)
 
 	sprite_sheets = list(
 		"Vox" = 'icons/mob/clothing/species/vox/suit.dmi',
@@ -205,7 +229,6 @@
 	icon_state = "captain_jacket"
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|ARMS
 	armor = list(MELEE = 40, BULLET = 20, LASER = 25, ENERGY = 5, BOMB = 15, RAD = 0, FIRE = INFINITY, ACID = 450)
-	flags_inv = HIDEJUMPSUIT
 
 /obj/item/clothing/suit/armor/vest/capcarapace/jacket/tunic
 	name = "captain's tunic"
@@ -224,7 +247,8 @@
 	desc = "An old style captain tunic. Makes you look and feel like you're wearing a cardboard box with arm holes cut in it but looks like it would be great for a wedding... or a funeral."
 	icon_state = "captain_white"
 
-	sprite_sheets = list( //Drask look fine in the regular human version
+	// Drask look fine in the regular human version
+	sprite_sheets = list(
 		"Vox" = 'icons/mob/clothing/species/vox/suit.dmi',
 		"Grey" = 'icons/mob/clothing/species/grey/suit.dmi',
 		"Kidan" = 'icons/mob/clothing/species/kidan/suit.dmi',
@@ -239,7 +263,6 @@
 	cold_protection = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
 	heat_protection = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
 	armor = list(MELEE = 50, BULLET = 5, LASER = 5, ENERGY = 5, BOMB = 0, RAD = 0, FIRE = 200, ACID = 200)
-	flags_inv = HIDEJUMPSUIT
 	strip_delay = 80
 	put_on_delay = 60
 	sprite_sheets = list(
@@ -260,7 +283,8 @@
 	icon_state = "knight_green"
 	item_state = "knight_green"
 	slowdown = 1
-	sprite_sheets = list()
+	sprite_sheets = list("Vox" = 'icons/mob/clothing/species/vox/suit.dmi')
+	hide_tail_by_species = list("Vox")
 
 /obj/item/clothing/suit/armor/riot/knight/yellow
 	icon_state = "knight_yellow"
@@ -357,7 +381,8 @@
 	name = "armor"
 	desc = "An armored vest with a detective's badge on it."
 	sprite_sheets = list(
-		"Grey" = 'icons/mob/clothing/species/grey/suit.dmi'
+		"Grey" = 'icons/mob/clothing/species/grey/suit.dmi',
+		"Vox" = 'icons/mob/clothing/species/vox/suit.dmi'
 	)
 	icon_state = "detective-armor"
 	item_state = "armor"
@@ -370,6 +395,7 @@
 /obj/item/clothing/suit/armor/reactive
 	name = "reactive armor"
 	desc = "Doesn't seem to do much for some reason."
+	/// Is the armor turned on?
 	var/active = FALSE
 	/// Is the armor disabled, and prevented from reactivating temporarly?
 	var/disabled = FALSE
@@ -391,7 +417,7 @@
 /obj/item/clothing/suit/armor/reactive/Initialize(mapload, ...)
 	. = ..()
 	cell = new(src)
-	RegisterSignal(src, COMSIG_PARENT_QDELETING, PROC_REF(alert_admins_on_destroy))
+	AddElement(/datum/element/high_value_item)
 
 /obj/item/clothing/suit/armor/reactive/Destroy()
 	QDEL_NULL(cell)
@@ -402,7 +428,15 @@
 	if(cell)
 		. += "<span class='notice'>The armor is [round(cell.percent())]% charged.</span>"
 
-/obj/item/clothing/suit/armor/reactive/attack_self(mob/user)
+/obj/item/clothing/suit/armor/reactive/examine_more(mob/user)
+	. = ..()
+	. += "Reactive armours are one of the uses that Nanotasen has found for the anomaly cores that can be recovered from the bluespace phenomina that occur in the space in orbit of Lavaland. \
+	The effects of these armours can be unpredictable or undesirable in certain situations, so Nanotrasen advises only activating them when the user is in danger."
+	. += ""
+	. += "Outside of the strange effects caused by the anomaly core, the armour provides no protection against conventional attacks. \
+	Nanotrasen cannot be held liable for injury and/or death due to misuse or proper operation of the reactive armour."
+
+/obj/item/clothing/suit/armor/reactive/attack_self__legacy__attackchain(mob/user)
 	active = !(active)
 	if(disabled)
 		to_chat(user, "<span class='warning'>[src] is disabled and rebooting!</span>")
@@ -419,7 +453,7 @@
 	user.update_inv_wear_suit()
 	for(var/X in actions)
 		var/datum/action/A = X
-		A.UpdateButtonIcon()
+		A.UpdateButtons()
 
 /obj/item/clothing/suit/armor/reactive/emp_act(severity)
 	var/emp_power = 5 + (severity-1 ? 0 : 5)
@@ -461,7 +495,7 @@
 
 /obj/item/clothing/suit/armor/reactive/proc/reaction_check(hitby)
 	if(prob(hit_reaction_chance))
-		if(istype(hitby, /obj/item/projectile))
+		if(isprojectile(hitby))
 			var/obj/item/projectile/P = hitby
 			if(istype(P, /obj/item/projectile/ion))
 				return FALSE
@@ -496,7 +530,7 @@
 
 /obj/item/clothing/suit/armor/reactive/fire/equipped(mob/user, slot)
 	..()
-	if(slot != SLOT_HUD_OUTER_SUIT)
+	if(slot != ITEM_SLOT_OUTER_SUIT)
 		return
 	ADD_TRAIT(user, TRAIT_RESISTHEAT, "[UID()]")
 
@@ -523,7 +557,7 @@
 
 /obj/item/clothing/suit/armor/reactive/cryo/equipped(mob/user, slot)
 	..()
-	if(slot != SLOT_HUD_OUTER_SUIT)
+	if(slot != ITEM_SLOT_OUTER_SUIT)
 		return
 	ADD_TRAIT(user, TRAIT_RESISTCOLD, "[UID()]")
 
@@ -599,7 +633,7 @@
 				continue
 			owner.Beam(M,icon_state="lightning[rand(1, 12)]",icon='icons/effects/effects.dmi',time=5)
 			M.adjustFireLoss(20)
-			playsound(M, 'sound/machines/defib_zap.ogg', 50, 1, -1)
+			playsound(M, 'sound/machines/defib_zap.ogg', 50, TRUE, -1)
 			add_attack_logs(owner, M, "[M] was shocked by [owner]'s [src]", ATKLOG_ALMOSTALL)
 		disable(rand(2, 5)) // let's not have buckshot set it off 4 times and do 80 burn damage.
 		return TRUE
@@ -626,9 +660,8 @@
 			for(var/atom/movable/AM in T)
 				thrown_atoms += AM
 
-		for(var/am in thrown_atoms)
-			var/atom/movable/AM = am
-			if(AM == owner || AM.anchored)
+		for(var/atom/movable/AM as anything in thrown_atoms)
+			if(AM == owner || AM.anchored || (ismob(AM) && !isliving(AM)))
 				continue
 
 			var/throw_target = get_edge_target_turf(owner, get_dir(owner, get_step_away(AM, owner)))
@@ -649,14 +682,15 @@
 		disable(rand(2, 5))
 		return TRUE
 
-/obj/item/clothing/suit/armor/reactive/random //Spawner for random reactive armor
+/obj/effect/spawner/reactive_armor
 	name = "Random Reactive Armor"
+	icon = 'icons/obj/clothing/suits.dmi'
+	icon_state = "reactiveoff"
 
-/obj/item/clothing/suit/armor/reactive/random/Initialize(mapload)
+/obj/effect/spawner/reactive_armor/Initialize(mapload)
 	. = ..()
-	var/spawnpath = pick(subtypesof(/obj/item/clothing/suit/armor/reactive) - /obj/item/clothing/suit/armor/reactive/random)
+	var/spawnpath = pick(subtypesof(/obj/item/clothing/suit/armor/reactive))
 	new spawnpath(loc)
-	UnregisterSignal(src, COMSIG_PARENT_QDELETING)
 	return INITIALIZE_HINT_QDEL
 
 //All of the armor below is mostly unused
@@ -676,6 +710,7 @@
 	min_cold_protection_temperature = SPACE_SUIT_MIN_TEMP_PROTECT
 	sprite_sheets = null
 	armor = list(MELEE = 200, BULLET = 200, LASER = 50, ENERGY = 50, BOMB = INFINITY, RAD = INFINITY, FIRE = 450, ACID = 450)
+	flags_2 = RAD_PROTECT_CONTENTS_2
 
 /obj/item/clothing/suit/armor/heavy
 	name = "heavy armor"
@@ -686,16 +721,18 @@
 	w_class = WEIGHT_CLASS_BULKY
 	gas_transfer_coefficient = 0.90
 	flags = THICKMATERIAL
+	flags_2 = RAD_PROTECT_CONTENTS_2
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
 	slowdown = 3
-	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT
+	flags_inv = HIDEGLOVES|HIDEJUMPSUIT
 	hide_tail_by_species = list("Vox")
 
 /obj/item/clothing/suit/armor/tdome
 	armor = list(MELEE = 200, BULLET = 200, LASER = 50, ENERGY = 50, BOMB = INFINITY, RAD = INFINITY, FIRE = 450, ACID = 450)
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
-	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT
+	flags_inv = HIDEGLOVES|HIDEJUMPSUIT
 	flags = THICKMATERIAL
+	flags_2 = RAD_PROTECT_CONTENTS_2
 	cold_protection = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
 	heat_protection = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
 	hide_tail_by_species = list("Vox")
@@ -715,7 +752,7 @@
 //Non-hardsuit ERT armor.
 /obj/item/clothing/suit/armor/vest/ert
 	name = "emergency response team armor"
-	desc = "A set of armor worn by members of the Nanotrasen Emergency Response Team."
+	desc = "A mid-quality protective vest produced by Citadel Armories. Additional polymer paneling over the chest and shoulders offers moderately improved energy protection compared to standard kevlar vests."
 	icon_state = "ertarmor_cmd"
 	item_state = "armor"
 	armor = list(MELEE = 20, BULLET = 20, LASER = 20, ENERGY = 20, BOMB = 10, RAD = 0, FIRE = 50, ACID = 50)
@@ -723,37 +760,37 @@
 //Commander
 /obj/item/clothing/suit/armor/vest/ert/command
 	name = "emergency response team commander armor"
-	desc = "A set of armor worn by the commander of a Nanotrasen Emergency Response Team. Has blue highlights."
+	desc = "A mid-quality protective vest produced by Citadel Armories. Additional polymer paneling over the chest and shoulders offers moderately improved energy protection compared to standard kevlar vests. This one has chipped blue Command insignia on the shoulders."
 
 //Security
 /obj/item/clothing/suit/armor/vest/ert/security
 	name = "emergency response team security armor"
-	desc = "A set of armor worn by security members of the Nanotrasen Emergency Response Team. Has red highlights."
+	desc = "A mid-quality protective vest produced by Citadel Armories. Additional polymer paneling over the chest and shoulders offers moderately improved energy protection compared to standard kevlar vests. This one has chipped red Security insignia on the shoulders."
 	icon_state = "ertarmor_sec"
 
-
+//Paranormal
 /obj/item/clothing/suit/armor/vest/ert/security/paranormal
 	name = "emergency response team paranormal armor"
-	desc = "A set of armor worn by paranormal members of the Nanotrasen Emergency Response Team. Has crusader sigils."
+	desc = "A full suit of medieval plate armor, kitted out in crusader colors. Where the hell did they even find this? There are chipped black insignia on the shoulders."
 	icon_state = "knight_templar"
 	item_state = "knight_templar"
 
 //Engineer
 /obj/item/clothing/suit/armor/vest/ert/engineer
 	name = "emergency response team engineer armor"
-	desc = "A set of armor worn by engineering members of the Nanotrasen Emergency Response Team. Has orange highlights."
+	desc = "A mid-quality protective vest produced by Citadel Armories. Additional polymer paneling over the chest and shoulders offers moderately improved energy protection compared to standard kevlar vests. This one has chipped orange Engineering insignia on the shoulders."
 	icon_state = "ertarmor_eng"
 
 //Medical
 /obj/item/clothing/suit/armor/vest/ert/medical
 	name = "emergency response team medical armor"
-	desc = "A set of armor worn by medical members of the Nanotrasen Emergency Response Team. Has red and white highlights."
+	desc = "A mid-quality protective vest produced by Citadel Armories. Additional polymer paneling over the chest and shoulders offers moderately improved energy protection compared to standard kevlar vests. This one has chipped white Medical insignia on the shoulders."
 	icon_state = "ertarmor_med"
 
 //Janitorial
 /obj/item/clothing/suit/armor/vest/ert/janitor
 	name = "emergency response team janitor armor"
-	desc = "A set of armor worn by janitorial members of the Nanotrasen Emergency Response Team. Has red and white highlights."
+	desc = "A mid-quality protective vest produced by Citadel Armories. Additional polymer paneling over the chest and shoulders offers moderately improved energy protection compared to standard kevlar vests. This one has chipped purple Janitorial insignia on the shoulders."
 	icon_state = "ertarmor_jan"
 
 //same defense as basic sec armor
@@ -802,7 +839,9 @@
 	allowed = list(/obj/item/flashlight, /obj/item/tank/internals, /obj/item/pickaxe, /obj/item/spear, /obj/item/organ/internal/regenerative_core/legion, /obj/item/kitchen/knife/combat/survival)
 	armor = list(MELEE = 25, BULLET = 5, LASER = 15, ENERGY = 5, BOMB = 15, RAD = 0, FIRE = 75, ACID = 75) //a fair alternative to bone armor, requiring alternative materials and gaining a suit slot
 	hoodtype = /obj/item/clothing/head/hooded/goliath
-	body_parts_covered = UPPER_TORSO|LOWER_TORSO|ARMS
+	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|ARMS|HANDS
+	heat_protection = UPPER_TORSO|LOWER_TORSO|LEGS|ARMS|HANDS
+	max_heat_protection_temperature = FIRE_IMMUNITY_MAX_TEMP_PROTECT
 
 /obj/item/clothing/head/hooded/goliath
 	name = "goliath cloak hood"
@@ -812,6 +851,9 @@
 	armor = list(MELEE = 25, BULLET = 5, LASER = 15, ENERGY = 5, BOMB = 15, RAD = 0, FIRE = 75, ACID = 75)
 	flags = BLOCKHAIR
 	flags_cover = HEADCOVERSEYES
+	body_parts_covered = HEAD
+	heat_protection = HEAD
+	max_heat_protection_temperature = FIRE_IMMUNITY_MAX_TEMP_PROTECT
 
 /obj/item/clothing/suit/armor/bone
 	name = "bone armor"
@@ -820,4 +862,6 @@
 	item_state = "bonearmor"
 	blood_overlay_type = "armor"
 	armor = list(MELEE = 25, BULLET = 15, LASER = 15, ENERGY = 5, BOMB = 15, RAD = 0, FIRE = 50, ACID = 50)
-	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS
+	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
+	heat_protection = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
+	max_heat_protection_temperature = FIRE_IMMUNITY_MAX_TEMP_PROTECT

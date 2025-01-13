@@ -16,6 +16,7 @@
 
 	no_spin_thrown = TRUE
 	del_on_death = TRUE
+	weather_immunities = list("ash")
 
 	/// The probability % of us escaping if stuffed into a bag/toolbox/etc
 	var/escape_chance = 10
@@ -41,17 +42,17 @@
 
 
 /mob/living/simple_animal/possessed_object/ghost() // Ghosting will return the object to normal, and will not disqualify the ghoster from various mid-round antag positions.
-	var/response = alert(src, "End your possession of this object? (It will not stop you from respawning later)","Are you sure you want to ghost?","Ghost","Stay in body")
+	var/response = tgui_alert(src, "End your possession of this object? (It will not stop you from respawning later)", "Are you sure you want to ghost?", list("Ghost", "Stay in body"))
 	if(response != "Ghost")
 		return
 	lay_down()
-	var/mob/dead/observer/ghost = ghostize(1)
+	var/mob/dead/observer/ghost = ghostize(TRUE)
 	ghost.timeofdeath = world.time
 	death(0) // Turn back into a regular object.
 
 /mob/living/simple_animal/possessed_object/death(gibbed)
 	if(can_die())
-		ghostize(GHOST_CAN_REENTER)
+		ghostize(TRUE)
 		// if gibbed, the item goes with the ghost
 		if(!gibbed && possessed_item.loc == src)
 			// Put the normal item back once the EVIL SPIRIT has been vanquished from it. If it's not already in place
@@ -90,8 +91,8 @@
 	to_chat(src, "<span class='notice'><b>Your spirit has entered [src] and possessed it.</b><br>You are able to do most things a humanoid would be able to do with a [src] in their hands.<br>If you want to end your ghostly possession, use the '<b>ghost</b>' verb, it won't penalize your ability to respawn.</span>")
 
 
-/mob/living/simple_animal/possessed_object/New(atom/loc as obj)
-	..()
+/mob/living/simple_animal/possessed_object/Initialize(mapload)
+	. = ..()
 
 	if(!isitem(loc)) // Some silly motherfucker spawned us directly via the game panel.
 		message_admins("<span class='adminnotice'>Possessed object improperly spawned, deleting.</span>") // So silly admins with debug off will see the message too and not spam these things.
@@ -143,7 +144,7 @@
 	name = spirit_name
 
 	if(A == src) // If we're clicking ourself we should not attack ourself.
-		possessed_item.attack_self(src)
+		possessed_item.attack_self__legacy__attackchain(src)
 	else
 		..()
 
@@ -172,7 +173,7 @@
 	set_opacity(possessed_item.opacity)
 	return ..(NONE)
 
-/mob/living/simple_animal/possessed_object/attackby(obj/item/O, mob/living/user)
+/mob/living/simple_animal/possessed_object/attackby__legacy__attackchain(obj/item/O, mob/living/user)
 	. = ..()
 	if(istype(O, /obj/item/nullrod))
 		visible_message("<span type='notice'>[O] dispels the spooky aura!</span>")

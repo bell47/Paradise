@@ -15,11 +15,11 @@
 	origin_tech = "materials=1"
 	var/turf_type = null
 	var/mineralType = null
+	scatter_distance = 3
 
-/obj/item/stack/tile/New(loc, amount)
-	..()
-	pixel_x = rand(-3, 3)
-	pixel_y = rand(-3, 3) //randomize a little
+/obj/item/stack/tile/Initialize(mapload, new_amount, merge)
+	. = ..()
+	scatter_atom()
 
 /obj/item/stack/tile/welder_act(mob/user, obj/item/I)
 	if(get_amount() < 4)
@@ -65,8 +65,54 @@
 	resistance_flags = FLAMMABLE
 
 /obj/item/stack/tile/wood/cyborg
-	energy_type = /datum/robot_energy_storage/wood_tile
+	energy_type = /datum/robot_storage/energy/wood_tile
 	is_cyborg = TRUE
+
+
+//Bamboo
+/obj/item/stack/tile/bamboo
+	name = "bamboo mat pieces"
+	singular_name = "bamboo mat piece"
+	gender = PLURAL
+	desc = "A piece of a bamboo mat with a decorative trim."
+	icon_state = "tile_bamboo"
+	turf_type = /turf/simulated/floor/bamboo
+	merge_type = /obj/item/stack/tile/bamboo
+	parent_stack = TRUE
+	resistance_flags = FLAMMABLE
+
+/obj/item/stack/tile/bamboo/twenty
+	amount = 20
+
+/obj/item/stack/tile/bamboo/tatami
+	name = "tatami with green rim"
+	singular_name = "green tatami floor tile"
+	icon_state = "tile_tatami_green"
+	turf_type = /turf/simulated/floor/bamboo/tatami
+	merge_type = /obj/item/stack/tile/bamboo/tatami
+
+/obj/item/stack/tile/bamboo/tatami/twenty
+	amount = 20
+
+/obj/item/stack/tile/bamboo/tatami/purple
+	name = "tatami with purple rim"
+	singular_name = "purple tatami floor tile"
+	icon_state = "tile_tatami_purple"
+	turf_type = /turf/simulated/floor/bamboo/tatami/purple
+	merge_type = /obj/item/stack/tile/bamboo/tatami/purple
+
+/obj/item/stack/tile/bamboo/tatami/purple/twenty
+	amount = 20
+
+/obj/item/stack/tile/bamboo/tatami/black
+	name = "tatami with black rim"
+	singular_name = "black tatami floor tile"
+	icon_state = "tile_tatami_black"
+	turf_type = /turf/simulated/floor/bamboo/tatami/black
+	merge_type = /obj/item/stack/tile/bamboo/tatami/black
+
+/obj/item/stack/tile/bamboo/tatami/black/twenty
+	amount = 20
 
 //Carpets
 /obj/item/stack/tile/carpet
@@ -167,6 +213,16 @@
 /obj/item/stack/tile/carpet/royalblue/twenty
 	amount = 20
 
+/obj/item/stack/tile/carpet/grimey
+	name = "cheap carpet"
+	icon_state = "tile-carpet-grimey"
+	turf_type = /turf/simulated/floor/carpet/grimey
+/obj/item/stack/tile/carpet/grimey/ten
+	amount = 10
+
+/obj/item/stack/tile/carpet/grimey/twenty
+	amount = 20
+
 //Plasteel
 /obj/item/stack/tile/plasteel
 	name = "floor tiles"
@@ -184,9 +240,10 @@
 	mineralType = "metal"
 	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, RAD = 0, FIRE = 100, ACID = 70)
 	resistance_flags = FIRE_PROOF
+	merge_type = /obj/item/stack/tile/plasteel
 
 /obj/item/stack/tile/plasteel/cyborg
-	energy_type = /datum/robot_energy_storage/metal_tile
+	energy_type = /datum/robot_storage/energy/metal_tile
 	is_cyborg = TRUE
 
 //Light
@@ -288,7 +345,8 @@
 	mineralType = "metal"
 	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, RAD = 0, FIRE = 100, ACID = 70)
 	resistance_flags = FIRE_PROOF
+	merge_type = /obj/item/stack/tile/catwalk
 
 /obj/item/stack/tile/catwalk/cyborg
-	energy_type = /datum/robot_energy_storage/catwalk
+	energy_type = /datum/robot_storage/energy/catwalk
 	is_cyborg = TRUE

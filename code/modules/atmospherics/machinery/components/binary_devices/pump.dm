@@ -13,13 +13,13 @@ Thus, the two variables affect pump operation are set in New():
 */
 
 /obj/machinery/atmospherics/binary/pump
+	name = "gas pump"
+	desc = "A pump."
 	icon = 'icons/atmos/pump.dmi'
 	icon_state = "map_off"
 
-	name = "gas pump"
-	desc = "A pump"
-
 	can_unwrench = TRUE
+	can_unwrench_while_on = FALSE
 
 	target_pressure = ONE_ATMOSPHERE
 
@@ -72,7 +72,6 @@ Thus, the two variables affect pump operation are set in New():
 		add_underlay(T, node2, dir)
 
 /obj/machinery/atmospherics/binary/pump/process_atmos()
-	..()
 	if((stat & (NOPOWER|BROKEN)) || !on)
 		return 0
 
@@ -83,9 +82,9 @@ Thus, the two variables affect pump operation are set in New():
 		return 1
 
 	//Calculate necessary moles to transfer using PV=nRT
-	if((air1.total_moles() > 0) && (air1.temperature>0))
+	if((air1.total_moles() > 0) && (air1.temperature() > 0))
 		var/pressure_delta = target_pressure - output_starting_pressure
-		var/transfer_moles = pressure_delta*air2.volume/(air1.temperature * R_IDEAL_GAS_EQUATION)
+		var/transfer_moles = pressure_delta * air2.volume / (air1.temperature() * R_IDEAL_GAS_EQUATION)
 
 		//Actually transfer the gas
 		var/datum/gas_mixture/removed = air1.remove(transfer_moles)
@@ -110,10 +109,13 @@ Thus, the two variables affect pump operation are set in New():
 /obj/machinery/atmospherics/binary/pump/attack_ghost(mob/user)
 	ui_interact(user)
 
-/obj/machinery/atmospherics/binary/pump/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = FALSE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/machinery/atmospherics/binary/pump/ui_state(mob/user)
+	return GLOB.default_state
+
+/obj/machinery/atmospherics/binary/pump/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "AtmosPump", name, 310, 110, master_ui, state)
+		ui = new(user, src, "AtmosPump", name)
 		ui.open()
 
 /obj/machinery/atmospherics/binary/pump/ui_data(mob/user)
@@ -155,13 +157,8 @@ Thus, the two variables affect pump operation are set in New():
 		return
 	update_icon()
 
-/obj/machinery/atmospherics/binary/pump/attackby(obj/item/W, mob/user, params)
+/obj/machinery/atmospherics/binary/pump/attackby__legacy__attackchain(obj/item/W, mob/user, params)
 	if(is_pen(W))
 		rename_interactive(user, W)
-		return
-	else if(!istype(W, /obj/item/wrench))
-		return ..()
-	if(!(stat & NOPOWER) && on)
-		to_chat(user, "<span class='alert'>You cannot unwrench this [src], turn it off first.</span>")
-		return 1
+		return TRUE
 	return ..()

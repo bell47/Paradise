@@ -1,6 +1,7 @@
 
 
-/obj/structure/alien/resin/flower_bud_enemy //inheriting basic attack/damage stuff from alien structures
+/// inheriting basic attack/damage stuff from alien structures
+/obj/structure/alien/resin/flower_bud_enemy
 	name = "flower bud"
 	desc = "A large pulsating plant..."
 	icon = 'icons/effects/spacevines.dmi'
@@ -36,11 +37,10 @@
 	mouse_opacity = MOUSE_OPACITY_ICON
 	desc = "A thick vine, painful to the touch."
 
-
-/obj/effect/ebeam/vine/Crossed(atom/movable/AM, oldloc)
-	if(!isliving(AM))
+/obj/effect/ebeam/vine/on_atom_entered(datum/source, atom/movable/entered)
+	if(!isliving(entered))
 		return
-	var/mob/living/L = AM
+	var/mob/living/L = entered
 	if(!("vines" in L.faction))
 		L.adjustBruteLoss(5)
 		to_chat(L, "<span class='alert'>You cut yourself on the thorny vines.</span>")
@@ -89,7 +89,7 @@
 					step(L,get_dir(L,src)) //reel them in
 					L.Weaken(6 SECONDS) //you can't get away now~
 
-		if(grasping.len < max_grasps)
+		if(length(grasping) < max_grasps)
 			grasping:
 				for(var/mob/living/L in view(grasp_range, src))
 					if(L == src || faction_check_mob(L) || (L in grasping) || L == target)

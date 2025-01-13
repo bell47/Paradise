@@ -1,5 +1,5 @@
 import { useBackend } from '../backend';
-import { Box, Button, Section, Table, Flex } from '../components';
+import { Box, Button, Section, Table, Stack } from '../components';
 import { Window } from '../layouts';
 import { BeakerContents } from '../interfaces/common/BeakerContents';
 import { Operating } from '../interfaces/common/Operating';
@@ -9,16 +9,14 @@ export const ReagentGrinder = (props, context) => {
   const { operating } = data;
   const { title } = config;
   return (
-    <Window resizable>
-      <Window.Content
-        scrollable
-        display="flex"
-        className="Layout__content--flexColumn"
-      >
-        <Operating operating={operating} name={title} />
-        <GrinderControls />
-        <GrinderContents />
-        <GrinderReagents />
+    <Window width={400} height={565}>
+      <Window.Content>
+        <Stack fill vertical>
+          <Operating operating={operating} name={title} />
+          <GrinderControls />
+          <GrinderContents />
+          <GrinderReagents />
+        </Stack>
       </Window.Content>
     </Window>
   );
@@ -30,8 +28,8 @@ const GrinderControls = (props, context) => {
 
   return (
     <Section title="Controls">
-      <Flex>
-        <Flex.Item width="50%" mr="3px">
+      <Stack>
+        <Stack.Item width="50%">
           <Button
             fluid
             textAlign="center"
@@ -42,8 +40,8 @@ const GrinderControls = (props, context) => {
             content="Grind"
             onClick={() => act('grind')}
           />
-        </Flex.Item>
-        <Flex.Item width="50%">
+        </Stack.Item>
+        <Stack.Item width="50%">
           <Button
             fluid
             textAlign="center"
@@ -54,8 +52,8 @@ const GrinderControls = (props, context) => {
             content="Juice"
             onClick={() => act('juice')}
           />
-        </Flex.Item>
-      </Flex>
+        </Stack.Item>
+      </Stack>
     </Section>
   );
 };
@@ -67,7 +65,8 @@ const GrinderContents = (props, context) => {
   return (
     <Section
       title="Contents"
-      flexGrow={1}
+      fill
+      scrollable
       buttons={
         <Box>
           <Box inline color="label" mr={2}>
@@ -103,36 +102,26 @@ const GrinderContents = (props, context) => {
 
 const GrinderReagents = (props, context) => {
   const { act, data } = useBackend(context);
-  const {
-    beaker_loaded,
-    beaker_current_volume,
-    beaker_max_volume,
-    beaker_contents,
-  } = data;
+  const { beaker_loaded, beaker_current_volume, beaker_max_volume, beaker_contents } = data;
 
   return (
     <Section
       title="Beaker"
-      flexGrow="1"
+      fill
+      scrollable
+      height="40%"
       buttons={
         !!beaker_loaded && (
           <Box>
             <Box inline color="label" mr={2}>
               {beaker_current_volume} / {beaker_max_volume} units
             </Box>
-            <Button
-              icon="eject"
-              content="Detach Beaker"
-              onClick={() => act('detach')}
-            />
+            <Button icon="eject" content="Detach Beaker" onClick={() => act('detach')} />
           </Box>
         )
       }
     >
-      <BeakerContents
-        beakerLoaded={beaker_loaded}
-        beakerContents={beaker_contents}
-      />
+      <BeakerContents beakerLoaded={beaker_loaded} beakerContents={beaker_contents} />
     </Section>
   );
 };

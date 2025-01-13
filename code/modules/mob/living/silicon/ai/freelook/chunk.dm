@@ -20,6 +20,8 @@
 /datum/camerachunk/proc/add_camera(obj/machinery/camera/cam)
 	if(active_cameras[cam] || inactive_cameras[cam])
 		return
+	if(cam.non_chunking_camera)
+		return
 	// Register all even though it is active/inactive. Won't get called incorrectly
 	RegisterSignal(cam, COMSIG_CAMERA_OFF, PROC_REF(deactivate_camera), TRUE)
 	RegisterSignal(cam, COMSIG_CAMERA_ON, PROC_REF(activate_camera), TRUE)
@@ -54,7 +56,7 @@
 	SScamera.queue(src)
 
 // Add an AI eye to the chunk, then update if changed.
-/datum/camerachunk/proc/add(mob/camera/aiEye/eye, add_images = TRUE)
+/datum/camerachunk/proc/add(mob/camera/ai_eye/eye, add_images = TRUE)
 	if(add_images)
 		var/client/client = eye.GetViewerClient()
 		if(client)
@@ -65,11 +67,11 @@
 	if(changed)
 		SScamera.queue(src)
 
-/datum/camerachunk/proc/aiEye_destroyed(mob/camera/aiEye/eye)
+/datum/camerachunk/proc/aiEye_destroyed(mob/camera/ai_eye/eye)
 	remove(eye, FALSE)
 
 // Remove an AI eye from the chunk, then update if changed.
-/datum/camerachunk/proc/remove(mob/camera/aiEye/eye, remove_images = TRUE)
+/datum/camerachunk/proc/remove(mob/camera/ai_eye/eye, remove_images = TRUE)
 	if(remove_images)
 		var/client/client = eye.GetViewerClient()
 		if(client)
@@ -132,7 +134,7 @@
 		obscured += t.obscured
 		images_to_add += t.obscured
 
-	for(var/mob/camera/aiEye/eye as anything in seenby)
+	for(var/mob/camera/ai_eye/eye as anything in seenby)
 		var/client/client = eye.GetViewerClient()
 		if(client)
 			client.images -= images_to_remove
@@ -154,7 +156,7 @@
 	for(var/obj/machinery/camera/c in urange(half_chunk + CAMERA_VIEW_DISTANCE, locate(x + half_chunk, y + half_chunk, z)))
 		add_camera(c)
 
-	for(var/turf/t in block(locate(max(x, 1), max(y, 1), max(z, 1)), locate(min(x + CAMERA_CHUNK_SIZE - 1, world.maxx), min(y + CAMERA_CHUNK_SIZE - 1, world.maxy), z)))
+	for(var/turf/t in block(max(x, 1), max(y, 1), max(z, 1), min(x + CAMERA_CHUNK_SIZE - 1, world.maxx), min(y + CAMERA_CHUNK_SIZE - 1, world.maxy), z))
 		turfs[t] = t
 
 	for(var/obj/machinery/camera/c as anything in active_cameras)

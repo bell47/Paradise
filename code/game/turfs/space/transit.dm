@@ -1,12 +1,16 @@
 /turf/space/transit
 	var/pushdirection // push things that get caught in the transit tile this direction
 	plane = PLANE_SPACE
+	icon_state = "black"
+	dir = SOUTH
 
-//Overwrite because we dont want people building rods in space.
-/turf/space/transit/attackby(obj/O as obj, mob/user as mob, params)
-	return
+/turf/space/transit/Initialize(mapload)
+	. = ..()
+	// We don't want people building rods in space.
+	RegisterSignal(src, COMSIG_ATTACK_BY, TYPE_PROC_REF(/datum, signal_cancel_attack_by))
 
-/turf/space/transit/north // moving to the north
+/// moving to the north
+/turf/space/transit/north
 
 	pushdirection = SOUTH  // south because the space tile is scrolling south
 
@@ -56,7 +60,8 @@
 /turf/space/transit/north/shuttlespace_ns15
 	icon_state = "speedspace_ns_15"
 
-/turf/space/transit/east // moving to the east
+/// moving to the east
+/turf/space/transit/east
 	pushdirection = WEST
 
 /turf/space/transit/east/shuttlespace_ew1
@@ -105,10 +110,6 @@
 	icon_state = "speedspace_ew_15"
 //-tg- stuff
 
-/turf/space/transit
-	icon_state = "black"
-	dir = SOUTH
-
 /turf/space/transit/horizontal
 	dir = WEST
 
@@ -144,10 +145,6 @@
 
 
 /turf/space/transit/rpd_act()
-	return
-
-//Overwrite because we dont want people building rods in space.
-/turf/space/transit/attackby()
 	return
 
 /turf/space/transit/Initialize(mapload)

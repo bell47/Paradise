@@ -38,6 +38,7 @@ GLOBAL_LIST_EMPTY(nukedisc_respawn)
 GLOBAL_LIST_EMPTY(ninjastart)
 GLOBAL_LIST_EMPTY(carplist) //list of all carp-spawn landmarks
 GLOBAL_LIST_EMPTY(syndicateofficer)
+GLOBAL_LIST_EMPTY(roundstart_observer_start)
 
 //List of preloaded templates
 GLOBAL_LIST_EMPTY(map_templates)
@@ -45,5 +46,3 @@ GLOBAL_LIST_EMPTY(space_ruins_templates)
 GLOBAL_LIST_EMPTY(lava_ruins_templates)
 GLOBAL_LIST_EMPTY(shelter_templates)
 GLOBAL_LIST_EMPTY(shuttle_templates)
-GLOBAL_LIST_EMPTY(bridge_horizontal_templates)
-GLOBAL_LIST_EMPTY(bridge_vertical_templates)

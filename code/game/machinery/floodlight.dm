@@ -1,5 +1,6 @@
 /obj/machinery/floodlight
 	name = "emergency floodlight"
+	desc = "An artificial sun, except a lot smaller and a lot less powerful."
 	icon = 'icons/obj/machines/floodlight.dmi'
 	icon_state = "flood00"
 	anchored = FALSE
@@ -17,7 +18,7 @@
 /obj/machinery/floodlight/get_cell()
 	return cell
 
-/obj/machinery/floodlight/Initialize()
+/obj/machinery/floodlight/Initialize(mapload)
 	. = ..()
 	cell = new(src)
 	mapVarInit()
@@ -89,7 +90,7 @@
 		set_light(brightness_on)
 		update_icon(UPDATE_ICON_STATE)
 
-/obj/machinery/floodlight/attackby(obj/item/W as obj, mob/user as mob, params)
+/obj/machinery/floodlight/attackby__legacy__attackchain(obj/item/W as obj, mob/user as mob, params)
 	if(istype(W, /obj/item/stock_parts/cell))
 		if(open)
 			if(cell)

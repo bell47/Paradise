@@ -12,9 +12,6 @@ GLOBAL_DATUM_INIT(cameranet, /datum/cameranet, new())
 	var/list/chunks = list()
 	var/ready = FALSE
 
-	// The object used for the clickable stat() button.
-	var/obj/effect/statclick/statclick
-
 // Checks if a chunk has been Generated in x, y, z.
 /datum/cameranet/proc/chunkGenerated(x, y, z)
 	x &= ~(CAMERA_CHUNK_SIZE - 1)
@@ -47,7 +44,7 @@ GLOBAL_DATUM_INIT(cameranet, /datum/cameranet, new())
 	var/list/chunks_post_seen = list()
 
 	for(var/V in moved_eyes)
-		var/mob/camera/aiEye/eye = V
+		var/mob/camera/ai_eye/eye = V
 		if(C)
 			chunks_pre_seen |= eye.visibleCameraChunks
 		// 0xf = 15
@@ -79,7 +76,7 @@ GLOBAL_DATUM_INIT(cameranet, /datum/cameranet, new())
 
 	if(C)
 		for(var/V in other_eyes)
-			var/mob/camera/aiEye/eye = V
+			var/mob/camera/ai_eye/eye = V
 			chunks_post_seen |= eye.visibleCameraChunks
 
 		var/list/remove = chunks_pre_seen - chunks_post_seen
@@ -178,21 +175,3 @@ GLOBAL_DATUM_INIT(cameranet, /datum/cameranet, new())
 		if(chunk.visibleTurfs[position])
 			return 1
 	return 0
-
-/*
-/datum/cameranet/proc/stat_entry()
-	if(!statclick)
-		statclick = new/obj/effect/statclick/debug(null, "Initializing...", src)
-
-	stat(name, statclick.update("Cameras: [cameranet.cameras.len] | Chunks: [cameranet.chunks.len]"))
-*/
-
-// Debug verb for VVing the chunk that the turf is in.
-/*
-/turf/verb/view_chunk()
-	set src in world
-
-	if(cameranet.chunkGenerated(x, y, z))
-		var/datum/camerachunk/chunk = cameranet.getCameraChunk(x, y, z)
-		usr.client.debug_variables(chunk)
-*/

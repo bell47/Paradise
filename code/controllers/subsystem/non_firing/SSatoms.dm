@@ -1,8 +1,3 @@
-#define BAD_INIT_QDEL_BEFORE 1
-#define BAD_INIT_DIDNT_INIT 2
-#define BAD_INIT_SLEPT 4
-#define BAD_INIT_NO_HINT 8
-
 SUBSYSTEM_DEF(atoms)
 	name = "Atoms"
 	init_order = INIT_ORDER_ATOMS
@@ -36,7 +31,7 @@ SUBSYSTEM_DEF(atoms)
 	var/count
 	var/list/mapload_arg = list(TRUE)
 	if(atoms)
-		count = atoms.len
+		count = length(atoms)
 		for(var/I in atoms)
 			var/atom/A = I
 			if(A && !A.initialized)
@@ -54,11 +49,10 @@ SUBSYSTEM_DEF(atoms)
 		log_startup_progress("Initialized [count] atoms in [stop_watch(watch)]s")
 	else
 		log_debug("	Initialized [count] atoms in [stop_watch(watch)]s")
-	pass(count)
 
 	initialized = INITIALIZATION_INNEW_REGULAR
 
-	if(late_loaders.len)
+	if(length(late_loaders))
 		watch = start_watch()
 		if(noisy)
 			log_startup_progress("Late-initializing atoms...")
@@ -106,6 +100,11 @@ SUBSYSTEM_DEF(atoms)
 		qdeleted = TRUE
 	else if(!A.initialized)
 		BadInitializeCalls[the_type] |= BAD_INIT_DIDNT_INIT
+	else
+		SEND_SIGNAL(A, COMSIG_ATOM_AFTER_SUCCESSFUL_INITIALIZE)
+		var/atom/location = A.loc
+		if(location)
+			SEND_SIGNAL(location, COMSIG_ATOM_AFTER_SUCCESSFUL_INITIALIZED_ON, A, arguments[1])
 
 	return qdeleted || QDELING(A)
 
@@ -122,3 +121,26 @@ SUBSYSTEM_DEF(atoms)
 		InitializeAtoms()
 	old_initialized = SSatoms.old_initialized
 	BadInitializeCalls = SSatoms.BadInitializeCalls
+
+
+
+/client/proc/debug_atom_init()
+	set name = "Atom Init Log"
+	set category = "Debug"
+	set desc = "Shows what failed to init this round"
+
+	if(!check_rights(R_DEBUG | R_VIEWRUNTIMES))
+		return
+
+	var/list/html_data = list()
+	html_data += "<h1>Bad Initialize() Calls</h1><table border='1'><tr><th scope='col'>Type</th><th scope='col'>Qdeleted before init</th><th scope='col'>Did not init</th><th scope='col'>Slept during init</th><th scope='col'>No init hint</th></tr>"
+
+	for(var/typepath in SSatoms.BadInitializeCalls)
+		var/val = SSatoms.BadInitializeCalls[typepath]
+
+		html_data += "<tr><td>[typepath]</td><td>[val & BAD_INIT_QDEL_BEFORE ? "X" : "&nbsp;"]</td><td>[val & BAD_INIT_DIDNT_INIT ? "X" : "&nbsp;"]</td><td>[val & BAD_INIT_SLEPT ? "X" : "&nbsp;"]</td><td>[val & BAD_INIT_NO_HINT ? "X" : "&nbsp;"]</td></tr>"
+
+	html_data += "</table>"
+
+	usr << browse(html_data.Join(), "window=initdebug")
+

@@ -1,14 +1,3 @@
-/turf
-	var/dynamic_lighting = TRUE
-	luminosity           = 1
-
-	var/tmp/lighting_corners_initialised = FALSE
-
-	var/tmp/list/datum/light_source/affecting_lights       // List of light sources affecting this turf.
-	var/tmp/atom/movable/lighting_object/lighting_object // Our lighting object.
-	var/tmp/list/datum/lighting_corner/corners
-	var/tmp/has_opaque_atom = FALSE // Not to be confused with opacity, this will be TRUE if there's any opaque atom on the tile.
-
 // Causes any affecting light sources to be queued for a visibility update, for example a door got opened.
 /turf/proc/reconsider_lights()
 	var/datum/light_source/L
@@ -95,7 +84,7 @@
 				has_opaque_atom = TRUE
 				break
 
-/turf/Exited(atom/movable/Obj, atom/newloc)
+/turf/Exited(atom/movable/Obj, direction)
 	. = ..()
 
 	if(Obj && Obj.opacity)
@@ -109,6 +98,8 @@
 				lighting_build_overlay()
 			else
 				lighting_clear_overlay()
+	for(var/obj/machinery/machine in contents)
+		machine.reregister_machine()
 
 /turf/proc/generate_missing_corners()
 	if(!IS_DYNAMIC_LIGHTING(src) && !light_sources)

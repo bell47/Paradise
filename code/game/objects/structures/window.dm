@@ -8,6 +8,8 @@
 	anchored = TRUE
 	flags = ON_BORDER
 	flags_2 = RAD_PROTECT_CONTENTS_2
+	flags_ricochet = RICOCHET_HARD
+	receive_ricochet_chance_mod = 0.5
 	can_be_unanchored = TRUE
 	max_integrity = 25
 	resistance_flags = ACID_PROOF
@@ -35,6 +37,8 @@
 	var/mutable_appearance/edge_overlay
 	/// Minimum environment smash level (found on simple animals) to break through this instantly
 	var/env_smash_level = ENVIRONMENT_SMASH_STRUCTURES
+	/// How well this window resists superconductivity.
+	var/superconductivity = WINDOW_HEAT_TRANSFER_COEFFICIENT
 
 /obj/structure/window/examine(mob/user)
 	. = ..()
@@ -75,7 +79,13 @@
 	real_explosion_block = explosion_block
 	explosion_block = EXPLOSION_BLOCK_PROC
 
-	air_update_turf(TRUE)
+	var/static/list/loc_connections = list(
+		COMSIG_ATOM_EXIT = PROC_REF(on_atom_exit),
+	)
+
+	AddElement(/datum/element/connect_loc, loc_connections)
+
+	recalculate_atmos_connectivity()
 
 /obj/structure/window/proc/toggle_polarization()
 	if(opacity)
@@ -105,12 +115,12 @@
 	else
 		..(FULLTILE_WINDOW_DIR)
 
-/obj/structure/window/CanPass(atom/movable/mover, turf/target, height=0)
+/obj/structure/window/CanPass(atom/movable/mover, border_dir)
 	if(istype(mover) && mover.checkpass(PASSGLASS))
 		return 1
 	if(dir == FULLTILE_WINDOW_DIR)
 		return 0	//full tile window, you can't move into it!
-	if(get_dir(loc, target) == dir)
+	if(border_dir & dir)
 		return !density
 	if(istype(mover, /obj/structure/window))
 		var/obj/structure/window/W = mover
@@ -124,20 +134,28 @@
 		return FALSE
 	return 1
 
-/obj/structure/window/CheckExit(atom/movable/O, target)
-	if(istype(O) && O.checkpass(PASSGLASS))
-		return 1
-	if(get_dir(O.loc, target) == dir)
-		return 0
-	return 1
+/obj/structure/window/proc/on_atom_exit(datum/source, atom/movable/leaving, direction)
+	SIGNAL_HANDLER // COMSIG_ATOM_EXIT
 
-/obj/structure/window/CanPathfindPass(obj/item/card/id/ID, to_dir, atom/movable/caller, no_id = FALSE)
+	if(istype(leaving) && leaving.checkpass(PASSGLASS))
+		return
+	if(leaving == src)
+		return
+	if(dir == FULLTILE_WINDOW_DIR)
+		return
+	if(direction & dir)
+		leaving.Bump(src)
+		return COMPONENT_ATOM_BLOCK_EXIT
+
+	return
+
+/obj/structure/window/CanPathfindPass(to_dir, datum/can_pass_info/pass_info)
 	if(!density)
-		return 1
-	if((dir == FULLTILE_WINDOW_DIR) || (dir == to_dir) || fulltile)
-		return 0
+		return TRUE
+	if((dir == FULLTILE_WINDOW_DIR) || (dir & to_dir) || fulltile)
+		return FALSE
 
-	return 1
+	return TRUE
 
 /obj/structure/window/attack_tk(mob/user)
 	user.changeNext_move(CLICK_CD_MELEE)
@@ -180,7 +198,7 @@
 		deconstruct(FALSE)
 		M.visible_message("<span class='danger'>[M] smashes through [src]!</span>", "<span class='warning'>You smash through [src].</span>", "<span class='warning'>You hear glass breaking.</span>")
 
-/obj/structure/window/attackby(obj/item/I, mob/living/user, params)
+/obj/structure/window/attackby__legacy__attackchain(obj/item/I, mob/living/user, params)
 	if(!can_be_reached(user))
 		return 1 //skip the afterattack
 
@@ -264,7 +282,7 @@
 			if(!I.use_tool(src, user, decon_speed, volume = I.tool_volume, extra_checks = CALLBACK(src, PROC_REF(check_state_and_anchored), state, anchored)))
 				return
 			anchored = !anchored
-			air_update_turf(TRUE)
+			recalculate_atmos_connectivity()
 			update_nearby_icons()
 			to_chat(user, "<span class='notice'>You [anchored ? "fasten the frame to":"unfasten the frame from"] the floor.</span>")
 
@@ -274,7 +292,7 @@
 		if(!I.use_tool(src, user, decon_speed, volume = I.tool_volume, extra_checks = CALLBACK(src, PROC_REF(check_anchored), anchored)))
 			return
 		anchored = !anchored
-		air_update_turf(TRUE)
+		recalculate_atmos_connectivity()
 		update_nearby_icons()
 		to_chat(user, "<span class='notice'>You [anchored ? "fasten the window to":"unfasten the window from"] the floor.</span>")
 
@@ -333,7 +351,7 @@
 	if(!fulltile)
 		if(get_dir(user, src) & dir)
 			for(var/obj/O in loc)
-				if(!O.CanPass(user, user.loc, 1))
+				if(!O.CanPass(user, get_dir(src, user)))
 					return 0
 	return 1
 
@@ -396,7 +414,7 @@
 
 /obj/structure/window/Destroy()
 	density = FALSE
-	air_update_turf(1)
+	recalculate_atmos_connectivity()
 	update_nearby_icons()
 	return ..()
 
@@ -411,10 +429,15 @@
 	anchored = FALSE
 	QUEUE_SMOOTH_NEIGHBORS(src)
 
-/obj/structure/window/CanAtmosPass(turf/T)
+/obj/structure/window/CanAtmosPass(direction)
 	if(!anchored || !density)
 		return TRUE
-	return !(FULLTILE_WINDOW_DIR == dir || dir == get_dir(loc, T))
+	return !(FULLTILE_WINDOW_DIR == dir || (dir & direction))
+
+/obj/structure/window/get_superconductivity(direction)
+	if(dir == FULLTILE_WINDOW_DIR || dir & direction)
+		return superconductivity
+	return ..()
 
 //This proc is used to update the icons of nearby windows.
 /obj/structure/window/proc/update_nearby_icons()
@@ -456,14 +479,14 @@
 	if(exposed_temperature > (T0C + heat_resistance))
 		take_damage(round(exposed_volume / 100), BURN, 0, 0)
 
-/obj/structure/window/hit_by_thrown_carbon(mob/living/carbon/human/C, datum/thrownthing/throwingdatum, damage, mob_hurt, self_hurt)
+/obj/structure/window/hit_by_thrown_mob(mob/living/C, datum/thrownthing/throwingdatum, damage, mob_hurt, self_hurt)
 	var/shattered = FALSE
 	if(damage * 2 >= obj_integrity && shardtype && !mob_hurt)
 		shattered = TRUE
-		var/obj/item/S = new shardtype(loc)
-		S.embedded_ignore_throwspeed_threshold = TRUE
-		S.throw_impact(C)
-		S.embedded_ignore_throwspeed_threshold = FALSE
+		var/obj/item/shard = new shardtype(loc)
+		shard.embedded_ignore_throwspeed_threshold = TRUE
+		shard.throw_impact(C)
+		shard.embedded_ignore_throwspeed_threshold = FALSE
 		damage *= (4/3) //Inverts damage loss from being a structure, since glass breaking on you hurts
 		var/turf/T = get_turf(src)
 		for(var/obj/structure/grille/G in T.contents)
@@ -479,7 +502,7 @@
 		self_hurt = TRUE
 	..()
 	if(shattered)
-		C.throw_at(throwingdatum.target, throwingdatum.maxrange - 1, throwingdatum.speed - 1) //Annnnnnnd yeet them into space, but slower, now that everything is dealt with
+		C.throw_at(locateUID(throwingdatum.initial_target_uid), throwingdatum.maxrange - 1, throwingdatum.speed - 1) //Annnnnnnd yeet them into space, but slower, now that everything is dealt with
 
 /obj/structure/window/GetExplosionBlock()
 	return reinf && fulltile ? real_explosion_block : 0
@@ -523,8 +546,13 @@
 	icon_state = "light0"
 	anchored = TRUE
 	desc = "A remote control switch for polarized windows."
-	var/range = 7
-	var/id = 0
+	/// The area where the button is located.
+	var/area/button_area
+	/// Windows in this range are controlled by this button. If it equals TINT_CONTROL_RANGE_AREA, the button controls only windows at button_area.
+	var/range = TINT_CONTROL_RANGE_AREA
+	/// If equals TINT_CONTROL_GROUP_NONE, only windows with 'null-like' id are controlled by this button. Otherwise, windows with corresponding or 'null-like' id are controlled by this button.
+	var/id = TINT_CONTROL_GROUP_NONE
+	/// The button toggle state. If range equals TINT_CONTROL_RANGE_AREA and id equals TINT_CONTROL_GROUP_NONE or is same with other button, it is shared between all such buttons in its area.
 	var/active = FALSE
 
 /obj/machinery/button/windowtint/Initialize(mapload, w_dir = null)
@@ -538,6 +566,10 @@
 			pixel_x = 25
 		if(WEST)
 			pixel_x = -25
+
+/obj/machinery/button/windowtint/New(turf/loc, direction)
+	..()
+	button_area = get_area(src)
 
 /obj/machinery/button/windowtint/attack_hand(mob/user)
 	if(..())
@@ -562,23 +594,30 @@
 
 /obj/machinery/button/windowtint/proc/toggle_tint()
 	use_power(5)
+	if(range == TINT_CONTROL_RANGE_AREA)
+		button_area.window_tint = !button_area.window_tint
+		for(var/obj/machinery/button/windowtint/button in button_area)
+			if(button.range != TINT_CONTROL_RANGE_AREA || (button.id != id && button.id != TINT_CONTROL_GROUP_NONE))
+				continue
+			button.active = button_area.window_tint
+			button.update_icon()
+	else
+		active = !active
+		update_icon()
+	process_controlled_windows(range != TINT_CONTROL_RANGE_AREA ? range(src, range) : button_area)
 
-	active = !active
-	update_icon()
-
-	for(var/obj/structure/window/reinforced/polarized/W in range(src,range))
-		if(W.id == src.id || !W.id)
-			W.toggle_polarization()
-
-	for(var/obj/structure/window/full/reinforced/polarized/W in range(src, range))
-		if(W.id == id || !W.id)
-			W.toggle_polarization()
-
-	for(var/obj/machinery/door/D in range(src, range))
-		if(!D.polarized_glass)
+/obj/machinery/button/windowtint/proc/process_controlled_windows(control_area)
+	for(var/obj/structure/window/reinforced/polarized/window in control_area)
+		if(window.id == id || !window.id)
+			window.toggle_polarization()
+	for(var/obj/structure/window/full/reinforced/polarized/window in control_area)
+		if(window.id == id || !window.id)
+			window.toggle_polarization()
+	for(var/obj/machinery/door/door in control_area)
+		if(!door.polarized_glass)
 			continue
-		if(D.id == id || !D.id)
-			D.toggle_polarization()
+		if(door.id == id || !door.id)
+			door.toggle_polarization()
 
 /obj/machinery/button/windowtint/power_change()
 	if(!..())
@@ -601,9 +640,7 @@
 	explosion_block = 1
 	armor = list(MELEE = 75, BULLET = 5, LASER = 0, ENERGY = 0, BOMB = 45, RAD = 100, FIRE = 99, ACID = 100)
 	rad_insulation = RAD_NO_INSULATION
-
-/obj/structure/window/plasmabasic/BlockSuperconductivity()
-	return 1
+	superconductivity = ZERO_HEAT_TRANSFER_COEFFICIENT
 
 /obj/structure/window/plasmareinforced
 	name = "reinforced plasma window"
@@ -619,12 +656,11 @@
 	armor = list(MELEE = 85, BULLET = 20, LASER = 0, ENERGY = 0, BOMB = 60, RAD = 100, FIRE = 99, ACID = 100)
 	rad_insulation = RAD_NO_INSULATION
 	damage_deflection = 21
+	env_smash_level = ENVIRONMENT_SMASH_WALLS  // these windows are a fair bit tougher
+	superconductivity = ZERO_HEAT_TRANSFER_COEFFICIENT
 
 /obj/structure/window/plasmareinforced/temperature_expose(datum/gas_mixture/air, exposed_temperature, exposed_volume)
 	return
-
-/obj/structure/window/plasmareinforced/BlockSuperconductivity()
-	return 1 //okay this SHOULD MAKE THE TOXINS CHAMBER WORK
 
 /obj/structure/window/full
 	glass_amount = 2
@@ -660,6 +696,7 @@
 	rad_insulation = RAD_NO_INSULATION
 	edge_overlay_file = 'icons/obj/smooth_structures/windows/window_edges.dmi'
 	env_smash_level = ENVIRONMENT_SMASH_WALLS  // these windows are a fair bit tougher
+	superconductivity = ZERO_HEAT_TRANSFER_COEFFICIENT
 
 /obj/structure/window/full/plasmareinforced
 	name = "reinforced plasma window"
@@ -678,6 +715,7 @@
 	rad_insulation = RAD_NO_INSULATION
 	edge_overlay_file = 'icons/obj/smooth_structures/windows/reinforced_window_edges.dmi'
 	env_smash_level = ENVIRONMENT_SMASH_RWALLS  // these ones are insanely tough
+	superconductivity = ZERO_HEAT_TRANSFER_COEFFICIENT
 
 /obj/structure/window/full/plasmareinforced/temperature_expose(datum/gas_mixture/air, exposed_temperature, exposed_volume)
 	return
@@ -726,6 +764,8 @@
 	canSmoothWith = list(SMOOTH_GROUP_WINDOW_FULLTILE_SHUTTLE, SMOOTH_GROUP_TITANIUM_WALLS)
 	glass_type = /obj/item/stack/sheet/titaniumglass
 	env_smash_level = ENVIRONMENT_SMASH_RWALLS  // shuttle windows should probably be a bit stronger, too
+	// Mostly for the mining shuttle.
+	superconductivity = ZERO_HEAT_TRANSFER_COEFFICIENT
 
 /obj/structure/window/full/shuttle/narsie_act()
 	color = "#3C3434"
@@ -748,6 +788,8 @@
 	glass_type = /obj/item/stack/sheet/plastitaniumglass
 	smoothing_groups = list(SMOOTH_GROUP_SHUTTLE_PARTS, SMOOTH_GROUP_WINDOW_FULLTILE_PLASTITANIUM, SMOOTH_GROUP_PLASTITANIUM_WALLS)
 	canSmoothWith = list(SMOOTH_GROUP_WINDOW_FULLTILE_PLASTITANIUM, SMOOTH_GROUP_SYNDICATE_WALLS, SMOOTH_GROUP_PLASTITANIUM_WALLS)
+	env_smash_level = ENVIRONMENT_SMASH_RWALLS //used in shuttles, same reason as above
+	superconductivity = ZERO_HEAT_TRANSFER_COEFFICIENT
 
 /obj/structure/window/reinforced/clockwork
 	name = "brass window"

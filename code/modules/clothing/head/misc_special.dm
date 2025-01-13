@@ -5,7 +5,6 @@
  *		Soviet Hats
  *		Pumpkin head
  *		Kitty ears
- *		Cardborg Disguise
  *		Head Mirror
  */
 
@@ -25,7 +24,7 @@
 	armor = list(MELEE = 10, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, RAD = 0, FIRE = INFINITY, ACID = 75)
 	flags_inv = (HIDEMASK|HIDEEARS|HIDEEYES|HIDEFACE)
 	actions_types = list(/datum/action/item_action/toggle)
-	visor_flags_inv = HIDEMASK|HIDEEARS|HIDEEYES|HIDEFACE
+	visor_flags_inv = HIDEMASK|HIDEEYES|HIDEFACE
 	resistance_flags = FIRE_PROOF
 
 	sprite_sheets = list(
@@ -36,7 +35,7 @@
 		"Grey" = 'icons/mob/clothing/species/grey/helmet.dmi'
 		)
 
-/obj/item/clothing/head/welding/attack_self(mob/user)
+/obj/item/clothing/head/welding/attack_self__legacy__attackchain(mob/user)
 	weldingvisortoggle(user)
 
 /obj/item/clothing/head/welding/flamedecal
@@ -75,13 +74,13 @@
 	var/turf/location = loc
 	if(ismob(location))
 		var/mob/living/carbon/human/M = location
-		if(M.l_hand == src || M.r_hand == src || M.head == src)
+		if(M.is_holding(src) || M.head == src)
 			location = M.loc
 
 	if(isturf(location))
 		location.hotspot_expose(700, 1)
 
-/obj/item/clothing/head/cakehat/attack_self(mob/user)
+/obj/item/clothing/head/cakehat/attack_self__legacy__attackchain(mob/user)
 	if(status > 1)
 		return
 	onfire = !onfire
@@ -113,7 +112,7 @@
 	"Vox" = 'icons/mob/clothing/species/vox/head.dmi'
 	)
 
-/obj/item/clothing/head/ushanka/attack_self(mob/user as mob)
+/obj/item/clothing/head/ushanka/attack_self__legacy__attackchain(mob/user as mob)
 	if(icon_state == "ushankadown")
 		icon_state = "ushankaup"
 		item_state = "ushankaup"
@@ -202,39 +201,13 @@
 
 /obj/item/clothing/head/kitty/equipped(mob/M, slot)
 	. = ..()
-	if(ishuman(M) && slot == SLOT_HUD_HEAD)
+	if(ishuman(M) && slot == ITEM_SLOT_HEAD)
 		update_icon(NONE, M)
 
 /obj/item/clothing/head/kitty/mouse
 	name = "mouse ears"
 	desc = "A pair of mouse ears. Squeak!"
 	icon_state = "mousey"
-
-/obj/item/clothing/head/cardborg
-	name = "cardborg helmet"
-	desc = "A helmet made out of a box."
-	icon_state = "cardborg_h"
-	item_state = "cardborg_h"
-	flags_inv = HIDEMASK|HIDEEARS|HIDEEYES|HIDEFACE
-	flags_cover = HEADCOVERSEYES | HEADCOVERSMOUTH
-	species_disguise = "High-tech robot"
-	dog_fashion = /datum/dog_fashion/head/cardborg
-	sprite_sheets = list(
-	"Grey" = 'icons/mob/clothing/species/grey/head.dmi'
-	)
-
-
-/obj/item/clothing/head/cardborg/equipped(mob/living/user, slot)
-	..()
-	if(ishuman(user) && slot == SLOT_HUD_HEAD)
-		var/mob/living/carbon/human/H = user
-		if(istype(H.wear_suit, /obj/item/clothing/suit/cardborg))
-			var/obj/item/clothing/suit/cardborg/CB = H.wear_suit
-			CB.disguise(user, src)
-
-/obj/item/clothing/head/cardborg/dropped(mob/living/user)
-	..()
-	user.remove_alt_appearance("standard_borg_disguise")
 
 /*
  * Head Mirror

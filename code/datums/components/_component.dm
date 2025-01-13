@@ -102,7 +102,7 @@
 				components_of_type = test
 			if(I == our_type)	//exact match, take priority
 				var/inserted = FALSE
-				for(var/J in 1 to components_of_type.len)
+				for(var/J in 1 to length(components_of_type))
 					var/datum/component/C = components_of_type[J]
 					if(C.type != our_type) //but not over other exact matches
 						components_of_type.Insert(J, I)
@@ -127,13 +127,13 @@
 		var/list/components_of_type = dc[I]
 		if(length(components_of_type))	//
 			var/list/subtracted = components_of_type - src
-			if(subtracted.len == 1)	//only 1 guy left
+			if(length(subtracted) == 1)	//only 1 guy left
 				dc[I] = subtracted[1]	//make him special
 			else
 				dc[I] = subtracted
 		else	//just us
 			dc -= I
-	if(!dc.len)
+	if(!length(dc))
 		P.datum_components = null
 
 	UnregisterFromParent()
@@ -163,7 +163,7 @@
   * Register to listen for a signal from the passed in target
   *
   * This sets up a listening relationship such that when the target object emits a signal
-  * the source datum this proc is called upon, will recieve a callback to the given proctype
+  * the source datum this proc is called upon, will receive a callback to the given proctype
   * Return values from procs registered must be a bitfield
   *
   * Arguments:
@@ -241,7 +241,7 @@
 				lookup[sig] -= src
 
 	signal_procs[target] -= sig_type_or_types
-	if(!signal_procs[target].len)
+	if(!length(signal_procs[target]))
 		signal_procs -= target
 
 /// Registers multiple signals to the same proc.
@@ -343,17 +343,17 @@
   */
 /datum/proc/GetExactComponent(datum/component/c_type)
 	RETURN_TYPE(c_type)
-	if(initial(c_type.dupe_mode) == COMPONENT_DUPE_ALLOWED || initial(c_type.dupe_mode) == COMPONENT_DUPE_SELECTIVE)
+	var/initial_type_mode = initial(c_type.dupe_mode)
+	if(initial_type_mode == COMPONENT_DUPE_ALLOWED || initial_type_mode == COMPONENT_DUPE_SELECTIVE)
 		stack_trace("GetComponent was called to get a component of which multiple copies could be on an object. This can easily break and should be changed. Type: \[[c_type]\]")
-	var/list/dc = datum_components
-	if(!dc)
+	var/list/all_components = datum_components
+	if(!all_components)
 		return null
-	var/datum/component/C = dc[c_type]
-	if(C)
-		if(length(C))
-			C = C[1]
-		if(C.type == c_type)
-			return C
+	var/datum/component/potential_component
+	if(length(all_components))
+		potential_component = all_components[c_type]
+	if(potential_component?.type == c_type)
+		return potential_component
 	return null
 
 /**
@@ -442,6 +442,23 @@
 	return old_comp
 
 /**
+  * Removes the component from the datum
+  */
+/datum/proc/DeleteComponent(component_to_nuke)
+	var/datum/component/removing = GetComponent(component_to_nuke)
+	if(istype(removing, component_to_nuke) && !QDELETED(removing))
+		qdel(removing)
+
+/**
+  * Removes all components of a given type from the datum
+  */
+/datum/proc/DeleteComponentsType(component_type_to_nuke)
+	var/list/components = GetComponents(component_type_to_nuke)
+	for(var/datum/component/removing in components)
+		if(!QDELETED(removing))
+			qdel(removing)
+
+/**
   * Get existing component of type, or create it and return a reference to it
   *
   * Use this if the item needs to exist at the time of this call, but may not have been created before now
@@ -458,7 +475,7 @@
 /**
   * Removes the component from parent, ends up with a null parent
   */
-/datum/component/proc/RemoveComponent()
+/datum/component/proc/UnlinkComponent()
 	if(!parent)
 		return
 	var/datum/old_parent = parent
@@ -466,6 +483,13 @@
 	_RemoveFromParent()
 	parent = null
 	SEND_SIGNAL(old_parent, COMSIG_COMPONENT_REMOVING, src)
+
+/**
+  * Deletes the component and removes it from parent.
+  */
+/datum/component/proc/RemoveComponent() // This really is just a wrapper to pretend that we're using sane procs to fully remove a component
+	if(!QDELETED(src))
+		qdel(src)
 
 /**
   * Transfer this component to another parent
@@ -479,7 +503,7 @@
 	if(!target || target.parent == src)
 		return
 	if(target.parent)
-		target.RemoveComponent()
+		target.UnlinkComponent()
 	target.parent = src
 	var/result = target.PostTransfer()
 	switch(result)

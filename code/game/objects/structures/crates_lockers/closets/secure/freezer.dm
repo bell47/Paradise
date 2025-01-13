@@ -1,5 +1,8 @@
 /obj/structure/closet/secure_closet/freezer
 	desc = "It's a card-locked refrigerative storage unit. This one is lead-lined."
+	door_anim_squish = 0.22
+	door_anim_angle = 123
+	door_anim_time = 2.50
 
 /obj/structure/closet/secure_closet/freezer/ex_act(severity)
 	// IF INDIANA JONES CAN DO IT SO CAN YOU
@@ -11,13 +14,14 @@
 
 /obj/structure/closet/secure_closet/freezer/kitchen
 	name = "kitchen cabinet"
+	desc = "It's a card-locked cabinet for storing dry ingredients. It looks robust enough to withstand most explosions."
 	req_access = list(ACCESS_KITCHEN)
 
 /obj/structure/closet/secure_closet/freezer/kitchen/populate_contents()
 	for(var/i in 1 to 3)
-		new /obj/item/reagent_containers/food/condiment/flour(src)
-	new /obj/item/reagent_containers/food/condiment/rice(src)
-	new /obj/item/reagent_containers/food/condiment/sugar(src)
+		new /obj/item/reagent_containers/condiment/flour(src)
+	new /obj/item/reagent_containers/condiment/rice(src)
+	new /obj/item/reagent_containers/condiment/sugar(src)
 
 
 /obj/structure/closet/secure_closet/freezer/kitchen/mining
@@ -30,20 +34,19 @@
 
 /obj/structure/closet/secure_closet/freezer/kitchen/maintenance/populate_contents()
 	for(var/i = 0, i < 5, i++)
-		new /obj/item/reagent_containers/food/condiment/milk(src)
+		new /obj/item/reagent_containers/condiment/milk(src)
 	for(var/i = 0, i < 5, i++)
-		new /obj/item/reagent_containers/food/condiment/soymilk(src)
+		new /obj/item/reagent_containers/condiment/soymilk(src)
 	for(var/i = 0, i < 2, i++)
 		new /obj/item/storage/fancy/egg_box(src)
 
 /obj/structure/closet/secure_closet/freezer/meat
 	name = "meat fridge"
 	icon_state = "freezer"
-	open_door_sprite = "freezer_door"
 
 /obj/structure/closet/secure_closet/freezer/meat/populate_contents()
 	for(var/i in 1 to 4)
-		new /obj/item/reagent_containers/food/snacks/meat/monkey(src)
+		new /obj/item/food/meat/monkey(src)
 
 /obj/structure/closet/secure_closet/freezer/meat/open
 	req_access = null
@@ -52,12 +55,11 @@
 /obj/structure/closet/secure_closet/freezer/fridge
 	name = "refrigerator"
 	icon_state = "freezer"
-	open_door_sprite = "freezer_door"
 
 /obj/structure/closet/secure_closet/freezer/fridge/populate_contents()
 	for(var/i in 1 to 5)
-		new /obj/item/reagent_containers/food/condiment/milk(src)
-		new /obj/item/reagent_containers/food/condiment/soymilk(src)
+		new /obj/item/reagent_containers/condiment/milk(src)
+		new /obj/item/reagent_containers/condiment/soymilk(src)
 	for(var/i in 1 to 2)
 		new /obj/item/storage/fancy/egg_box(src)
 
@@ -68,7 +70,6 @@
 /obj/structure/closet/secure_closet/freezer/money
 	name = "freezer"
 	icon_state = "freezer"
-	open_door_sprite = "freezer_door"
 	req_access = list(ACCESS_HEADS_VAULT)
 
 /obj/structure/closet/secure_closet/freezer/money/populate_contents()

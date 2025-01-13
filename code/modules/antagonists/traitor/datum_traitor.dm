@@ -1,3 +1,4 @@
+RESTRICT_TYPE(/datum/antagonist/traitor)
 
 // Syndicate Traitors.
 /datum/antagonist/traitor
@@ -15,6 +16,11 @@
 	var/give_codewords = TRUE
 	/// Should we give the traitor their uplink?
 	var/give_uplink = TRUE
+	blurb_r = 200
+	blurb_a = 0.75
+
+	/// Have we / are we sending a backstab message at this time. If we are, do not send another.
+	var/sending_backstab = FALSE
 
 /datum/antagonist/traitor/on_gain()
 	// Create this in case the traitor wants to mindslaves someone.
@@ -23,6 +29,18 @@
 
 	owner.som.masters += owner
 	..()
+
+/datum/antagonist/traitor/apply_innate_effects(mob/living/mob_override)
+	. = ..()
+	var/mob/living/datum_owner = mob_override || owner.current
+	datum_owner.AddComponent(/datum/component/codeword_hearing, GLOB.syndicate_code_phrase_regex, "codephrases", src)
+	datum_owner.AddComponent(/datum/component/codeword_hearing, GLOB.syndicate_code_response_regex, "coderesponses", src)
+
+/datum/antagonist/traitor/remove_innate_effects(mob/living/mob_override)
+	. = ..()
+	var/mob/living/datum_owner = mob_override || owner.current
+	for(var/datum/component/codeword_hearing/component in datum_owner.GetComponents(/datum/component/codeword_hearing))
+		component.delete_if_from_source(src)
 
 /datum/antagonist/traitor/Destroy(force, ...)
 	// Remove all associated malf AI abilities.
@@ -44,8 +62,6 @@
 		slaved.leave_serv_hud(owner)
 		owner.som = null
 
-	owner.current.client?.chatOutput?.clear_syndicate_codes()
-
 	// Try removing their uplink, check PDA
 	var/mob/M = owner.current
 	var/obj/item/uplink_holder = locate(/obj/item/pda) in M.contents
@@ -61,11 +77,21 @@
 		qdel(uplink)
 
 	// Check for an uplink implant
-	var/uplink_implant = locate(/obj/item/implant/uplink) in M.contents
+	var/uplink_implant = locate(/obj/item/bio_chip/uplink) in M.contents
 	if(uplink_implant)
 		qdel(uplink_implant)
 
 	return ..()
+
+/datum/antagonist/traitor/select_organization()
+	if(isAI(owner.current))
+		return
+	var/chaos = pickweight(list(ORG_CHAOS_HUNTER = ORG_PROB_HUNTER, ORG_CHAOS_MILD = ORG_PROB_MILD, ORG_CHAOS_AVERAGE = ORG_PROB_AVERAGE, ORG_CHAOS_HIJACK = ORG_PROB_HIJACK))
+	for(var/org_type in shuffle(subtypesof(/datum/antag_org/syndicate)))
+		var/datum/antag_org/org = org_type
+		if(initial(org.chaos_level) == chaos)
+			organization = new org_type(src)
+			return
 
 /datum/antagonist/traitor/add_owner_to_gamemode()
 	SSticker.mode.traitors |= owner
@@ -91,23 +117,31 @@
  * Create and assign a full set of randomized human traitor objectives.
  */
 /datum/antagonist/traitor/proc/forge_human_objectives()
-	// Hijack objective.
-	if(prob(10) && !(locate(/datum/objective/hijack) in owner.get_all_objectives()))
-		add_antag_objective(/datum/objective/hijack)
-		return // Hijack should be their only objective (normally), so return.
+	var/iteration = 1
+	var/can_succeed_if_dead = TRUE
+	// If our org has forced objectives, give them to us guaranteed.
+	if(organization && length(organization.forced_objectives))
+		for(var/forced_objectives in organization.forced_objectives)
+			var/datum/objective/forced_obj = forced_objectives
+			if(!ispath(forced_obj, /datum/objective/hijack) && delayed_objectives) // Hijackers know their objective immediately
+				forced_obj = new /datum/objective/delayed(forced_obj)
+			add_antag_objective(forced_obj)
+			iteration++
 
-	// Will give normal steal/kill/etc. type objectives.
-	for(var/i in 1 to GLOB.configuration.gamemode.traitor_objectives_amount)
+	if(locate(/datum/objective/hijack) in owner.get_all_objectives())
+		return //Hijackers only get hijack.
+
+	// Will give objectives from our org or random objectives.
+	for(var/i in iteration to GLOB.configuration.gamemode.traitor_objectives_amount)
 		forge_single_human_objective()
 
-	var/can_succeed_if_dead = TRUE
 	for(var/objective in owner.get_all_objectives())
 		var/datum/objective/O = objective
-		if(!O.martyr_compatible) // Check if our current objectives can co-exist with martyr.
+		if(!O.martyr_compatible) // Check if we need to stay alive in order to accomplish our objectives (Steal item, etc)
 			can_succeed_if_dead  = FALSE
 			break
 
-	// Give them an escape objective if they don't have one already.
+	// Give them an escape objective if they don't have one. 20 percent chance not to have escape if we can greentext without staying alive.
 	if(!(locate(/datum/objective/escape) in owner.get_all_objectives()) && (!can_succeed_if_dead || prob(80)))
 		add_antag_objective(/datum/objective/escape)
 
@@ -119,29 +153,14 @@
 	add_antag_objective(/datum/objective/assassinate)
 	add_antag_objective(/datum/objective/survive)
 
-/**
- * Create and assign a single randomized human traitor objective.
- */
-/datum/antagonist/traitor/proc/forge_single_human_objective()
-	if(prob(50))
-		if(length(active_ais()) && prob(100 / length(GLOB.player_list)))
-			add_antag_objective(/datum/objective/destroy)
-		else if(prob(5))
-			add_antag_objective(/datum/objective/debrain)
-		else if(prob(30))
-			add_antag_objective(/datum/objective/maroon)
-		else if(prob(30))
-			add_antag_objective(/datum/objective/assassinateonce)
-		else
-			add_antag_objective(/datum/objective/assassinate)
-	else
-		add_antag_objective(/datum/objective/steal)
 
 /**
  * Give human traitors their uplink, and AI traitors their law 0. Play the traitor an alert sound.
  */
 /datum/antagonist/traitor/finalize_antag()
 	var/list/messages = list()
+	if(organization)
+		antag_memory += "<b>Organization</b>: [organization.name]<br>"
 	if(give_codewords)
 		messages.Add(give_codewords())
 	if(isAI(owner.current))
@@ -162,7 +181,6 @@
 /datum/antagonist/traitor/proc/give_codewords()
 	if(!owner.current)
 		return
-	var/mob/traitor_mob = owner.current
 
 	var/phrases = jointext(GLOB.syndicate_code_phrase, ", ")
 	var/responses = jointext(GLOB.syndicate_code_response, ", ")
@@ -177,7 +195,6 @@
 	messages.Add("Use the codewords during regular conversation to identify other agents. Proceed with caution, however, as everyone is a potential foe.")
 	messages.Add("<b><font color=red>You memorize the codewords, allowing you to recognize them when heard.</font></b>")
 
-	traitor_mob.client.chatOutput?.notify_syndicate_codes()
 	return messages
 
 /**
@@ -253,3 +270,36 @@
 					<b>The code responses were:</b> <span class='redtext'>[responses]</span><br>"
 
 	return message
+
+/datum/antagonist/traitor/custom_blurb()
+		return "[GLOB.current_date_string], [station_time_timestamp()]\n[station_name()], [get_area_name(owner.current, TRUE)], \n[organization.intro_desc] BEGIN MISSION"
+/datum/antagonist/traitor/proc/reveal_delayed_objectives()
+
+	for(var/datum/objective/delayed/delayed_obj in get_antag_objectives(FALSE))
+		delayed_obj.reveal_objective()
+
+	if(!owner?.current)
+		return
+	SEND_SOUND(owner.current, sound('sound/ambience/alarm4.ogg'))
+
+	if(prob(ORG_PROB_PARANOIA)) // Low chance of fake 'You are targeted' notification
+		queue_backstab()
+
+	var/list/messages = owner.prepare_announce_objectives()
+	to_chat(owner.current, chat_box_red(messages.Join("<br>")))
+	delayed_objectives = FALSE
+
+/datum/antagonist/traitor/proc/queue_backstab()
+	// We do not want to send out two of these. As such, if the datum is already sending a backstab, abort.
+	if(sending_backstab)
+		return
+	sending_backstab = TRUE
+	addtimer(CALLBACK(src, PROC_REF(send_backstab)), rand(2 MINUTES, 5 MINUTES))
+
+/datum/antagonist/traitor/proc/send_backstab()
+	if(!owner.current)
+		return
+	add_antag_objective(/datum/objective/potentially_backstabbed)
+	var/list/messages = owner.prepare_announce_objectives()
+	to_chat(owner.current, chat_box_red(messages.Join("<br>")))
+	SEND_SOUND(owner.current, sound('sound/ambience/alarm4.ogg'))

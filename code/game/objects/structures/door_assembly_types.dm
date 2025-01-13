@@ -137,7 +137,7 @@
 	base_name = "large airlock"
 	overlays_file = 'icons/obj/doors/airlocks/glass_large/overlays.dmi'
 	dir = EAST
-	var/width = 1
+	var/width = 2
 	airlock_type = /obj/machinery/door/airlock/multi_tile
 	glass_type = /obj/machinery/door/airlock/multi_tile/glass
 	material_amt = 8
@@ -170,8 +170,8 @@
 
 /obj/structure/door_assembly/door_assembly_cult/Initialize(mapload)
 	. = ..()
-	icon = SSticker.cultdat?.airlock_runed_icon_file
-	overlays_file = SSticker.cultdat?.airlock_runed_overlays_file
+	icon = GET_CULT_DATA(airlock_runed_icon_file, initial(icon))
+	overlays_file = GET_CULT_DATA(airlock_runed_overlays_file, initial(overlays_file))
 	update_icon()
 
 /obj/structure/door_assembly/door_assembly_cult/unruned
@@ -182,9 +182,15 @@
 
 /obj/structure/door_assembly/door_assembly_cult/unruned/Initialize(mapload)
 	. = ..()
-	icon = SSticker.cultdat?.airlock_unruned_icon_file
-	overlays_file = SSticker.cultdat?.airlock_unruned_overlays_file
+	icon = GET_CULT_DATA(airlock_unruned_icon_file, initial(icon))
+	overlays_file = GET_CULT_DATA(airlock_unruned_overlays_file, initial(overlays_file))
 	update_icon()
+
+/obj/structure/door_assembly/door_assembly_clockwork
+	icon = 'icons/obj/doors/airlocks/clockwork/clockwork.dmi'
+	overlays_file = 'icons/obj/doors/airlocks/clockwork/clockwork-overlays.dmi'
+	airlock_type = /obj/machinery/door/airlock/clockwork
+	glass_type = /obj/machinery/door/airlock/clockwork/glass
 
 /obj/structure/door_assembly/door_assembly_centcom
 	icon = 'icons/obj/doors/airlocks/centcom/centcom.dmi'

@@ -8,57 +8,15 @@
 	item_state = "ygloves"
 	siemens_coefficient = 0
 	permeability_coefficient = 0.05
-	item_color="yellow"
+	item_color = "yellow"
 	resistance_flags = NONE
-
-/obj/item/clothing/gloves/color/yellow/power
-	var/old_mclick_override
-	var/datum/middleClickOverride/power_gloves/mclick_override = new /datum/middleClickOverride/power_gloves
-	var/last_shocked = 0
-	var/shock_delay = 3 SECONDS
-	var/unlimited_power = FALSE // Does this really need explanation?
-	var/shock_range = 7
-
-/obj/item/clothing/gloves/color/yellow/power/examine(mob/user)
-	. = ..()
-	if(isAntag(user))
-		. += "<span class='warning'>These are a pair of power gloves, and can be used to fire bolts of electricity while standing over powered power cables.</span>"
-
-/obj/item/clothing/gloves/color/yellow/power/equipped(mob/user, slot)
-	if(!ishuman(user))
-		return
-	var/mob/living/carbon/human/H = user
-	if(slot == SLOT_HUD_GLOVES)
-		if(H.middleClickOverride)
-			old_mclick_override = H.middleClickOverride
-		H.middleClickOverride = mclick_override
-		if(!unlimited_power)
-			to_chat(H, "<span class='notice'>You feel electricity begin to build up in [src].</span>")
-		else
-			to_chat(H, "<span class='biggerdanger'>You feel like you have UNLIMITED POWER!!</span>")
-
-/obj/item/clothing/gloves/color/yellow/power/dropped(mob/user, slot)
-	..()
-	if(!ishuman(user))
-		return
-	var/mob/living/carbon/human/H = user
-	if(H.get_item_by_slot(SLOT_HUD_GLOVES) == src && H.middleClickOverride == mclick_override)
-		if(old_mclick_override)
-			H.middleClickOverride = old_mclick_override
-			old_mclick_override = null
-		else
-			H.middleClickOverride = null
-
-/obj/item/clothing/gloves/color/yellow/power/unlimited
-	name = "UNLIMITED POWER gloves"
-	desc = "These gloves possess UNLIMITED POWER."
-	shock_delay = 0
-	unlimited_power = TRUE
+	dyeable = TRUE
 
 /obj/item/clothing/gloves/color/yellow/fake
 	siemens_coefficient = 1
 
-/obj/item/clothing/gloves/color/fyellow                             //Cheap Chinese Crap
+/// Cheap Chinese Crap
+/obj/item/clothing/gloves/color/fyellow
 	name = "budget insulated gloves"
 	desc = "These gloves are cheap copies of the coveted gloves, no way this can end badly."
 	icon_state = "yellow"
@@ -99,20 +57,13 @@
 		"Kidan" = 'icons/mob/clothing/species/kidan/gloves.dmi',
 		)
 
-
-/obj/item/clothing/gloves/color/black/hos
-	item_color = "hosred"		//Exists for washing machines. Is not different from black gloves in any way.
-
-/obj/item/clothing/gloves/color/black/ce
-	item_color = "chief"			//Exists for washing machines. Is not different from black gloves in any way.
-
 /obj/item/clothing/gloves/color/black/thief
 	pickpocket = 1
 
-/obj/item/clothing/gloves/color/black/attackby(obj/item/W as obj, mob/user as mob, params)
+/obj/item/clothing/gloves/color/black/attackby__legacy__attackchain(obj/item/W as obj, mob/user as mob, params)
 	if(istype(W, /obj/item/wirecutters))
 		if(can_be_cut && icon_state == initial(icon_state))//only if not dyed
-			var/confirm = alert("Do you want to cut off the gloves fingertips? Warning: It might destroy their functionality.","Cut tips?","Yes","No")
+			var/confirm = tgui_alert(user, "Do you want to cut off the gloves fingertips? Warning: It might destroy their functionality.", "Cut tips?", list("Yes","No"))
 			if(get_dist(user, src) > 1)
 				to_chat(user, "You have moved too far away.")
 				return
@@ -187,13 +138,7 @@
 	desc = "A pair of gloves, they don't look special in any way."
 	icon_state = "gray"
 	item_state = "graygloves"
-	item_color="grey"
-
-/obj/item/clothing/gloves/color/grey/rd
-	item_color = "director"			//Exists for washing machines. Is not different from gray gloves in any way.
-
-/obj/item/clothing/gloves/color/grey/hop
-	item_color = "hop"				//Exists for washing machines. Is not different from gray gloves in any way.
+	item_color = "grey"
 
 /obj/item/clothing/gloves/color/light_brown
 	name = "light brown gloves"
@@ -209,9 +154,6 @@
 	item_state = "browngloves"
 	item_color="brown"
 
-/obj/item/clothing/gloves/color/brown/cargo
-	item_color = "cargo"				//Exists for washing machines. Is not different from brown gloves in any way.
-
 /obj/item/clothing/gloves/color/latex
 	name = "latex gloves"
 	desc = "Cheap sterile gloves made from latex."
@@ -219,7 +161,7 @@
 	item_state = "lgloves"
 	siemens_coefficient = 0.30
 	permeability_coefficient = 0.01
-	item_color="white"
+	item_color = "white"
 	transfer_prints = TRUE
 	resistance_flags = NONE
 
@@ -243,9 +185,6 @@
 		"Grey" = 'icons/mob/clothing/species/grey/gloves.dmi',
 		"Kidan" = 'icons/mob/clothing/species/kidan/gloves.dmi',
 		)
-
-/obj/item/clothing/gloves/color/white/redcoat
-	item_color = "redcoat"		//Exists for washing machines. Is not different from white gloves in any way.
 
 
 /obj/item/clothing/gloves/color/captain
@@ -275,4 +214,4 @@
 	icon_state = "furglovesico"
 	item_state = "furgloves"
 	transfer_prints = TRUE
-	transfer_blood = TRUE
+	dyeable = FALSE

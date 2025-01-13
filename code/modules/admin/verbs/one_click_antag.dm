@@ -13,13 +13,14 @@
 /datum/admins/proc/one_click_antag()
 
 	var/dat = {"<B>One-click Antagonist</B><br>
-		<a href='?src=[UID()];makeAntag=1'>Make Traitors</a><br>
-		<a href='?src=[UID()];makeAntag=2'>Make Changelings</a><br>
-		<a href='?src=[UID()];makeAntag=3'>Make Revolutionaries</a><br>
-		<a href='?src=[UID()];makeAntag=4'>Make Cult</a><br>
-		<a href='?src=[UID()];makeAntag=5'>Make Wizard (Requires Ghosts)</a><br>
-		<a href='?src=[UID()];makeAntag=6'>Make Vampires</a><br>
-		<a href='?src=[UID()];makeAntag=7'>Make Abductor Team (Requires Ghosts)</a><br>
+		<a href='byond://?src=[UID()];makeAntag=1'>Make Traitors</a><br>
+		<a href='byond://?src=[UID()];makeAntag=2'>Make Changelings</a><br>
+		<a href='byond://?src=[UID()];makeAntag=3'>Make Revolutionaries</a><br>
+		<a href='byond://?src=[UID()];makeAntag=4'>Make Cult</a><br>
+		<a href='byond://?src=[UID()];makeAntag=5'>Make Wizard (Requires Ghosts)</a><br>
+		<a href='byond://?src=[UID()];makeAntag=6'>Make Vampires</a><br>
+		<a href='byond://?src=[UID()];makeAntag=7'>Make Abductor Team (Requires Ghosts)</a><br>
+		<a href='byond://?src=[UID()];makeAntag=8'>Make Mindflayers</a><br>
 		"}
 	usr << browse(dat, "window=oneclickantag;size=400x400")
 	return
@@ -31,7 +32,7 @@
 	if(M.stat || !M.mind || M.mind.special_role || M.mind.offstation_role)
 		return FALSE
 	if(temp)
-		if((M.mind.assigned_role in temp.restricted_jobs) || (M.client.prefs.active_character.species in temp.protected_species))
+		if((M.mind.assigned_role in temp.restricted_jobs) || (M.client.prefs.active_character.species in temp.species_to_mindflayer))
 			return FALSE
 	if(role) // Don't even bother evaluating if there's no role
 		if(player_old_enough_antag(M.client,role) && (role in M.client.prefs.be_special) && !M.client.skip_antag && (!jobban_isbanned(M, role)))
@@ -60,8 +61,8 @@
 		if(CandCheck(ROLE_TRAITOR, applicant, temp))
 			candidates += applicant
 
-	if(candidates.len)
-		var/numTraitors = min(candidates.len, antnum)
+	if(length(candidates))
+		var/numTraitors = min(length(candidates), antnum)
 
 		for(var/i = 0, i<numTraitors, i++)
 			H = pick(candidates)
@@ -91,8 +92,8 @@
 		if(CandCheck(ROLE_CHANGELING, applicant, temp))
 			candidates += applicant
 
-	if(candidates.len)
-		var/numChangelings = min(candidates.len, antnum)
+	if(length(candidates))
+		var/numChangelings = min(length(candidates), antnum)
 
 		for(var/i = 0, i<numChangelings, i++)
 			H = pick(candidates)
@@ -121,8 +122,8 @@
 		if(CandCheck(ROLE_REV, applicant, temp))
 			candidates += applicant
 
-	if(candidates.len)
-		var/numRevs = min(candidates.len, antnum)
+	if(length(candidates))
+		var/numRevs = min(length(candidates), antnum)
 
 		for(var/i = 0, i<numRevs, i++)
 			H = pick(candidates)
@@ -142,15 +143,16 @@
 	log_admin("[key_name(owner)] tried making a Wizard with One-Click-Antag")
 	message_admins("[key_name_admin(owner)] tried making a Wizard with One-Click-Antag")
 
-	if(candidates.len)
+	if(length(candidates))
 		var/mob/dead/observer/selected = pick(candidates)
 		candidates -= selected
 
 		var/mob/living/carbon/human/new_character = makeBody(selected)
-		new_character.mind.make_Wizard()
+		new_character.mind.add_antag_datum(/datum/antagonist/wizard)
+		new_character.forceMove(pick(GLOB.wizardstart))
 		dust_if_respawnable(selected)
-		return 1
-	return 0
+		return TRUE
+	return FALSE
 
 
 /datum/admins/proc/makeCult()
@@ -162,7 +164,7 @@
 	var/list/mob/living/carbon/human/candidates = list()
 	var/mob/living/carbon/human/H = null
 	var/antnum = input(owner, "How many cultists do you want to create? Enter 0 to cancel.", "Amount:", 0) as num
-	if(!antnum || antnum <= 0) // 5 because cultist can really screw balance over if spawned in high amount.
+	if(!antnum || antnum <= 0)
 		return
 	log_admin("[key_name(owner)] tried making a Cult with One-Click-Antag")
 	message_admins("[key_name_admin(owner)] tried making a Cult with One-Click-Antag")
@@ -171,17 +173,17 @@
 		if(CandCheck(ROLE_CULTIST, applicant, temp))
 			candidates += applicant
 
-	if(length(candidates))
-		var/numCultists = min(length(candidates), antnum)
+	if(!length(candidates))
+		return FALSE
 
-		for(var/I in 1 to numCultists)
-			H = pick(candidates)
-			to_chat(H, CULT_GREETING)
-			SSticker.mode.add_cultist(H.mind)
-			SSticker.mode.equip_cultist(H)
-			candidates.Remove(H)
-		return TRUE
-	return FALSE
+	for(var/I in 1 to antnum)
+		if(!length(candidates))
+			return
+		H = pick_n_take(candidates)
+
+		var/datum/antagonist/cultist/cultist = H.mind.add_antag_datum(/datum/antagonist/cultist)
+		cultist.equip_roundstart_cultist(H)
+	return TRUE
 
 //Abductors
 /datum/admins/proc/makeAbductorTeam()
@@ -275,8 +277,8 @@
 		if(CandCheck(ROLE_VAMPIRE, applicant, temp))
 			candidates += applicant
 
-	if(candidates.len)
-		var/numVampires = min(candidates.len, antnum)
+	if(length(candidates))
+		var/numVampires = min(length(candidates), antnum)
 
 		for(var/i = 0, i<numVampires, i++)
 			H = pick(candidates)
@@ -285,6 +287,29 @@
 
 		return 1
 	return 0
+
+/datum/admins/proc/makeMindflayers()
+	var/datum/game_mode/vampire/temp = new()
+
+	if(GLOB.configuration.gamemode.prevent_mindshield_antags)
+		temp.restricted_jobs += temp.protected_jobs
+
+	var/input_num = input(owner, "How many Mindflayers you want to create? Enter 0 to cancel","Amount:", 0) as num|null
+	if(input_num <= 0 || isnull(input_num))
+		qdel(temp)
+		return FALSE
+
+	log_admin("[key_name(owner)] tried making [input_num] Mindflayers with One-Click-Antag")
+	message_admins("[key_name_admin(owner)] tried making [input_num] Mindflayers with One-Click-Antag")
+	var/list/possible_mindflayers = temp.get_players_for_role(ROLE_MIND_FLAYER, FALSE, "Machine")
+	var/num_mindflayers = min(length(possible_mindflayers), input_num)
+	if(!num_mindflayers)
+		return FALSE
+	for(var/i in 1 to num_mindflayers)
+		var/datum/mind/flayer = pick_n_take(possible_mindflayers)
+		flayer.make_mind_flayer()
+	qdel(temp)
+	return TRUE
 
 /datum/admins/proc/makeThunderdomeTeams() // Not strictly an antag, but this seemed to be the best place to put it.
 	var/max_thunderdome_players = 10

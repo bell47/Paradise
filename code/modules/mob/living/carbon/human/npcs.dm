@@ -13,7 +13,7 @@
 	. = ..()
 	name = "Pun Pun"
 	real_name = name
-	equip_to_slot(new /obj/item/clothing/under/punpun(src), SLOT_HUD_JUMPSUIT)
+	equip_to_slot(new /obj/item/clothing/under/punpun(src), ITEM_SLOT_JUMPSUIT)
 
 /mob/living/carbon/human/monkey/teeny/Initialize(mapload)
 	. = ..()
@@ -40,7 +40,7 @@
 		update_transform()
 	real_name = name
 
-	equip_to_slot_or_del(new headwear(src), SLOT_HUD_HEAD)
+	equip_to_slot_or_del(new headwear(src), ITEM_SLOT_HEAD)
 	RegisterSignal(src, list(COMSIG_HUMAN_ATTACKED, COMSIG_HOSTILE_ATTACKINGTARGET), PROC_REF(ouch))
 
 	for(var/trait in list(TRAIT_RESISTHEAT, TRAIT_NOBREATH, TRAIT_RESISTCOLD, TRAIT_RESISTHIGHPRESSURE, TRAIT_RESISTLOWPRESSURE))
@@ -107,5 +107,5 @@
 /mob/living/carbon/human/monkey/magic/mind_checks()
 	if(!..())
 		return FALSE
-	mind.AddSpell(new /obj/effect/proc_holder/spell/turf_teleport/blink(null))
+	mind.AddSpell(new /datum/spell/turf_teleport/blink(null))
 	mind.special_role = SPECIAL_ROLE_WIZARD

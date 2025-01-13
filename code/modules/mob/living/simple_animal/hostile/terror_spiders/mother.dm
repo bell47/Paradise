@@ -54,11 +54,12 @@
 	DropSpiderlings()
 	. = ..()
 
-/mob/living/simple_animal/hostile/poison/terror_spider/mother/Stat()
-	..()
+/mob/living/simple_animal/hostile/poison/terror_spider/mother/get_status_tab_items()
+	var/list/status_tab_data = ..()
+	. = status_tab_data
 	// Provides a status panel indicator, showing mothers how many regen points they have.
-	if(statpanel("Status") && ckey && stat == CONSCIOUS)
-		stat(null, "Regeneration Points: [regen_points]")
+	if(ckey && stat == CONSCIOUS)
+		status_tab_data[++status_tab_data.len] = list("Regeneration Points:", "[regen_points]")
 
 /mob/living/simple_animal/hostile/poison/terror_spider/mother/examine(mob/user)
 	. = ..()
@@ -138,7 +139,7 @@
 	name = "mother web"
 	desc = "This web is coated in pheromones which prevent spiderlings from passing it."
 
-/obj/structure/spider/terrorweb/mother/CanPass(atom/movable/mover, turf/target)
+/obj/structure/spider/terrorweb/mother/CanPass(atom/movable/mover, border_dir)
 	if(istype(mover, /obj/structure/spider/spiderling/terror_spiderling))
 		return FALSE
 	return ..()

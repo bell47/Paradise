@@ -2,7 +2,7 @@
 //Put handheld rocket launchers here if someone ever decides to make something so hilarious ~Paprika
 
 /obj/item/gun/projectile/revolver/grenadelauncher//this is only used for underbarrel grenade launchers at the moment, but admins can still spawn it if they feel like being assholes
-	desc = "A break-operated grenade launcher."
+	desc = "A break-action grenade launcher."
 	name = "grenade launcher"
 	icon_state = "dbshotgun_sawn"
 	item_state = "gun"
@@ -11,7 +11,7 @@
 	w_class = WEIGHT_CLASS_NORMAL
 	can_holster = FALSE  // Not your normal revolver
 
-/obj/item/gun/projectile/revolver/grenadelauncher/attackby(obj/item/A, mob/user, params)
+/obj/item/gun/projectile/revolver/grenadelauncher/attackby__legacy__attackchain(obj/item/A, mob/user, params)
 	..()
 	if(istype(A, /obj/item/ammo_box) || istype(A, /obj/item/ammo_casing))
 		chamber_round()
@@ -29,17 +29,18 @@
 	icon_state = "mecha_grenadelnchr"
 	mag_type = /obj/item/ammo_box/magazine/internal/cylinder/grenadelauncher/multi/fifteen
 
-/obj/item/gun/projectile/revolver/grenadelauncher/multi/cyborg/attack_self()
+/obj/item/gun/projectile/revolver/grenadelauncher/multi/cyborg/attack_self__legacy__attackchain()
 	return
 
 /obj/item/gun/projectile/automatic/gyropistol
-	name = "gyrojet pistol"
-	desc = "A prototype pistol designed to fire self propelled rockets."
+	name = "\improper MX2000 gyrojet pistol"
+	desc = "A prototype pistol designed by Sunburst Heavy Industries, intended to fire self-propelled rockets."
 	icon_state = "gyropistol"
 	fire_sound = 'sound/effects/explosion1.ogg'
 	origin_tech = "combat=5"
 	mag_type = /obj/item/ammo_box/magazine/m75
 	can_holster = TRUE // Override default automatic setting since it is a handgun sized gun
+	can_suppress = FALSE
 	burst_size = 1
 	fire_delay = 0
 	actions_types = list()
@@ -57,7 +58,7 @@
 	icon_state = "speargun"
 	item_state = "speargun"
 	w_class = WEIGHT_CLASS_BULKY
-	slot_flags = SLOT_FLAG_BACK
+	slot_flags = ITEM_SLOT_BACK
 	origin_tech = "combat=4;engineering=4"
 	force = 10
 	can_suppress = FALSE
@@ -71,14 +72,14 @@
 /obj/item/gun/projectile/automatic/speargun/update_icon_state()
 	return
 
-/obj/item/gun/projectile/automatic/speargun/attack_self()
+/obj/item/gun/projectile/automatic/speargun/attack_self__legacy__attackchain()
 	return
 
 /obj/item/gun/projectile/automatic/speargun/process_chamber(eject_casing = 0, empty_chamber = 1)
 	..()
 
-/obj/item/gun/projectile/automatic/speargun/attackby(obj/item/A, mob/user, params)
-	var/num_loaded = magazine.attackby(A, user, params, 1)
+/obj/item/gun/projectile/automatic/speargun/attackby__legacy__attackchain(obj/item/A, mob/user, params)
+	var/num_loaded = magazine.attackby__legacy__attackchain(A, user, params, 1)
 	if(num_loaded)
 		to_chat(user, "<span class='notice'>You load [num_loaded] spear\s into \the [src].</span>")
 		update_icon()

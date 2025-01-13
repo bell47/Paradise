@@ -30,7 +30,7 @@
 	if(HAS_TRAIT(src, TRAIT_CMAGGED))
 		. += "<span class='warning'>Yellow ooze seems to be seeping from the speaker...</span>"
 
-/obj/item/megaphone/attack_self(mob/living/user)
+/obj/item/megaphone/attack_self__legacy__attackchain(mob/living/user)
 	if(check_mute(user.ckey, MUTE_IC))
 		to_chat(src, "<span class='warning'>You cannot speak in IC (muted).</span>")
 		return
@@ -56,10 +56,7 @@
 		to_chat(user, "<span class='warning'>[src] needs to recharge!</span>")
 		return
 
-	var/message = input(user, "Shout a message:", "Megaphone") as text|null
-	if(!message)
-		return
-	message = sanitize(copytext(message, 1, MAX_MESSAGE_LEN))
+	var/message = tgui_input_text(user, "Shout a message:", "Megaphone")
 	if(!message)
 		return
 	message = capitalize(message)
@@ -86,25 +83,27 @@
 	for(var/obj/O in view(14, get_turf(src)))
 		O.hear_talk(user, message_to_multilingual("<span class='[span]'>[message]</span>"))
 
-	for(var/mob/M in get_mobs_in_view(7, src))
+	for(var/mob/M as anything in get_mobs_in_view(7, src))
 		if((M.client?.prefs.toggles2 & PREFTOGGLE_2_RUNECHAT) && M.can_hear())
 			M.create_chat_message(user, message, FALSE, "big")
 
 /obj/item/megaphone/cmag_act(mob/user)
 	if(HAS_TRAIT(src, TRAIT_CMAGGED))
-		return
+		return FALSE
 	if(user)
 		to_chat(user, "<span class='warning'>You drip some yellow ooze into [src]'s voice synthesizer, gunking it up.</span>")
 	playsound(src, "sparks", 75, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 	ADD_TRAIT(src, TRAIT_CMAGGED, CLOWN_EMAG)
+	return TRUE
 
 /obj/item/megaphone/emag_act(mob/user)
 	if(emagged)
-		return
+		return FALSE
 	if(HAS_TRAIT(src, TRAIT_CMAGGED))  // one at a time
 		to_chat(user, "<span class='warning'>You go to short out [src], but it's covered in yellow ooze! You don't want to gunk up your emag!</span>")
-		return
+		return FALSE
 	to_chat(user, "<span class='danger'>You short out [src]'s dampener circuits.</span>")
 	emagged = TRUE
 	span = "reallybig userdanger"  // really obvious, but also really loud
+	return TRUE
 

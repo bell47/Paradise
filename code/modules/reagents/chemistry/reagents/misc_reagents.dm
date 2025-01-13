@@ -246,7 +246,7 @@
 	taste_description = "a carpet...what?"
 
 /datum/reagent/carpet/reaction_turf(turf/simulated/T, volume)
-	if((istype(T, /turf/simulated/floor/plating) || istype(T, /turf/simulated/floor/plasteel)) && !islava(T))
+	if((istype(T, /turf/simulated/floor/plating) || istype(T, /turf/simulated/floor/plasteel)))
 		var/turf/simulated/floor/F = T
 		F.ChangeTurf(/turf/simulated/floor/carpet)
 	..()
@@ -395,16 +395,16 @@
 		H.update_fhair()
 		if(!H.wear_mask || H.wear_mask && !istype(H.wear_mask, /obj/item/clothing/mask/fakemoustache))
 			if(H.wear_mask)
-				H.unEquip(H.wear_mask)
+				H.drop_item_to_ground(H.wear_mask)
 			var/obj/item/clothing/mask/fakemoustache = new /obj/item/clothing/mask/fakemoustache
-			H.equip_to_slot(fakemoustache, SLOT_HUD_WEAR_MASK)
+			H.equip_to_slot(fakemoustache, ITEM_SLOT_MASK)
 			to_chat(H, "<span class='notice'>Hair bursts forth from your every follicle!")
 	..()
 
 /datum/reagent/hugs
 	name = "Pure hugs"
 	id = "hugs"
-	description = "Hugs, in liquid form.  Yes, the concept of a hug.  As a liquid.  This makes sense in the future."
+	description = "Hugs, in liquid form. Yes, the concept of a hug. As a liquid. This makes sense in the future."
 	reagent_state = LIQUID
 	color = "#FF97B9"
 	taste_description = "<font color='pink'><b>hugs</b></font>"
@@ -412,7 +412,7 @@
 /datum/reagent/love
 	name = "Pure love"
 	id = "love"
-	description = "What is this emotion you humans call \"love?\"  Oh, it's this?  This is it? Huh, well okay then, thanks."
+	description = "What is this emotion you humans call \"love?\" Oh, it's this? This is it? Huh, well okay then, thanks."
 	reagent_state = LIQUID
 	color = "#FF83A5"
 	process_flags = ORGANIC | SYNTHETIC // That's the power of love~
@@ -436,7 +436,7 @@
 					continue
 				if(!C.stat)
 					M.visible_message("<span class='notice'>[M] gives [C] a [pick("hug","warm embrace")].</span>")
-					playsound(get_turf(M), 'sound/weapons/thudswoosh.ogg', 50, 1, -1)
+					playsound(get_turf(M), 'sound/weapons/thudswoosh.ogg', 50, TRUE, -1)
 					break
 	return ..()
 
@@ -447,11 +447,13 @@
 /datum/reagent/love/reaction_mob(mob/living/M, method=REAGENT_TOUCH, volume)
 	to_chat(M, "<span class='notice'>You feel loved!</span>")
 
-/datum/reagent/jestosterone //Formerly known as Nitrogen tungstide hypochlorite before NT fired the chemists for trying to be funny
+/// Formerly known as Nitrogen tungstide hypochlorite before NT fired the chemists for trying to be funny
+/datum/reagent/jestosterone
 	name = "Jestosterone"
 	id = "jestosterone"
 	description = "Jestosterone is an odd chemical compound that induces a variety of annoying side-effects in the average person. It also causes mild intoxication, and is toxic to mimes."
 	color = "#ff00ff" //Fuchsia, pity we can't do rainbow here
+	process_flags = ORGANIC | SYNTHETIC
 	taste_description = "a funny flavour"
 
 /datum/reagent/jestosterone/on_new()
@@ -465,22 +467,23 @@
 		else if(C.mind.assigned_role == "Mime")
 			to_chat(C, "<span class='warning'>You feel nauseous.</span>")
 			C.AdjustDizzy(volume STATUS_EFFECT_CONSTANT)
+			ADD_TRAIT(C, TRAIT_COMIC_SANS, id)
+			C.AddElement(/datum/element/waddling)
 		else
 			to_chat(C, "<span class='warning'>Something doesn't feel right...</span>")
 			C.AdjustDizzy(volume STATUS_EFFECT_CONSTANT)
-	if(C.mind.assigned_role != "Clown")
-		ADD_TRAIT(C, TRAIT_COMIC_SANS, id)
-		C.AddElement(/datum/element/waddling)
+			ADD_TRAIT(C, TRAIT_COMIC_SANS, id)
+			C.AddElement(/datum/element/waddling)
 	C.AddComponent(/datum/component/squeak, null, null, null, null, null, TRUE, falloff_exponent = 20)
 
-/datum/reagent/jestosterone/on_mob_life(mob/living/carbon/M)
+/datum/reagent/jestosterone/on_mob_life(mob/living/carbon/human/M)
 	var/update_flags = STATUS_UPDATE_NONE
 	if(prob(10))
 		M.emote("giggle")
 	if(!M.mind)
 		return ..() | update_flags
 	if(M.mind.assigned_role == "Clown")
-		update_flags |= M.adjustBruteLoss(-1.5 * REAGENTS_EFFECT_MULTIPLIER) //Screw those pesky clown beatings!
+		update_flags |= M.adjustBruteLoss(-1.5 * REAGENTS_EFFECT_MULTIPLIER, robotic = TRUE) //Screw those pesky clown beatings!
 	else
 		M.AdjustDizzy(20 SECONDS, 0, 100 SECONDS)
 		M.Druggy(30 SECONDS)
@@ -500,16 +503,92 @@
 			"You feel like telling a pun.")
 			to_chat(M, "<span class='warning'>[pick(clown_message)]</span>")
 		if(M.mind.assigned_role == "Mime")
-			update_flags |= M.adjustToxLoss(1.5 * REAGENTS_EFFECT_MULTIPLIER)
+			if(M.dna.species.tox_mod <= 0) // If they can't take tox damage, make them take burn damage
+				update_flags |= M.adjustFireLoss(1.5 * REAGENTS_EFFECT_MULTIPLIER, robotic = TRUE)
+			else
+				update_flags |= M.adjustToxLoss(1.5 * REAGENTS_EFFECT_MULTIPLIER)
 	return ..() | update_flags
 
 /datum/reagent/jestosterone/on_mob_delete(mob/living/M)
 	..()
-	if(M.mind.assigned_role != "Clown")
+	if(M.mind?.assigned_role != "Clown")
 		REMOVE_TRAIT(M, TRAIT_COMIC_SANS, id)
 		M.RemoveElement(/datum/element/waddling)
-	qdel(M.GetComponent(/datum/component/squeak))
+		M.DeleteComponent(/datum/component/squeak)
 
+/datum/reagent/mimestrogen
+	name = "Mimestrogen"
+	id = "mimestrogen"
+	description = "Mimestrogen is an odd chemical compound that induces a variety of annoying side-effects in the average person. It also causes mild intoxication, and is toxic to clowns."
+	color = "#353535" // Should be dark grey, there are already a fair number of white chemicals
+	process_flags = ORGANIC | SYNTHETIC
+	drink_desc = "The color of the glass' surroundings seem to drain as you look at it."
+	taste_description = "an entertaining flavour"
+
+/datum/reagent/mimestrogen/on_new()
+	..()
+	var/mob/living/carbon/C = holder.my_atom
+	if(!istype(C))
+		return
+	if(C.mind)
+		if(C.mind.assigned_role == "Mime")
+			to_chat(C, "<span class='notice'>Whatever that was, it feels great!</span>")
+		else if(C.mind.assigned_role == "Clown")
+			to_chat(C, "<span class='warning'>You feel nauseous.</span>")
+			C.AdjustDizzy(volume STATUS_EFFECT_CONSTANT)
+			C.mind.miming = TRUE
+			ADD_TRAIT(C, TRAIT_COLORBLIND, id)
+		else
+			to_chat(C, "<span class='warning'>Something doesn't feel right...</span>")
+			C.AdjustDizzy(volume STATUS_EFFECT_CONSTANT)
+			C.mind.miming = TRUE // Jestosterone gives comic sans which makes one more clown-like, comic sans also unlocks clown healing, minus Jestoserone. So, mind.miming makes one more like a mime and unlocks mime healing, minus Mimestrogen.
+			ADD_TRAIT(C, TRAIT_COLORBLIND, id)
+
+/datum/reagent/mimestrogen/on_mob_life(mob/living/carbon/human/M)
+	var/update_flags = STATUS_UPDATE_NONE
+	if(prob(10))
+		M.emote("giggle")
+	if(!M.mind)
+		return ..() | update_flags
+	if(M.mind.assigned_role == "Mime")
+		update_flags |= M.adjustBruteLoss(-1.5 * REAGENTS_EFFECT_MULTIPLIER, robotic = TRUE)
+	else
+		M.AdjustDizzy(20 SECONDS, 0, 100 SECONDS)
+		if(M.client)
+			M.client.color = MATRIX_GREYSCALE
+			M.update_client_colour() // TRAIT_COLORBLIND only makes you colourblind for the wires, this fully makes it greyscale
+		if(prob(10))
+			M.EyeBlurry(10 SECONDS)
+		if(prob(6))
+			var/static/list/mime_message = list("You feel light-headed.",
+				"You can't see straight.",
+				"You feel about as entertaining as the station mime.",
+				"Muted colors and berets cloud your vision.",
+				"Your voice box feels numb.",
+				"What was that?!",
+				"You can hear silence in the distance, somehow.",
+				"You feel like miming.",
+				"Silence permeates your ears.",
+				"...",
+				"You feel like miming a performance.")
+			to_chat(M, "<span class='warning'>[pick(mime_message)]</span>")
+		if(M.mind.assigned_role == "Clown")
+			if(M.dna.species.tox_mod <= 0) // If they can't take tox damage, make them take burn damage
+				update_flags |= M.adjustFireLoss(1.5 * REAGENTS_EFFECT_MULTIPLIER, robotic = TRUE)
+			else
+				update_flags |= M.adjustToxLoss(1.5 * REAGENTS_EFFECT_MULTIPLIER)
+	return ..() | update_flags
+
+/datum/reagent/mimestrogen/on_mob_delete(mob/living/M)
+	..()
+	if(M.mind?.assigned_role != "Mime")
+		M.mind.miming = FALSE
+		if(M.client)
+			M.client.color = null
+			REMOVE_TRAIT(M, TRAIT_COLORBLIND, id)
+			M.update_client_colour() // You get stuck with permanent greyscale if it's not separated from client.color by at least one line
+		else
+			REMOVE_TRAIT(M, TRAIT_COLORBLIND, id)
 
 /datum/reagent/royal_bee_jelly
 	name = "Royal bee jelly"
@@ -589,40 +668,51 @@
 
 //////////////////////////////////Hydroponics stuff///////////////////////////////
 
-/datum/reagent/plantnutriment
-	name = "Generic nutriment"
-	id = "plantnutriment"
-	description = "Some kind of nutriment. You can't really tell what it is. You should probably report it, along with how you obtained it."
+/datum/reagent/plantnutrient
+	name = "Generic nutrient"
+	id = "plantnutrient"
+	description = "Some kind of nutrient. You can't really tell what it is. You should probably report it, along with how you obtained it."
 	color = "#000000" // RBG: 0, 0, 0
 	var/tox_prob = 0
+	var/mutation_level = 0
 	taste_description = "puke"
 
-/datum/reagent/plantnutriment/on_mob_life(mob/living/M)
+/datum/reagent/plantnutrient/on_mob_life(mob/living/M)
 	var/update_flags = STATUS_UPDATE_NONE
 	if(prob(tox_prob))
 		update_flags |= M.adjustToxLoss(1*REAGENTS_EFFECT_MULTIPLIER, FALSE)
 	return ..() | update_flags
 
-/datum/reagent/plantnutriment/eznutriment
+/datum/reagent/plantnutrient/eznutrient
 	name = "E-Z-Nutrient"
-	id = "eznutriment"
-	description = "Cheap and extremely common type of plant nutriment."
-	color = "#376400" // RBG: 50, 100, 0
-	tox_prob = 10
+	id = "eznutrient"
+	description = "Cheap and boring nutrition for plants."
+	color = "#504700" // RBG: 80, 70, 0
+	tox_prob = 5
 	taste_description = "obscurity and toil"
 
-/datum/reagent/plantnutriment/left4zednutriment
+/datum/reagent/plantnutrient/mut
+	name = "Mutrient"
+	id = "mutrient"
+	description = "Plant nutrient designed to trigger mild genetic drift."
+	color = "#376400" // RBG: 50, 100, 0
+	tox_prob = 10
+	mutation_level = 10
+	taste_description = "change"
+
+/datum/reagent/plantnutrient/left4zednutrient
 	name = "Left 4 Zed"
-	id = "left4zednutriment"
-	description = "Unstable nutriment that makes plants mutate more often than usual."
+	id = "left4zednutrient"
+	description = "Unstable nutrient that makes plants mutate strongly at the cost of minimal yield."
 	color = "#2A1680" // RBG: 42, 128, 22
 	tox_prob = 25
+	mutation_level = 15
 	taste_description = "evolution"
 
-/datum/reagent/plantnutriment/robustharvestnutriment
+/datum/reagent/plantnutrient/robustharvestnutrient
 	name = "Robust Harvest"
-	id = "robustharvestnutriment"
-	description = "Very potent nutriment that prevents plants from mutating."
+	id = "robustharvestnutrient"
+	description = "Very potent nutrient that increases yield."
 	color = "#9D9D00" // RBG: 157, 157, 0
 	tox_prob = 15
 	taste_description = "bountifulness"
@@ -700,7 +790,7 @@
 		set_skin_color(N)
 		if(prob(7))
 			if(N.w_uniform)
-				M.visible_message(pick("<b>[M]</b>'s collar pops up without warning.</span>", "<b>[M]</b> flexes [M.p_their()] arms."))
+				M.visible_message(pick("<span><b>[M]</b>'s collar pops up without warning.</span>", "<b>[M]</b> flexes [M.p_their()] arms."))
 			else
 				M.visible_message("<b>[M]</b> flexes [M.p_their()] arms.")
 	if(prob(10))
@@ -714,3 +804,56 @@
 
 	if(H.dna.species.bodyflags & HAS_SKIN_COLOR) //take current alien color and darken it slightly
 		H.change_skin_color("#9B7653")
+
+/datum/reagent/admin_cleaner
+	name = "WD-2381"
+	color = "#da9eda"
+	description = "Extra-bubbly cleaner designed to clear all objects. Or, well. Anything that isn't bolted down. Or is, for that matter. In other words: if you're seeing this, how'd you get your hands on it?"
+
+/datum/reagent/admin_cleaner/organic
+	name = "WD-2381-MOB"
+	id = "admincleaner_mob"
+	description = "A bottle of strange nanites that instantly devour bodies, both living and dead, as well as organs."
+
+/datum/reagent/admin_cleaner/organic/reaction_mob(mob/living/M, method, volume, show_message)
+	. = ..()
+	if(method == REAGENT_TOUCH)
+		M.dust()
+
+/datum/reagent/admin_cleaner/organic/reaction_obj(obj/O, volume)
+	if(is_organ(O))
+		qdel(O)
+	if(istype(O, /obj/effect/decal/cleanable/blood) || istype(O, /obj/effect/decal/cleanable/vomit))
+		qdel(O)
+	if(istype(O, /obj/item/mmi))
+		qdel(O)
+
+/datum/reagent/admin_cleaner/item
+	name = "WD-2381-ITM"
+	id = "admincleaner_item"
+	description = "A bottle of strange nanites that instantly devour items, while curiously leaving everything else untouched."
+
+/datum/reagent/admin_cleaner/item/reaction_obj(obj/O, volume)
+	if(isitem(O) && !istype(O, /obj/item/grenade/clusterbuster/segment))
+		qdel(O)
+
+/datum/reagent/admin_cleaner/all
+	name = "WD-2381-ALL"
+	id = "admincleaner_all"
+	description = "An incredibly dangerous set of nanites engineered by Syndicate Janitors which devour everything they touch."
+
+/datum/reagent/admin_cleaner/all/reaction_obj(obj/O, volume)
+	if(istype(O, /obj/item/grenade/clusterbuster/segment))
+		// don't clear clusterbang segments
+		// I'm allowed to make this hack because this is admin only anyway
+		return
+	if(!iseffect(O))
+		qdel(O)
+
+/datum/reagent/admin_cleaner/all/reaction_mob(mob/living/M, method, volume, show_message)
+	. = ..()
+	if(method == REAGENT_TOUCH)
+		M.dust()
+
+
+

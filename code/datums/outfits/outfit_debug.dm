@@ -22,7 +22,7 @@
 	id = /obj/item/card/id/admin
 	pda = /obj/item/pda/centcom
 
-	internals_slot = SLOT_HUD_SUIT_STORE
+	internals_slot = ITEM_SLOT_SUIT_STORE
 	toggle_helmet = TRUE
 
 	cybernetic_implants = list(
@@ -40,11 +40,17 @@
 	if(istype(I))
 		apply_to_card(I, H, get_all_accesses(), "Debugger", "admin")
 
+	H.dna.SetSEState(GLOB.breathlessblock, 1)
+	singlemutcheck(H, GLOB.breathlessblock, MUTCHK_FORCED)
+	H.dna.default_blocks.Add(GLOB.breathlessblock)
+	H.check_mutations = 1
+
 /obj/item/radio/headset/centcom/debug
 	name = "AVD-CNED bowman headset"
 	ks2type = /obj/item/encryptionkey/syndicate/all_channels
 
-/obj/item/encryptionkey/syndicate/all_channels // has to be a subtype and stuff
+/// has to be a subtype and stuff
+/obj/item/encryptionkey/syndicate/all_channels
 	name = "AVD-CNED Encryption Key"
 	desc = "Lets you listen to <b>everything</b>. Use in hand to toggle voice changing. Alt-click to change your fake name."
 	icon_state = "com_cypherkey"
@@ -57,15 +63,15 @@
 	for(var/channel in SSradio.radiochannels)
 		channels[channel] = 1 // yeah, all channels, sure, probably fine
 
-/obj/item/encryptionkey/syndicate/all_channels/attack_self(mob/user, pickupfireoverride)
+/obj/item/encryptionkey/syndicate/all_channels/attack_self__legacy__attackchain(mob/user, pickupfireoverride)
 	change_voice = !change_voice
 	to_chat(user, "You switch [src] to [change_voice ? "" : "not "]change your voice on syndicate communications.")
 
 /obj/item/encryptionkey/syndicate/all_channels/AltClick(mob/user)
-	var/new_name = stripped_input(user, "Enter new fake agent name...", "New name")
+	var/new_name = tgui_input_text(user, "Enter new fake agent name...", "New name", max_length = MAX_NAME_LEN)
 	if(!new_name)
 		return
-	fake_name = copytext(new_name, 1, MAX_NAME_LEN + 1)
+	fake_name = new_name
 
 /obj/item/clothing/mask/gas/welding/advanced
 	name = "AVD-CNED welding mask"
@@ -89,10 +95,11 @@
 
 /obj/item/clothing/glasses/hud/debug
 	name = "AVD-CNED glasses"
-	desc = "Medical, security and diagnostic hud. Alt click to toggle xray."
+	desc = "Diagnostic, Hydroponic, Medical, Security, and Skills HUD. Built-in advanced reagent scanner. Alt-click to toggle X-ray vision."
 	icon_state = "nvgmeson"
 	flags_cover = GLASSESCOVERSEYES
 	flash_protect = FLASH_PROTECTION_WELDER
+	scan_reagents_advanced = TRUE
 
 	prescription_upgradable = FALSE
 
@@ -150,7 +157,7 @@
 	. = ..()
 	. += "<span class='notice'><b>Alt-Click</b> to toggle mind-activation on spawning.</span>"
 
-/obj/item/debug/human_spawner/afterattack(atom/target, mob/user, proximity)
+/obj/item/debug/human_spawner/afterattack__legacy__attackchain(atom/target, mob/user, proximity)
 	..()
 	if(!isturf(target))
 		return
@@ -160,13 +167,12 @@
 	if(activate_mind)
 		H.mind_initialize()
 
-/obj/item/debug/human_spawner/attack_self(mob/user)
+/obj/item/debug/human_spawner/attack_self__legacy__attackchain(mob/user)
 	..()
 	var/choice = input("Select a species", "Human Spawner", null) in GLOB.all_species
 	selected_species = GLOB.all_species[choice]
 
 /obj/item/debug/human_spawner/AltClick(mob/user)
-	. = ..()
 	if(!Adjacent(user))
 		return
 	activate_mind = !activate_mind
@@ -193,7 +199,7 @@
 	desc = "A wonder of modern medicine. This tool functions as any other sort of surgery tool, and finishes in only a fraction of the time. Hey, how'd you get your hands on this, anyway?"
 	toolspeed = 0.01
 
-/obj/item/scalpel/laser/manager/debug/attack_self(mob/user)
+/obj/item/scalpel/laser/manager/debug/attack_self__legacy__attackchain(mob/user)
 	. = ..()
 	toolspeed = toolspeed == 0.5 ? 0.01 : 0.5
 	to_chat(user, "[src] is now set to toolspeed [toolspeed]")
@@ -312,8 +318,8 @@
 
 // put cool admin-only shit here :)
 /obj/item/storage/box/debug/misc_debug/populate_contents()
-	new /obj/item/badminBook(src)
-	new /obj/item/reagent_containers/food/drinks/bottle/vodka/badminka(src)
+	new /obj/item/badmin_book(src)
+	new /obj/item/reagent_containers/drinks/bottle/vodka/badminka(src)
 	new /obj/item/crowbar/power(src) // >admin only lol
 	new /obj/item/clothing/gloves/fingerless/rapid/admin(src)
 	new /obj/item/clothing/under/misc/acj(src)

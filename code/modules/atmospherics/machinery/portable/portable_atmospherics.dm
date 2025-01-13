@@ -19,7 +19,7 @@
 	SSair.atmos_machinery += src
 
 	air_contents.volume = volume
-	air_contents.temperature = T20C
+	air_contents.set_temperature(T20C)
 
 	if(mapload)
 		return INITIALIZE_HINT_LATELOAD
@@ -40,8 +40,6 @@
 		//Allow for reactions
 		air_contents.react()
 		return
-
-	update_icon()
 
 /obj/machinery/atmospherics/portable/Destroy()
 	SSair.atmos_machinery -= src
@@ -70,6 +68,8 @@
 
 	anchored = TRUE //Prevent movement
 
+	update_icon()
+
 	return TRUE
 
 /obj/machinery/atmospherics/portable/disconnect()
@@ -80,6 +80,8 @@
 
 	connected_port.connected_device = null
 	connected_port = null
+
+	update_icon()
 
 	return TRUE
 
@@ -103,6 +105,9 @@
 	if(holding_tank)
 		. += "<span class='notice'>\The [src] contains [holding_tank]. Alt-click [src] to remove it.</span>"
 
+/obj/machinery/atmospherics/portable/return_analyzable_air()
+	return air_contents
+
 /obj/machinery/atmospherics/portable/proc/replace_tank(mob/living/user, close_valve, obj/item/tank/new_tank)
 	if(holding_tank)
 		holding_tank.forceMove(drop_location())
@@ -115,7 +120,7 @@
 	update_icon()
 	return TRUE
 
-/obj/machinery/atmospherics/portable/attackby(obj/item/W, mob/user, params)
+/obj/machinery/atmospherics/portable/attackby__legacy__attackchain(obj/item/W, mob/user, params)
 	if(istype(W, /obj/item/tank))
 		if(!(stat & BROKEN))
 			if(!user.drop_item())
@@ -128,9 +133,6 @@
 			T.loc = src
 			holding_tank = T
 			update_icon()
-		return
-	if((istype(W, /obj/item/analyzer)) && get_dist(user, src) <= 1)
-		atmosanalyzer_scan(air_contents, user)
 		return
 	return ..()
 
@@ -155,7 +157,7 @@
 		else
 			to_chat(user, "<span class='notice'>Nothing happens.</span>")
 
-/obj/machinery/atmospherics/portable/attacked_by(obj/item/I, mob/user)
+/obj/machinery/atmospherics/portable/attacked_by__legacy__attackchain(obj/item/I, mob/user)
 	if(I.force < 10 && !(stat & BROKEN))
 		take_damage(0)
 	else

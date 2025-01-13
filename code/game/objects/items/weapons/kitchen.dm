@@ -44,7 +44,7 @@
 
 	create_reagents(5)
 
-/obj/item/kitchen/utensil/attack(mob/living/carbon/C, mob/living/carbon/user)
+/obj/item/kitchen/utensil/attack__legacy__attackchain(mob/living/carbon/C, mob/living/carbon/user)
 	if(!istype(C))
 		return ..()
 
@@ -57,7 +57,7 @@
 			return ..()
 
 	if(length(contents))
-		var/obj/item/reagent_containers/food/snacks/toEat = contents[1]
+		var/obj/item/food/toEat = contents[1]
 		if(istype(toEat))
 			if(C.eat(toEat, user))
 				toEat.On_Consume(C, user)
@@ -121,10 +121,14 @@
 	righthand_file = 'icons/mob/inhands/weapons_righthand.dmi'
 	var/bayonet = FALSE	//Can this be attached to a gun?
 
+/obj/item/kitchen/knife/Initialize(mapload)
+	. = ..()
+	AddComponent(/datum/component/surgery_initiator/robo)
+
 /obj/item/kitchen/knife/suicide_act(mob/user)
-	user.visible_message(pick("<span class='suicide'>[user] is slitting [user.p_their()] wrists with [src]! It looks like [user.p_theyre()] trying to commit suicide.</span>", \
-						"<span class='suicide'>[user] is slitting [user.p_their()] throat with [src]! It looks like [user.p_theyre()] trying to commit suicide.</span>", \
-						"<span class='suicide'>[user] is slitting [user.p_their()] stomach open with [src]! It looks like [user.p_theyre()] trying to commit seppuku.</span>"))
+	user.visible_message(pick("<span class='suicide'>[user] is slitting [user.p_their()] wrists with [src]! It looks like [user.p_theyre()] trying to commit suicide!</span>", \
+						"<span class='suicide'>[user] is slitting [user.p_their()] throat with [src]! It looks like [user.p_theyre()] trying to commit suicide!</span>", \
+						"<span class='suicide'>[user] is slitting [user.p_their()] stomach open with [src]! It looks like [user.p_theyre()] trying to commit seppuku!</span>"))
 	return BRUTELOSS
 
 /obj/item/kitchen/knife/plastic
@@ -143,7 +147,7 @@
 /obj/item/kitchen/knife/shiv
 	name = "glass shiv"
 	desc = "A haphazard sharp object wrapped in cloth, just like great-great-great-great grandma used to make."
-	icon = 'icons/obj/items.dmi'
+	icon = 'icons/obj/weapons/melee.dmi'
 	item_state = "glass_shiv"
 	icon_state = "glass_shiv"
 
@@ -214,6 +218,12 @@
 	icon_state = "knife"
 	desc = "A cyborg-mounted plasteel knife. Extremely sharp and durable."
 	origin_tech = null
+
+/obj/item/kitchen/knife/cheese
+	name = "cheese knife"
+	desc = "A blunt knife used to slice cheese."
+	icon_state = "knife-cheese"
+	force = 3
 
 /*
  * Rolling Pins

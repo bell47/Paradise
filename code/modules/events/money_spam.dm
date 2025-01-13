@@ -35,7 +35,7 @@
 					continue
 				viables.Add(check_pda)
 
-			if(!viables.len)
+			if(!length(viables))
 				return
 			var/obj/item/pda/P = pick(viables)
 			var/datum/data/pda/app/messenger/PM = P.find_program(/datum/data/pda/app/messenger)
@@ -78,6 +78,7 @@
 					"We are happy to inform you that due to the delay, we have been instructed to IMMEDIATELY deposit all funds into your account",\
 					"Dear fund beneficiary, We have please to inform you that overdue funds payment has finally been approved and released for payment",\
 					"Due to my lack of agents I require an off-world financial account to immediately deposit the sum of 1 POINT FIVE MILLION credits.",\
+					// Intentional errors here, please do not fix.
 					"Greetings sir, I regretfully to inform you that as I lay dying here due to my lack ofheirs I have chosen you to recieve the full sum of my lifetime savings of 1.5 billion credits")
 				if(6)
 					sender = pick("Nanotrasen Morale Divison","Feeling Lonely?","Bored?","www.wetskrell.nt")
@@ -98,7 +99,7 @@
 			last_spam_time = world.time
 
 			if(prob(50)) //Give the AI an increased chance to intercept the message
-				for(var/mob/living/silicon/ai/ai in GLOB.mob_list)
+				for(var/mob/living/silicon/ai/ai in GLOB.ai_list)
 					// Allows other AIs to intercept the message but the AI won't intercept their own message.
 					if(ai.aiPDA != P && ai.aiPDA != src)
 						ai.show_message("<i>Intercepted message from <b>[sender]</b></i> (Unknown / spam?) <i>to <b>[P:owner]</b>: [message]</i>")

@@ -25,25 +25,25 @@
 	/// Will this recipe send an admin message when it's completed.
 	var/alert_admins_on_craft = FALSE
 
-/datum/crafting_recipe/IED
+/datum/crafting_recipe/ied
 	name = "IED"
 	result = list(/obj/item/grenade/iedcasing)
 	reqs = list(/datum/reagent/fuel = 50,
 				/obj/item/stack/cable_coil = 1,
 				/obj/item/assembly/igniter = 1,
-				/obj/item/reagent_containers/food/drinks/cans = 1)
-	parts = list(/obj/item/reagent_containers/food/drinks/cans = 1)
+				/obj/item/reagent_containers/drinks/cans = 1)
+	parts = list(/obj/item/reagent_containers/drinks/cans = 1)
 	time = 15
 	category = CAT_WEAPONRY
 	subcategory = CAT_WEAPON
 
 /datum/crafting_recipe/molotov
 	name = "Molotov"
-	result = list(/obj/item/reagent_containers/food/drinks/bottle/molotov)
+	result = list(/obj/item/reagent_containers/drinks/bottle/molotov)
 	reqs = list(/obj/item/reagent_containers/glass/rag = 1,
-				/obj/item/reagent_containers/food/drinks/bottle = 1)
-	blacklist = list(/obj/item/reagent_containers/food/drinks/bottle/molotov)
-	parts = list(/obj/item/reagent_containers/food/drinks/bottle = 1)
+				/obj/item/reagent_containers/drinks/bottle = 1)
+	blacklist = list(/obj/item/reagent_containers/drinks/bottle/molotov)
+	parts = list(/obj/item/reagent_containers/drinks/bottle = 1)
 	time = 40
 	category = CAT_WEAPONRY
 	subcategory = CAT_WEAPON
@@ -82,7 +82,7 @@
 	result = list(/obj/item/pneumatic_cannon/ghetto)
 	tools = list(TOOL_WELDER, TOOL_WRENCH)
 	reqs = list(/obj/item/stack/sheet/metal = 4,
-				/obj/item/stack/packageWrap = 8,
+				/obj/item/stack/package_wrap = 8,
 				/obj/item/pipe = 2)
 	time = 300
 	category = CAT_WEAPONRY
@@ -91,10 +91,10 @@
 /datum/crafting_recipe/throwing_croissant
 	name = "Throwing croissant"
 	reqs = list(
-		/obj/item/reagent_containers/food/snacks/croissant = 1,
+		/obj/item/food/croissant = 1,
 		/obj/item/stack/rods = 1
 	)
-	result = list(/obj/item/reagent_containers/food/snacks/croissant/throwing)
+	result = list(/obj/item/food/croissant/throwing)
 	category = CAT_WEAPONRY
 	subcategory = CAT_WEAPON
 	always_available = FALSE
@@ -221,6 +221,21 @@
 	..()
 	blacklist += subtypesof(/obj/item/gun/energy/laser)
 
+/datum/crafting_recipe/sparker
+	name = "SPRK-12 Pistol"
+	tools = list(TOOL_SCREWDRIVER, TOOL_WIRECUTTER)
+	result = list(/obj/item/gun/energy/sparker)
+	reqs = list(/obj/item/gun/energy/gun/mini = 1,
+				/obj/item/stack/cable_coil = 5,
+				/obj/item/weaponcrafting/gunkit/sparker = 1)
+	time = 10 SECONDS
+	category = CAT_WEAPONRY
+	subcategory = CAT_WEAPON
+
+/datum/crafting_recipe/sparker/New()
+	..()
+	blacklist += subtypesof(/obj/item/gun/energy/gun/mini)
+
 /datum/crafting_recipe/teslarevolver
 	name = "Arc Revolver"
 	tools = list(TOOL_SCREWDRIVER, TOOL_WIRECUTTER)
@@ -280,6 +295,18 @@
 /datum/crafting_recipe/silencer/New()
 	..()
 	blacklist += subtypesof(/obj/item/gun/energy/disabler)
+
+/datum/crafting_recipe/flamethrower_extended
+	name = "Extended Chemical Flamethrower"
+	tools = list(TOOL_SCREWDRIVER, TOOL_WIRECUTTER)
+	result = list(/obj/item/chemical_flamethrower/extended)
+	reqs = list(/obj/item/chemical_flamethrower = 1,
+			/obj/item/stack/cable_coil = 5,
+			/obj/item/weaponcrafting/gunkit/chemical_flamethrower = 1)
+	time = 10 SECONDS
+	category = CAT_WEAPONRY
+	subcategory = CAT_WEAPON
+	alert_admins_on_craft = TRUE
 
 /datum/crafting_recipe/ed209
 	name = "ED209"
@@ -421,29 +448,6 @@
 	category = CAT_WEAPONRY
 	subcategory = CAT_AMMO
 
-/datum/crafting_recipe/improvisedslug
-	name = "Improvised Shotgun Shell"
-	result = list(/obj/item/ammo_casing/shotgun/improvised)
-	reqs = list(/obj/item/grenade/chem_grenade = 1,
-				/obj/item/stack/sheet/metal = 1,
-				/obj/item/stack/cable_coil = 1,
-				/datum/reagent/fuel = 10)
-	tools = list(TOOL_SCREWDRIVER)
-	time = 5
-	category = CAT_WEAPONRY
-	subcategory = CAT_AMMO
-
-/datum/crafting_recipe/improvisedslugoverload
-	name = "Overload Improvised Shell"
-	result = list(/obj/item/ammo_casing/shotgun/improvised/overload)
-	reqs = list(/obj/item/ammo_casing/shotgun/improvised = 1,
-				/datum/reagent/blackpowder = 10,
-				/datum/reagent/plasma_dust = 20)
-	tools = list(TOOL_SCREWDRIVER)
-	time = 5
-	category = CAT_WEAPONRY
-	subcategory = CAT_AMMO
-
 /datum/crafting_recipe/lasershot
 	name = "Lasershot Shell"
 	result = list(/obj/item/ammo_casing/shotgun/lasershot)
@@ -471,7 +475,7 @@
 	reqs = list(/obj/item/weaponcrafting/receiver = 1,
 				/obj/item/pipe = 1,
 				/obj/item/weaponcrafting/stock = 1,
-				/obj/item/stack/packageWrap = 5,)
+				/obj/item/stack/package_wrap = 5,)
 	tools = list(TOOL_SCREWDRIVER)
 	time = 100
 	category = CAT_WEAPONRY
@@ -496,9 +500,19 @@
 	reqs = list(/obj/item/restraints/handcuffs/cable = 1,
 				/obj/item/shard = 1,
 				/obj/item/stack/rods = 1)
+	parts = list(/obj/item/shard = 1)
 	time = 40
 	category = CAT_WEAPONRY
 	subcategory = CAT_WEAPON
+
+/datum/crafting_recipe/spear_primal // alternative recipe for Ash Walkers
+	name = "Spear"
+	result = list(/obj/item/spear)
+	reqs = list(/obj/item/restraints/handcuffs/sinew = 1,
+				/obj/item/shard = 1,
+				/obj/item/stack/rods = 1)
+	time = 4 SECONDS
+	category = CAT_PRIMAL
 
 /datum/crafting_recipe/spooky_camera
 	name = "Camera Obscura"
@@ -732,7 +746,7 @@
 
 /datum/crafting_recipe/bonetalisman
 	name = "Bone Talisman"
-	result = list(/obj/item/clothing/accessory/necklace/talisman)
+	result = list(/obj/item/clothing/accessory/talisman)
 	time = 20
 	reqs = list(/obj/item/stack/sheet/bone = 2,
 				/obj/item/stack/sheet/sinew = 1)
@@ -740,7 +754,7 @@
 
 /datum/crafting_recipe/bonecodpiece
 	name = "Skull Codpiece"
-	result = list(/obj/item/clothing/accessory/necklace/skullcodpiece)
+	result = list(/obj/item/clothing/accessory/skullcodpiece)
 	time = 20
 	reqs = list(/obj/item/stack/sheet/bone = 2,
 				/obj/item/stack/sheet/animalhide/goliath_hide = 1)
@@ -841,7 +855,8 @@
 	category = CAT_PRIMAL
 	alert_admins_on_craft = TRUE
 
-/datum/crafting_recipe/rake //Category resorting incoming
+/// Category resorting incoming
+/datum/crafting_recipe/rake
 	name = "Rake"
 	time = 30
 	reqs = list(/obj/item/stack/sheet/wood = 5)
@@ -907,11 +922,21 @@
 	pathtools = list(/obj/item/reagent_containers/glass/rag = 1) //need something to paint with it
 	category = CAT_MISC
 
+/datum/crafting_recipe/fake_tactical_medkit
+	name = "Tactical First-Aid Kit"
+	result = list(/obj/item/storage/firstaid/fake_tactical)
+	time = 40
+	reqs = list(/datum/reagent/paint/blue = 10,
+				/datum/reagent/paint/black = 30,
+				/obj/item/storage/firstaid = 1)
+	pathtools = list(/obj/item/reagent_containers/glass/rag = 1)
+	category = CAT_MISC
+
 /datum/crafting_recipe/snowman
 	name = "Snowman"
 	result = list(/obj/structure/snowman/built)
 	reqs = list(/obj/item/snowball = 10,
-				/obj/item/reagent_containers/food/snacks/grown/carrot = 1,
+				/obj/item/food/grown/carrot = 1,
 				/obj/item/grown/log = 2)
 	time = 50
 	category = CAT_MISC
@@ -1369,7 +1394,7 @@
 	time = 3 SECONDS
 	result = list(/obj/item/stack/medical/bruise_pack)
 	reqs = list(/obj/item/stack/medical/bruise_pack/improvised = 6,
-				/datum/reagent/medicine/styptic_powder = 30,
+				/datum/reagent/medicine/heal_on_apply/styptic_powder = 30,
 				/datum/reagent/medicine/sterilizine = 10)
 	category = CAT_MISC
 
@@ -1379,6 +1404,6 @@
 	result = list(/obj/item/stack/medical/ointment)
 	reqs = list(/obj/item/stack/sheet/plastic = 2,
 				/datum/reagent/water = 10,
-				/datum/reagent/medicine/silver_sulfadiazine = 30,
+				/datum/reagent/medicine/heal_on_apply/silver_sulfadiazine = 30,
 				/datum/reagent/medicine/sterilizine = 10)
 	category = CAT_MISC

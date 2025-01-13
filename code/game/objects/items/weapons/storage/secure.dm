@@ -39,7 +39,7 @@
 	new /obj/item/paper(src)
 	new /obj/item/pen(src)
 
-/obj/item/storage/secure/attackby(obj/item/W as obj, mob/user as mob, params)
+/obj/item/storage/secure/attackby__legacy__attackchain(obj/item/W as obj, mob/user as mob, params)
 	if(locked)
 		if((istype(W, /obj/item/melee/energy/blade)) && (!emagged))
 			emag_act(user, W)
@@ -84,6 +84,7 @@
 			to_chat(user, "You slice through the lock on [src].")
 		else
 			to_chat(user, "You short out the lock on [src].")
+			return TRUE
 
 /obj/item/storage/secure/AltClick(mob/user)
 	if(!try_to_open())
@@ -125,13 +126,16 @@
 /obj/item/storage/secure/hear_message(mob/living/M as mob, msg)
 	return
 
-/obj/item/storage/secure/attack_self(mob/user)
+/obj/item/storage/secure/attack_self__legacy__attackchain(mob/user)
 	ui_interact(user)
 
-/obj/item/storage/secure/ui_interact(mob/user, ui_key, datum/tgui/ui, force_open, datum/tgui/master_ui, datum/ui_state/state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/item/storage/secure/ui_state(mob/user)
+	return GLOB.default_state
+
+/obj/item/storage/secure/ui_interact(mob/user, datum/tgui/ui)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "SecureStorage", name, 275, 500, master_ui, state)
+		ui = new(user, src, "SecureStorage", name)
 		ui.open()
 
 /obj/item/storage/secure/ui_data(mob/user)

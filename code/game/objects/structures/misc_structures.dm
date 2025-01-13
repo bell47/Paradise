@@ -22,8 +22,7 @@
 
 /obj/structure/ninjatele/attack_hand(mob/user as mob)
 	if(user.mind.special_role=="Ninja")
-		switch(alert("Phase Jaunt relay primed, target locked as [station_name()], initiate VOID-shift translocation? (Warning! Internals required!)",,"Yes","No"))
-
+		switch(tgui_alert(user, "Phase Jaunt relay primed, target locked as [station_name()], initiate VOID-shift translocation? (Warning! Internals required!)", "Void Shift", list("Yes", "No")))
 			if("Yes")
 				if(user.z != src.z)
 					return
@@ -55,8 +54,8 @@
 
 /obj/structure/respawner/attack_ghost(mob/dead/observer/user)
 	if(check_rights(R_EVENT))
-		var/outfit_pick = alert(user, "Do you want to pick an outfit or respawn?", "Pick an Outfit?", "Pick outfit", "Respawn", "Cancel")
-		if(outfit_pick == "Cancel")
+		var/outfit_pick = tgui_alert(user, "Do you want to pick an outfit or respawn?", "Pick an Outfit?", list("Pick outfit", "Respawn", "Cancel"))
+		if(!outfit_pick || outfit_pick == "Cancel")
 			return
 		if(outfit_pick == "Pick outfit")
 			var/new_outfit = user.client.robust_dress_shop()
@@ -70,7 +69,7 @@
 			selected_outfit = new_outfit
 			return
 
-	var/response = alert(user, "Are you sure you want to spawn here?\n(If you do this, you won't be able to be cloned!)", "Respawn?", "Yes", "No")
+	var/response = tgui_alert(user, "Are you sure you want to spawn here?\n(If you do this, you won't be able to be cloned!)", "Respawn?", list("Yes", "No"))
 	if(response == "Yes")
 		var/turf/respawner_location = get_turf(src)
 		if(!respawner_location) // gotta check it still exists, else you'll get sent to nullspace
@@ -99,7 +98,7 @@
 	var/atom/attack_atom
 
 
-/obj/structure/ghost_beacon/Initialize()
+/obj/structure/ghost_beacon/Initialize(mapload)
 	. = ..()
 	last_ghost_alert = world.time
 	attack_atom = src
@@ -132,12 +131,3 @@
 	if(last_ghost_alert + ghost_alert_delay < world.time)
 		notify_ghosts("[src] active in [get_area(src)].", 'sound/effects/ghost2.ogg', title = alert_title, source = attack_atom, action = (attack_atom == src ? NOTIFY_JUMP : NOTIFY_ATTACK))
 		last_ghost_alert = world.time
-
-/obj/structure/boulder
-	name = "boulder"
-	desc = "A large rock."
-	icon = 'icons/obj/mining.dmi'
-	icon_state = "boulder1"
-	density = TRUE
-	opacity = TRUE
-	anchored = TRUE

@@ -7,13 +7,14 @@
 
 /obj/item/clothing/head/collectable/petehat
 	name = "ultra rare Pete's hat!"
-	desc = "It smells faintly of plasma"
+	desc = "It smells faintly of plasma."
 	icon_state = "petehat"
 
 /obj/item/clothing/head/collectable/slime
 	name = "collectable slime cap!"
 	desc = "It just latches right in place!"
-	icon_state = "slime"
+	icon_state = "headslime"
+	item_state = "headslime"
 
 /obj/item/clothing/head/collectable/xenom
 	name = "collectable xenomorph helmet!"
@@ -47,7 +48,7 @@
 
 /obj/item/clothing/head/collectable/captain
 	name = "collectable captain's hat"
-	desc = "A Collectable Hat that'll make you look just like a real comdom!"
+	desc = "A Collectable Hat that'll make you look just like a real captain!"
 	icon_state = "captain_hat"
 	item_state = "captain_hat"
 	dog_fashion = /datum/dog_fashion/head/captain
@@ -62,8 +63,15 @@
 /obj/item/clothing/head/collectable/beret
 	name = "collectable beret"
 	desc = "A Collectable red Beret. It smells faintly of Garlic."
+	icon = 'icons/obj/clothing/head/beret.dmi'
 	icon_state = "beret"
+	item_state = 'icons/mob/clothing/head/beret.dmi'
+	icon_override = 'icons/mob/clothing/head/beret.dmi'
 	dog_fashion = /datum/dog_fashion/head/beret
+
+	sprite_sheets = list(
+		"Vox" = 'icons/mob/clothing/species/vox/head/beret.dmi'
+		)
 
 /obj/item/clothing/head/collectable/welding
 	name = "collectable welding helmet"
@@ -78,12 +86,6 @@
 		"Vulpkanin" = 'icons/mob/clothing/species/vulpkanin/helmet.dmi',
 		"Grey" = 'icons/mob/clothing/species/grey/helmet.dmi'
 		)
-
-/obj/item/clothing/head/collectable/slime
-	name = "collectable slime hat"
-	desc = "Just like a real Brain Slug!"
-	icon_state = "headslime"
-	item_state = "headslime"
 
 /obj/item/clothing/head/collectable/flatcap
 	name = "collectable flat cap"
@@ -125,12 +127,12 @@
 	item_state = "hardhat0_yellow"
 	dog_fashion = /datum/dog_fashion/head/hardhat
 
-/obj/item/clothing/head/collectable/HoS
+/obj/item/clothing/head/collectable/hos
 	name = "collectable HoS hat"
 	desc = "Now you can beat prisoners, set silly sentences and arrest for no reason too!"
 	icon_state = "hos_cap"
 
-/obj/item/clothing/head/collectable/HoP
+/obj/item/clothing/head/collectable/hop
 	name = "collectable HoP hat"
 	desc = "It's your turn to demand excessive paperwork, signatures, stamps, and hire more clowns! Papers, please!"
 	icon_state = "hopcap"

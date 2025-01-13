@@ -74,7 +74,7 @@
 /mob/living/carbon/human/get_screen_colour() //Fetch the colour matrix from wherever (e.g. eyes) so it can be compared to client.color.
 	. = ..()
 	if(.)
-		return .
+		return
 
 	var/obj/item/clothing/glasses/worn_glasses = glasses
 	var/obj/item/organ/internal/eyes/eyes = get_int_organ(/obj/item/organ/internal/eyes)
@@ -99,7 +99,7 @@
 	INVOKE_ASYNC(client, TYPE_PROC_REF(/client, colour_transition), get_screen_colour(), flash_time)
 
 /proc/ismindshielded(A) //Checks to see if the person contains a mindshield implant, then checks that the implant is actually inside of them
-	for(var/obj/item/implant/mindshield/L in A)
+	for(var/obj/item/bio_chip/mindshield/L in A)
 		if(L && L.implanted)
 			return 1
 	return 0
@@ -108,11 +108,12 @@
 	return istype(M) && M.player_logged && M.stat != DEAD
 
 /proc/isAntag(A)
-	if(isliving(A))
-		var/mob/living/L = A
-		if(L.mind?.special_role)
-			return TRUE
-	return FALSE
+	if(!isliving(A))
+		return FALSE
+	var/mob/living/L = A
+	if(!L.mind || !L.mind.special_role)
+		return FALSE
+	return L.mind.special_role != SPECIAL_ROLE_ERT
 
 /proc/isNonCrewAntag(A)
 	if(!isAntag(A))
@@ -158,16 +159,26 @@
 		return U.sensor_mode
 	return SUIT_SENSOR_OFF
 
-/proc/offer_control(mob/M)
-	to_chat(M, "Control of your mob has been offered to dead players.")
+/proc/offer_control(mob/M, hours, hide_role)
+	if(HAS_TRAIT(M, TRAIT_BEING_OFFERED))
+		return
+	var/minhours
+	ADD_TRAIT(M, TRAIT_BEING_OFFERED, "admin_offer")
 	log_admin("[key_name(usr)] has offered control of ([key_name(M)]) to ghosts.")
-	var/minhours = input(usr, "Minimum hours required to play [M]?", "Set Min Hrs", 10) as num
-	message_admins("[key_name_admin(usr)] has offered control of ([key_name_admin(M)]) to ghosts with [minhours] hrs playtime")
 	var/question = "Do you want to play as [M.real_name ? M.real_name : M.name][M.job ? " ([M.job])" : ""]"
-	if(alert("Do you want to show the antag status?","Show antag status","Yes","No") == "Yes")
+	if(!hours)
+		minhours = input(usr, "Minimum hours required to play [M]?", "Set Min Hrs", 10) as num
+	else
+		minhours = hours
+	if(isnull(hide_role))
+		if(alert("Do you want to show the antag status?","Show antag status","Yes","No") == "Yes")
+			question += ", [M.mind?.special_role || "No special role"]"
+	else if(!hide_role)
 		question += ", [M.mind?.special_role ? M.mind?.special_role : "No special role"]"
+	message_admins("[key_name_admin(usr)] has offered control of ([key_name_admin(M)]) to ghosts with [minhours] hrs playtime")
 	var/list/mob/dead/observer/candidates = SSghost_spawns.poll_candidates("[question]?", poll_time = 10 SECONDS, min_hours = minhours, source = M)
 	var/mob/dead/observer/theghost = null
+	REMOVE_TRAIT(M, TRAIT_BEING_OFFERED, "admin_offer")
 
 	if(length(candidates))
 		if(QDELETED(M))
@@ -175,7 +186,9 @@
 		theghost = pick(candidates)
 		to_chat(M, "Your mob has been taken over by a ghost!")
 		message_admins("[key_name_admin(theghost)] has taken control of ([key_name_admin(M)])")
-		M.ghostize()
+		log_admin("[key_name(theghost)] has taken control of [key_name(M)]")
+		var/mob/dead/observer/ghost = M.ghostize(TRUE) // Keep them respawnable
+		ghost?.can_reenter_corpse = FALSE // but keep them out of their old body
 		M.key = theghost.key
 		dust_if_respawnable(theghost)
 	else
@@ -183,7 +196,8 @@
 		message_admins("No ghosts were willing to take control of [key_name_admin(M)])")
 
 /proc/check_zone(zone)
-	if(!zone)	return "chest"
+	if(!zone)
+		return "chest"
 	switch(zone)
 		if("eyes")
 			zone = "head"
@@ -203,18 +217,28 @@
 	if(prob(probability))
 		return zone
 
-	var/t = rand(1, 18) // randomly pick a different zone, or maybe the same one
-	switch(t)
-		if(1)		 return "head"
-		if(2)		 return "chest"
-		if(3 to 4)	 return "l_arm"
-		if(5 to 6)   return "l_hand"
-		if(7 to 8)	 return "r_arm"
-		if(9 to 10)  return "r_hand"
-		if(11 to 12) return "l_leg"
-		if(13 to 14) return "l_foot"
-		if(15 to 16) return "r_leg"
-		if(17 to 18) return "r_foot"
+	var/random_zone = rand(1, 18) // randomly pick a different zone, or maybe the same one
+	switch(random_zone)
+		if(1)
+			return "head"
+		if(2)
+			return "chest"
+		if(3 to 4)
+			return "l_arm"
+		if(5 to 6)
+			return "l_hand"
+		if(7 to 8)
+			return "r_arm"
+		if(9 to 10)
+			return "r_hand"
+		if(11 to 12)
+			return "l_leg"
+		if(13 to 14)
+			return "l_foot"
+		if(15 to 16)
+			return "r_leg"
+		if(17 to 18)
+			return "r_foot"
 
 	return zone
 
@@ -235,12 +259,12 @@
 			return n
 	var/te = n
 	var/t = ""
-	n = length(n)
+	n = length_char(n)
 	var/p = null
 	p = 1
 	while(p <= n)
-		if((copytext(te, p, p + 1) == " " || prob(pr)))
-			t = "[t][copytext(te, p, p + 1)]"
+		if((copytext_char(te, p, p + 1) == " " || prob(pr)))
+			t = "[t][copytext_char(te, p, p + 1)]"
 		else
 			t = "[t]*"
 		p++
@@ -252,78 +276,70 @@
 
 /proc/slur(phrase, list/slurletters = ("'"))//use a different list as an input if you want to make robots slur with $#@%! characters
 	phrase = html_decode(phrase)
-	var/leng=length(phrase)
-	var/counter=length(phrase)
-	var/newphrase=""
-	var/newletter=""
-	while(counter>=1)
-		newletter=copytext(phrase,(leng-counter)+1,(leng-counter)+2)
-		if(rand(1,3)==3)
-			if(lowertext(newletter)=="o")	newletter="u"
-			if(lowertext(newletter)=="s")	newletter="ch"
-			if(lowertext(newletter)=="a")	newletter="ah"
-			if(lowertext(newletter)=="c")	newletter="k"
-		switch(rand(1,15))
-			if(1,3,5,8)	newletter="[lowertext(newletter)]"
-			if(2,4,6,15)	newletter="[uppertext(newletter)]"
-			if(7)	newletter+=pick(slurletters)
+	var/leng = length_char(phrase)
+	var/counter = length_char(phrase)
+	var/list/newphrase = list()
+	var/newletter
+	while(counter >= 1)
+		newletter = copytext_char(phrase, (leng - counter) + 1, (leng - counter) + 2)
+		if(prob(33.33))
+			if(lowertext(newletter) == "o")
+				newletter = "u"
+			if(lowertext(newletter) == "s")
+				newletter = "ch"
+			if(lowertext(newletter) == "a")
+				newletter = "ah"
+			if(lowertext(newletter) == "c")
+				newletter = "k"
+		if(prob(60))
+			if(prob(11.11))
+				newletter += pick(slurletters)
 			else
-				pass()
-		newphrase+="[newletter]"
-		counter-=1
-	return newphrase
-
-/proc/stutter(n)
-	var/te = html_decode(n)
-	var/t = "" //placed before the message. Not really sure what it's for.
-	n = length(n) //length of the entire word
-	var/p = null
-	p = 1 //1 is the start of any word
-	while(p <= n) //while P, which starts at 1 is less or equal to N which is the length.
-		var/n_letter = copytext(te, p, p + 1)//copies text from a certain distance. In this case, only one letter at a time.
-		if(prob(80) && (ckey(n_letter) in list("b","c","d","f","g","h","j","k","l","m","n","p","q","r","s","t","v","w","x","y","z")))
-			if(prob(5))
-				n_letter = text("[n_letter]-[n_letter]-[n_letter]") //replaces the current letter with this instead.
-			else
-				if(prob(5))
-					n_letter = null
+				if(prob(50))
+					newletter = lowertext(newletter)
 				else
-					n_letter = text("[n_letter]-[n_letter]")
-		t = text("[t][n_letter]") //since the above is ran through for each letter, the text just adds up back to the original word.
-		p++ //for each letter p is increased to find where the next letter will be.
-	return sanitize(copytext(t,1,MAX_MESSAGE_LEN))
+					newletter = uppertext(newletter)
+		newphrase += newletter
+		counter -= 1
+	return newphrase.Join("")
 
-/proc/robostutter(n) //for robutts
-	var/te = html_decode(n)
-	var/t = ""//placed before the message. Not really sure what it's for.
-	n = length(n)//length of the entire word
-	var/p = null
-	p = 1//1 is the start of any word
-	while(p <= n)//while P, which starts at 1 is less or equal to N which is the length.
-		var/robotletter = pick("@", "!", "#", "$", "%", "&", "?") //for beep boop
-		var/n_letter = copytext(te, p, p + 1)//copies text from a certain distance. In this case, only one letter at a time.
-		if(prob(80) && (ckey(n_letter) in list("b","c","d","f","g","h","j","k","l","m","n","p","q","r","s","t","v","w","x","y","z")))
-			if(prob(10))
-				n_letter = text("[n_letter]-[robotletter]-[n_letter]-[n_letter]")//replaces the current letter with this instead.
-			else
-				if(prob(20))
-					n_letter = text("[n_letter]-[robotletter]-[n_letter]")
-				else
-					if(prob(5))
-						n_letter = robotletter
-					else
-						n_letter = text("[n_letter]-[n_letter]")
-		t = text("[t][n_letter]")//since the above is ran through for each letter, the text just adds up back to the original word.
-		p++//for each letter p is increased to find where the next letter will be.
-	return sanitize(copytext(t,1,MAX_MESSAGE_LEN))
+/proc/stutter(phrase, stamina_loss = 0, robotic = FALSE)
+	phrase = html_decode(phrase)
+	var/list/split_phrase = splittext_char(phrase, " ") //Split it up into words.
 
+	var/phrase_length = length_char(split_phrase)
+	var/stutter_chance = clamp(max(rand(25, 50), stamina_loss), 0, 100)
+	for(var/index in 1 to phrase_length)
+		if(!prob(stutter_chance))
+			continue
+		var/word = split_phrase[index] // Get the word at the index
+		var/first_letter = copytext_char(word, 1, 2)
+
+		//Search for dipthongs (two letters that make one sound.)
+		var/first_sound = copytext_char(word, 1, 3)
+		if(lowertext(first_sound) in list("ch", "th", "sh"))
+			first_letter = first_sound
+
+		var/second_repeat = first_letter
+		if(robotic && prob(50))
+			first_letter = pick("@", "!", "#", "$", "%", "&", "?")
+			if(prob(25))
+				second_repeat = pick("@", "!", "#", "$", "%", "&", "?")
+		//Repeat the first letter to create a stutter.
+		if(rand(1, 3) == 1) // more accurate than prob(33.333333)
+			word = "[first_letter]-[second_repeat]-[word]"
+		else
+			word = "[first_letter]-[word]"
+		split_phrase[index] = word // replace it
+
+	return sanitize(jointext(split_phrase, " "))
 
 /proc/Gibberish(t, p, replace_rate = 50)//t is the inputted message, and any value higher than 70 for p will cause letters to be replaced instead of added. replace_rate is the chance a letter is corrupted.
 	/* Turn text into complete gibberish! */
 	var/returntext = ""
-	for(var/i = 1, i <= length(t), i++)
+	for(var/i = 1, i <= length_char(t), i++)
 
-		var/letter = copytext(t, i, i+1)
+		var/letter = copytext_char(t, i, i + 1)
 		if(prob(replace_rate))
 			if(p >= 70)
 				letter = ""
@@ -335,6 +351,17 @@
 
 	return returntext
 
+/proc/brain_gibberish(message, emp_damage)
+	if(copytext(message, 1, 2) == "*") // if the brain tries to emote, return an emote
+		return message
+
+	var/repl_char = pick("@","&","%","$","/")
+	var/regex/bad_char = regex("\[*]|#")
+	message = Gibberish(message, emp_damage)
+	message = bad_char.Replace(message, repl_char, 1, 2) // prevents the gibbered message from emoting
+
+	return message
+
 /proc/Gibberish_all(list/message_pieces, p, replace_rate)
 	for(var/datum/multilingual_say_piece/S in message_pieces)
 		S.message = Gibberish(S.message, p, replace_rate)
@@ -342,12 +369,12 @@
 
 /proc/muffledspeech(phrase)
 	phrase = html_decode(phrase)
-	var/leng=length(phrase)
-	var/counter=length(phrase)
-	var/newphrase=""
-	var/newletter=""
-	while(counter>=1)
-		newletter=copytext(phrase,(leng-counter)+1,(leng-counter)+2)
+	var/leng = length_char(phrase)
+	var/counter = length_char(phrase)
+	var/newphrase = ""
+	var/newletter = ""
+	while(counter >= 1)
+		newletter=copytext_char(phrase, (leng - counter) + 1, (leng - counter) + 2)
 		if(newletter in list(" ", "!", "?", ".", ","))
 			// Skip these
 			counter -= 1
@@ -456,7 +483,7 @@
 	if(IsSleeping())
 		to_chat(src, "<span class='notice'>You are already sleeping.</span>")
 		return
-	if(alert(src, "You sure you want to sleep for a while?", "Sleep", "Yes", "No") == "Yes")
+	if(tgui_alert(src, "You sure you want to sleep for a while?", "Sleep", list("Yes", "No")) == "Yes")
 		SetSleeping(40 SECONDS, voluntary = TRUE) //Short nap
 
 /mob/living/verb/rest()
@@ -499,7 +526,7 @@
 //Direct dead say used both by emote and say
 //It is somewhat messy. I don't know what to do.
 //I know you can't see the change, but I rewrote the name code. It is significantly less messy now
-/proc/say_dead_direct(message, mob/subject = null)
+/proc/say_dead_direct(message, mob/subject, raw_message)
 	var/name
 	var/keyname
 	if(subject && subject.client)
@@ -520,12 +547,14 @@
 	for(var/obj/item/radio/deadsay_radio_system as anything in GLOB.deadsay_radio_systems)
 		deadsay_radio_system.attempt_send_deadsay_message(subject, message)
 
+	var/should_show_runechat = (subject && raw_message && !subject.orbiting_uid)
+
 	for(var/mob/M in GLOB.player_list)
-		if(M.client && ((!isnewplayer(M) && M.stat == DEAD) || check_rights(R_ADMIN|R_MOD,0,M)) && M.get_preference(PREFTOGGLE_CHAT_DEAD))
+		if(M.client && ((!isnewplayer(M) && M.stat == DEAD) || check_rights(R_ADMIN|R_MOD,0,M) || istype(M, /mob/living/simple_animal/revenant)) && M.get_preference(PREFTOGGLE_CHAT_DEAD))
 			var/follow
 			var/lname
 			if(subject)
-				if(subject != M)
+				if(subject != M && M.stat == DEAD)
 					follow = "([ghost_follow_link(subject, ghost=M)]) "
 				if(M.stat != DEAD && check_rights(R_ADMIN|R_MOD,0,M))
 					follow = "([admin_jump_link(subject)]) "
@@ -544,17 +573,19 @@
 						lname = name
 				lname = "<span class='name'>[lname]</span> "
 			to_chat(M, "<span class='deadsay'>[lname][follow][message]</span>")
+			if(should_show_runechat && (M.client?.prefs.toggles2 & PREFTOGGLE_2_RUNECHAT) && M.see_invisible >= subject.invisibility)
+				M.create_chat_message(subject, raw_message, symbol = RUNECHAT_SYMBOL_DEAD)
 
 /proc/notify_ghosts(message, ghost_sound = null, enter_link = null, title = null, atom/source = null, image/alert_overlay = null, flashwindow = TRUE, action = NOTIFY_JUMP, role = null) //Easy notification of ghosts.
 	for(var/mob/O in GLOB.player_list)
 		if(O.client && HAS_TRAIT(O, TRAIT_RESPAWNABLE) && (!role || (role in O.client.prefs.be_special)))
-			to_chat(O, "<span class='ghostalert'>[message][(enter_link) ? " [enter_link]" : ""]</span>")
+			to_chat(O, "<span class='ghostalert'>[message][(enter_link) ? " [enter_link]" : ""]</span>", MESSAGE_TYPE_DEADCHAT)
 			if(ghost_sound)
 				SEND_SOUND(O, sound(ghost_sound))
 			if(flashwindow)
 				window_flash(O.client)
 			if(source)
-				var/obj/screen/alert/notify_action/A = O.throw_alert("\ref[source]_notify_action", /obj/screen/alert/notify_action)
+				var/atom/movable/screen/alert/notify_action/A = O.throw_alert("\ref[source]_notify_action", /atom/movable/screen/alert/notify_action)
 				if(A)
 					if(O.client.prefs && O.client.prefs.UI_style)
 						A.icon = ui_style2icon(O.client.prefs.UI_style)
@@ -594,19 +625,15 @@
 		return FALSE
 	return TRUE
 
-/mob/proc/switch_to_camera(obj/machinery/camera/C)
-	if(!C.can_use() || incapacitated() || (get_dist(C, src) > 1 || machine != src || !has_vision()))
-		return FALSE
-	check_eye(src)
-	return TRUE
-
 /mob/proc/rename_character(oldname, newname)
 	if(!newname)
-		return 0
+		return FALSE
 	real_name = newname
 	name = newname
 	if(mind)
 		mind.name = newname
+		if(!isnull(oldname) && mind?.initial_account?.account_name == oldname)
+			mind.initial_account.account_name = newname
 	if(dna)
 		dna.real_name = real_name
 
@@ -620,8 +647,8 @@
 
 		//update our pda and id if we have them on our person
 		var/list/searching = GetAllContents(searchDepth = 3)
-		var/search_id = 1
-		var/search_pda = 1
+		var/search_id = TRUE
+		var/search_pda = TRUE
 
 		for(var/A in searching)
 			if(search_id && istype(A,/obj/item/card/id))
@@ -630,27 +657,26 @@
 					ID.registered_name = newname
 					ID.name = "[newname]'s ID Card ([ID.assignment])"
 					ID.RebuildHTML()
-					if(!search_pda)	break
-					search_id = 0
+					if(!search_pda)
+						break
+					search_id = FALSE
 
 			else if(search_pda && istype(A,/obj/item/pda))
 				var/obj/item/pda/PDA = A
 				if(PDA.owner == oldname)
 					PDA.owner = newname
 					PDA.name = "PDA-[newname] ([PDA.ownjob])"
-					if(!search_id)	break
-					search_pda = 0
+					if(!search_id)
+						break
+					search_pda = FALSE
 
 		//Fixes renames not being reflected in objective text
-		var/length
-		var/pos
-		for(var/datum/objective/objective in GLOB.all_objectives)
-			if(!mind || objective.target != mind)
-				continue
-			length = length(oldname)
-			pos = findtextEx(objective.explanation_text, oldname)
-			objective.explanation_text = copytext(objective.explanation_text, 1, pos)+newname+copytext(objective.explanation_text, pos+length)
-	return 1
+		if(mind)
+			for(var/datum/objective/objective in GLOB.all_objectives)
+				if(objective.target != mind)
+					continue
+				objective.update_explanation_text()
+	return TRUE
 
 /mob/proc/rename_self(role, allow_numbers = FALSE, force = FALSE)
 	spawn(0)
@@ -661,11 +687,11 @@
 
 		for(var/i=1,i<=3,i++)	//we get 3 attempts to pick a suitable name.
 			if(force)
-				newname = clean_input("Pick a new name.", "Name Change", oldname, src)
+				newname = tgui_input_text(src, "Pick a new name.", "Name Change", oldname)
 			else
-				newname = clean_input("You are a [role]. Would you like to change your name to something else? (You have 3 minutes to select a new name.)", "Name Change", oldname, src)
+				newname = tgui_input_text(src, "You are a [role]. Would you like to change your name to something else? (You have 3 minutes to select a new name.)", "Name Change", oldname, timeout = 3 MINUTES)
 			if(((world.time - time_passed) > 1800) && !force)
-				alert(src, "Unfortunately, more than 3 minutes have passed for selecting your name. If you are a robot, use the Namepick verb; otherwise, adminhelp.", "Name Change")
+				tgui_alert(src, "Unfortunately, more than 3 minutes have passed for selecting your name. If you are a robot, use the Namepick verb; otherwise, adminhelp.", "Name Change")
 				return	//took too long
 			newname = reject_bad_name(newname,allow_numbers)	//returns null if the name doesn't meet some basic requirements. Tidies up a few other things like bad-characters.
 
@@ -684,49 +710,42 @@
 
 		rename_character(oldname, newname)
 
-/proc/cultslur(n) // Inflicted on victims of a stun talisman
-	var/phrase = html_decode(n)
-	var/leng = length(phrase)
-	var/counter=length(phrase)
-	var/newphrase=""
-	var/newletter=""
-	while(counter>=1)
-		newletter=copytext(phrase,(leng-counter)+1,(leng-counter)+2)
-		if(rand(1,2)==2)
-			if(lowertext(newletter)=="o")
-				newletter="u"
-			if(lowertext(newletter)=="t")
-				newletter="ch"
-			if(lowertext(newletter)=="a")
-				newletter="ah"
-			if(lowertext(newletter)=="u")
-				newletter="oo"
-			if(lowertext(newletter)=="c")
-				newletter=" NAR "
-			if(lowertext(newletter)=="s")
-				newletter=" SIE "
-		if(rand(1,4)==4)
-			if(newletter==" ")
-				newletter=" no hope... "
-			if(newletter=="H")
-				newletter=" IT COMES... "
+/proc/cultslur(phrase)
+	phrase = html_decode(phrase)
+	var/leng = length_char(phrase)
+	var/counter = length_char(phrase)
+	var/list/newphrase = list()
+	var/newletter
+	while(counter >= 1)
+		newletter = copytext_char(phrase, (leng - counter) + 1, (leng - counter) + 2)
+		if(prob(50))
+			if(lowertext(newletter) == "o")
+				newletter = "u"
+			if(lowertext(newletter) == "t")
+				newletter = "ch"
+			if(lowertext(newletter) == "a")
+				newletter = "ah"
+			if(lowertext(newletter) == "u")
+				newletter = "oo"
+			if(lowertext(newletter) == "c")
+				newletter = " NAR "
+			if(lowertext(newletter) == "s")
+				newletter = " SIE "
+		if(prob(25))
+			if(newletter == " ")
+				newletter = " no hope... "
+			if(newletter == "H")
+				newletter = " IT COMES... "
 
-		switch(rand(1,15))
-			if(1)
-				newletter="'"
-			if(2)
-				newletter+="agn"
-			if(3)
-				newletter="fth"
-			if(4)
-				newletter="nglu"
-			if(5)
-				newletter="glor"
+		if(prob(33.33))
+			if(prob(20))
+				newletter += "agn"
 			else
-				pass()
+				newletter = pick("'", "fth", "nglu", "glor")
 
-		newphrase+="[newletter]";counter-=1
-	return newphrase
+		newphrase += newletter
+		counter -= 1
+	return newphrase.Join("")
 
 // Why does this exist?
 /mob/proc/get_preference(toggleflag)
@@ -797,9 +816,6 @@
 		if(DEAD)
 			return "dead"
 
-/mob/proc/attempt_listen_to_deadsay()
-
-
 /mob/proc/is_roundstart_observer()
 	return (ckey in GLOB.roundstart_observer_keys)
 
@@ -818,3 +834,7 @@
 			actual_hud.invisibility = invis_value
 		else
 			actual_hud.invisibility = initial(actual_hud.invisibility)
+		// Yes we need to remove the HUD from all HUDs then re-add it to update the HUD being invisible.
+		// No, I don't like it either.
+		remove_from_all_data_huds()
+		add_to_all_human_data_huds()

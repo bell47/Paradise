@@ -31,7 +31,7 @@
 			I.forceMove(src)
 	update_icon(UPDATE_ICON_STATE)
 
-/obj/structure/bookcase/attackby(obj/item/O, mob/user)
+/obj/structure/bookcase/attackby__legacy__attackchain(obj/item/O, mob/user)
 	if(is_type_in_list(O, allowed_books))
 		if(!user.drop_item())
 			return
@@ -98,7 +98,7 @@
 /obj/structure/bookcase/manuals/medical
 	name = "Medical Manuals bookcase"
 
-/obj/structure/bookcase/manuals/medical/Initialize()
+/obj/structure/bookcase/manuals/medical/Initialize(mapload)
 	. = ..()
 	new /obj/item/book/manual/medical_cloning(src)
 	update_icon(UPDATE_ICON_STATE)
@@ -107,7 +107,7 @@
 /obj/structure/bookcase/manuals/engineering
 	name = "Engineering Manuals bookcase"
 
-/obj/structure/bookcase/manuals/engineering/Initialize()
+/obj/structure/bookcase/manuals/engineering/Initialize(mapload)
 	. = ..()
 	new /obj/item/book/manual/wiki/engineering_construction(src)
 	new /obj/item/book/manual/engineering_particle_accelerator(src)
@@ -120,7 +120,7 @@
 /obj/structure/bookcase/manuals/research_and_development
 	name = "R&D Manuals bookcase"
 
-/obj/structure/bookcase/manuals/research_and_development/Initialize()
+/obj/structure/bookcase/manuals/research_and_development/Initialize(mapload)
 	. = ..()
 	new /obj/item/book/manual/research_and_development(src)
 	update_icon(UPDATE_ICON_STATE)
@@ -128,7 +128,7 @@
 /obj/structure/bookcase/sop
 	name = "bookcase (Standard Operating Procedures)"
 
-/obj/structure/bookcase/sop/Initialize()
+/obj/structure/bookcase/sop/Initialize(mapload)
 	. = ..()
 	new /obj/item/book/manual/wiki/sop_command(src)
 	new /obj/item/book/manual/wiki/sop_engineering(src)
@@ -149,7 +149,10 @@
 
 /obj/structure/bookcase/random/Initialize(mapload)
 	. = ..()
-	var/list/books = GLOB.library_catalog.get_random_book(book_count, doAsync = FALSE)
+	addtimer(CALLBACK(src, PROC_REF(load_books)), 0)
+
+/obj/structure/bookcase/random/proc/load_books()
+	var/list/books = GLOB.library_catalog.get_random_book(book_count)
 	for(var/datum/cachedbook/book as anything in books)
 		new /obj/item/book(src, book, TRUE, FALSE)
 	update_icon(UPDATE_ICON_STATE)
@@ -159,6 +162,7 @@
  */
 /obj/machinery/bookbinder
 	name = "Book Binder"
+	desc = "Used by authors, poets, and librarians to scan papers and print copies of their fanfics."
 	icon = 'icons/obj/library.dmi'
 	icon_state = "binder"
 	anchored = TRUE
@@ -179,7 +183,7 @@
 	ui_interact(user)
 
 
-/obj/machinery/bookbinder/attackby(obj/item/I, mob/user)
+/obj/machinery/bookbinder/attackby__legacy__attackchain(obj/item/I, mob/user)
 	if(istype(I, /obj/item/paper))
 		select_paper(I)
 	if(istype(I, /obj/item/paper_bundle))
@@ -214,10 +218,13 @@
 		if(c)
 			selected_content.categories += c
 
-/obj/machinery/bookbinder/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = TRUE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/machinery/bookbinder/ui_state(mob/user)
+	return GLOB.default_state
+
+/obj/machinery/bookbinder/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "BookBinder", name, 700, 400, master_ui, state)
+		ui = new(user, src, "BookBinder", name)
 		ui.open()
 
 /obj/machinery/bookbinder/ui_data(mob/user)
@@ -330,7 +337,7 @@
 	var/obj/machinery/computer/library/computer
 	var/mode = BARCODE_MODE_SCAN_SELECT
 
-/obj/item/barcodescanner/attack_self(mob/user)
+/obj/item/barcodescanner/attack_self__legacy__attackchain(mob/user)
 	if(!check_connection(user))
 		return
 	mode++
@@ -408,11 +415,11 @@
 		if(BARCODE_MODE_CHECKOUT)
 			var/confirm
 			if(!computer.user_data.patron_account)
-				confirm = alert("Warning: patron does not have an associated account number! Are you sure you want to checkout [B] to [computer.user_data.patron_name]?", "Confirm Checkout", "Yes", "No")
+				confirm = tgui_alert(user, "Warning: patron does not have an associated account number! Are you sure you want to checkout [B] to [computer.user_data.patron_name]?", "Confirm Checkout", list("Yes", "No"))
 			else
-				confirm = alert("Are you sure you want to checkout [B] to [computer.user_data.patron_name]?", "Confirm Checkout", "Yes", "No")
+				confirm = tgui_alert(user, "Are you sure you want to checkout [B] to [computer.user_data.patron_name]?", "Confirm Checkout", list("Yes", "No"))
 
-			if(confirm == "No")
+			if(confirm != "Yes")
 				return
 			if(computer.checkout(B))
 				playsound(src, 'sound/items/scannerbeep.ogg', 15, TRUE)
@@ -435,3 +442,8 @@
 		playsound(src, 'sound/machines/synth_no.ogg', 15, TRUE)
 		to_chat(user, "<span class='notice'>Please reconnect [src] to a library computer.</span>")
 		return FALSE
+
+#undef BARCODE_MODE_SCAN_SELECT
+#undef BARCODE_MODE_SCAN_INVENTORY
+#undef BARCODE_MODE_CHECKOUT
+#undef BARCODE_MODE_CHECKIN

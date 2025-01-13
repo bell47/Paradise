@@ -28,10 +28,11 @@
 	reagents_add = list("facid" = 0.25, "sacid" = 0.25)
 	rarity = 20
 
-/obj/item/grown/nettle //abstract type
+/// abstract type
+/obj/item/grown/nettle
 	name = "nettle"
 	desc = "It's probably <B>not</B> wise to touch it with bare hands..."
-	icon = 'icons/obj/items.dmi'
+	icon = 'icons/obj/weapons/melee.dmi'
 	lefthand_file = 'icons/mob/inhands/weapons_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/weapons_righthand.dmi'
 	icon_state = "nettle"
@@ -46,7 +47,7 @@
 	attack_verb = list("stung")
 
 /obj/item/grown/nettle/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is eating some of [src]! It looks like [user.p_theyre()] trying to commit suicide.</span>")
+	user.visible_message("<span class='suicide'>[user] is eating some of [src]! It looks like [user.p_theyre()] trying to commit suicide!</span>")
 	return BRUTELOSS|TOXLOSS
 
 /obj/item/grown/nettle/pickup(mob/living/user)
@@ -68,14 +69,14 @@
 
 
 
-/obj/item/grown/nettle/afterattack(atom/A as mob|obj, mob/user,proximity)
+/obj/item/grown/nettle/afterattack__legacy__attackchain(atom/A as mob|obj, mob/user,proximity)
 	if(!proximity)
 		return
 	if(force > 0)
 		force -= rand(1, (force / 3) + 1) // When you whack someone with it, leaves fall off
 	else
 		to_chat(usr, "All the leaves have fallen off the nettle from violent whacking.")
-		usr.unEquip(src)
+		usr.unequip(src)
 		qdel(src)
 
 /obj/item/grown/nettle/basic
@@ -88,7 +89,7 @@
 /obj/item/grown/nettle/death
 	seed = /obj/item/seeds/nettle/death
 	name = "deathnettle"
-	desc = "The <span class='danger'>glowing</span> nettle incites <span class='boldannounce'>rage</span> in you just from looking at it!"
+	desc = "The <span class='danger'>glowing</span> nettle incites <span class='boldannounceic'>rage</span> in you just from looking at it!"
 	icon_state = "deathnettle"
 	force = 25
 	throwforce = 10
@@ -104,7 +105,7 @@
 			user.Weaken(10 SECONDS)
 			to_chat(user, "<span class='userdanger'>You are stunned by the Deathnettle when you try picking it up!</span>")
 
-/obj/item/grown/nettle/death/attack(mob/living/carbon/M, mob/user)
+/obj/item/grown/nettle/death/attack__legacy__attackchain(mob/living/carbon/M, mob/user)
 	..()
 	if(!isliving(M))
 		return

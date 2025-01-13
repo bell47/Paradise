@@ -42,6 +42,10 @@
 	var/harvester_icon_state = "harvester"
 	var/harvester_dead_state = "shade_dead"
 
+	//Proteon Construct
+	var/proteon_name = "Proteon"
+	var/proteon_icon_state = "proteon"
+	var/proteon_dead_state = "shade_dead"
 	//Shade Spirit
 	var/shade_name = "Shade"
 	var/shade_icon_state = "shade2"
@@ -73,9 +77,6 @@
 
 	var/airlock_unruned_icon_file = 'icons/obj/doors/airlocks/cult/unruned/cult.dmi'
 	var/airlock_unruned_overlays_file = 'icons/obj/doors/airlocks/cult/unruned/cult-overlays.dmi'
-
-	/// Are cultist mirror shields active yet?
-	var/mirror_shields_active = FALSE
 
 
 /datum/cult_info/fire
@@ -214,6 +215,8 @@
 			return harvester_name
 		if("wraith")
 			return wraith_name
+		if("proteon")
+			return proteon_name
 		if("shade")
 			return shade_name
 
@@ -233,6 +236,8 @@
 			return harvester_icon_state
 		if("wraith")
 			return wraith_icon_state
+		if("proteon")
+			return proteon_icon_state
 		if("shade")
 			return shade_icon_state
 		if("forge")

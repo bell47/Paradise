@@ -9,7 +9,7 @@
 	speak_chance = 80
 	maxHealth = 220
 	health = 220
-	butcher_results = list(/obj/item/reagent_containers/food/snacks/meat/slab/gorilla = 4)
+	butcher_results = list(/obj/item/food/meat/slab/gorilla = 4)
 	response_help = "prods"
 	response_disarm = "challenges"
 	response_harm = "thumps"
@@ -43,9 +43,9 @@
 	/// Chance of doing the throw or stamina damage, along with the flat damage amount
 	var/throw_onhit = 50
 
-/mob/living/simple_animal/hostile/gorilla/Initialize()
+/mob/living/simple_animal/hostile/gorilla/Initialize(mapload)
 	. = ..()
-	var/datum/action/innate/gorilla/gorilla_toggle/toggle = new
+	var/datum/action/innate/gorilla_toggle/toggle = new
 	toggle.Grant(src)
 	var/static/default_cache = typecacheof(list(/obj/structure/closet/crate)) // Normal crates only please, no weird sized ones
 	carriable_cache = default_cache
@@ -54,14 +54,14 @@
 	LAZYCLEARLIST(crates_in_hand)
 	return ..()
 
-/datum/action/innate/gorilla/gorilla_toggle
+/datum/action/innate/gorilla_toggle
 	name = "Toggle Stand"
 	desc = "Toggles between crawling and standing up."
-	icon_icon = 'icons/mob/actions/actions_animal.dmi'
-	button_icon_state = "gorilla_toggle"
+	button_overlay_icon = 'icons/mob/actions/actions_animal.dmi'
+	button_overlay_icon_state = "gorilla_toggle"
 	check_flags = AB_CHECK_CONSCIOUS
 
-/datum/action/innate/gorilla/gorilla_toggle/Activate()
+/datum/action/innate/gorilla_toggle/Activate()
 	. = ..()
 	var/mob/living/simple_animal/hostile/gorilla/gorilla = owner
 	if(!istype(gorilla))
@@ -141,7 +141,7 @@
 			living_target.throw_at(get_edge_target_turf(living_target, dir), rand(1, 2), 7, src)
 			return
 
-		living_target.adjustStaminaLoss(stamina_damage)
+		living_target.apply_damage(stamina_damage, STAMINA)
 		visible_message("<span class='warning'>[src] knocks [living_target] down!</span>")
 
 /mob/living/simple_animal/hostile/gorilla/update_icon_state()

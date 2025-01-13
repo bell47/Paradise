@@ -26,8 +26,8 @@
 	var/max_combined_w_class = 14
 	/// The number of storage slots in this container.
 	var/storage_slots = 7
-	var/obj/screen/storage/boxes = null
-	var/obj/screen/close/closer = null
+	var/atom/movable/screen/storage/boxes = null
+	var/atom/movable/screen/close/closer = null
 
 	/// Set this to make it possible to use this item in an inverse way, so you can have the item in your hand and click items on the floor to pick them up.
 	var/use_to_pickup = FALSE
@@ -59,19 +59,22 @@
 
 	populate_contents()
 
-	boxes = new /obj/screen/storage()
+	boxes = new /atom/movable/screen/storage()
 	boxes.name = "storage"
 	boxes.master = src
 	boxes.icon_state = "block"
 	boxes.screen_loc = "7,7 to 10,8"
 	boxes.layer = HUD_LAYER
 	boxes.plane = HUD_PLANE
-	closer = new /obj/screen/close()
+	closer = new /atom/movable/screen/close()
 	closer.master = src
 	closer.icon_state = "backpack_close"
 	closer.layer = ABOVE_HUD_LAYER
 	closer.plane = ABOVE_HUD_PLANE
 	orient2hud()
+
+	ADD_TRAIT(src, TRAIT_ADJACENCY_TRANSPARENT, ROUNDSTART_TRAIT)
+	RegisterSignal(src, COMSIG_ATOM_EXITED, PROC_REF(on_atom_exited))
 
 /obj/item/storage/Destroy()
 	for(var/obj/O in contents)
@@ -100,7 +103,7 @@
 /obj/item/storage/proc/removal_allowed_check(mob/user)
 	return TRUE
 
-/obj/item/storage/MouseDrop(obj/over_object)
+/obj/item/storage/MouseDrop(obj/over_object, src_location, over_location, src_control, over_control, params)
 	if(!ismob(usr)) //so monkeys can take off their backpacks -- Urist
 		return
 	var/mob/M = usr
@@ -123,7 +126,7 @@
 		if(isfloorturf(over_object))
 			if(get_turf(M) != T)
 				return // Can only empty containers onto the floor under you
-			if(alert(M, "Empty [src] onto [T]?", "Confirm", "Yes", "No") != "Yes")
+			if(tgui_alert(M, "Empty [src] onto [T]?", "Confirm", list("Yes", "No")) != "Yes")
 				return
 			if(!(M && over_object && length(contents) && loc == M && !M.stat && !M.restrained() && !HAS_TRAIT(M, TRAIT_HANDS_BLOCKED) && get_turf(M) == T))
 				return // Something happened while the player was thinking
@@ -131,23 +134,27 @@
 		M.face_atom(over_object)
 		M.visible_message("<span class='notice'>[M] empties [src] onto [over_object].</span>",
 			"<span class='notice'>You empty [src] onto [over_object].</span>")
+		var/list/params_list = params2list(params)
+		var/x_offset = text2num(params_list["icon-x"]) - 16
+		var/y_offset = text2num(params_list["icon-y"]) - 16
 		for(var/obj/item/I in contents)
 			remove_from_storage(I, T)
+			I.scatter_atom(x_offset, y_offset)
 		update_icon() // For content-sensitive icons
 		return
 
-	if(!(istype(over_object, /obj/screen)))
+	if(!is_screen_atom(over_object))
 		return ..()
 	if(!(loc == M) || (loc && loc.loc == M))
 		return
 	if(!M.restrained() && !M.stat)
 		switch(over_object.name)
 			if("r_hand")
-				if(!M.unEquip(src, silent = TRUE))
+				if(!M.unequip(src))
 					return
 				M.put_in_r_hand(src)
 			if("l_hand")
-				if(!M.unEquip(src, silent = TRUE))
+				if(!M.unequip(src))
 					return
 				M.put_in_l_hand(src)
 		add_fingerprint(usr)
@@ -158,7 +165,6 @@
 		open(usr)
 
 /obj/item/storage/AltClick(mob/user)
-	. = ..()
 	if(ishuman(user) && Adjacent(user) && !user.incapacitated(FALSE, TRUE))
 		open(user)
 		add_fingerprint(user)
@@ -198,12 +204,9 @@
 	orient2hud(user) // this only needs to happen to make .contents show properly as screen objects.
 	if(user.s_active)
 		user.s_active.hide_from(user) // If there's already an interface open, close it.
-	user.client.screen -= boxes
-	user.client.screen -= closer
-	user.client.screen -= contents
-	user.client.screen += boxes
-	user.client.screen += closer
-	user.client.screen += contents
+	user.client.screen |= boxes
+	user.client.screen |= closer
+	user.client.screen |= contents
 	user.s_active = src
 	LAZYDISTINCTADD(mobs_viewing, user)
 
@@ -233,11 +236,20 @@
 /obj/item/storage/proc/update_viewers()
 	for(var/_M in mobs_viewing)
 		var/mob/M = _M
-		if(!QDELETED(M) && M.s_active == src && (M in range(1, loc)))
+		if(!QDELETED(M) && M.s_active == src && Adjacent(M))
 			continue
 		hide_from(M)
+	for(var/obj/item/storage/child in src)
+		child.update_viewers()
+
+/obj/item/storage/Moved(atom/oldloc, dir, forced = FALSE)
+	. = ..()
+	update_viewers()
 
 /obj/item/storage/proc/open(mob/user)
+	if(isobserver(user))
+		show_to(user)
+		return
 	if(use_sound && isliving(user))
 		playsound(loc, use_sound, 50, TRUE, -5)
 
@@ -328,7 +340,7 @@
 		for(var/obj/item/I in contents)
 			var/found = FALSE
 			for(var/datum/numbered_display/ND in numbered_contents)
-				if(ND.sample_object.type == I.type && ND.sample_object.name == I.name)
+				if(ND.sample_object.should_stack_with(I))
 					ND.number++
 					found = TRUE
 					break
@@ -424,51 +436,67 @@
   * This doesn't perform any checks of whether an item can be inserted. That's done by [/obj/item/storage/proc/can_be_inserted]
   * Arguments:
   * * obj/item/I - The item to be inserted
+  * * mob/user - The mob performing the insertion
   * * prevent_warning - Stop the insertion message being displayed. Intended for cases when you are inserting multiple items at once.
   */
-/obj/item/storage/proc/handle_item_insertion(obj/item/I, prevent_warning = FALSE)
+/obj/item/storage/proc/handle_item_insertion(obj/item/I, mob/user, prevent_warning = FALSE)
 	if(!istype(I))
 		return FALSE
-	if(usr)
-		if(!usr.unEquip(I, silent = TRUE))
+	if(user)
+		if(!Adjacent(user) && !isnewplayer(user))
 			return FALSE
-		usr.update_icons()	//update our overlays
-	if(silent)
+		if(!user.unequip(I))
+			return FALSE
+		user.update_icons()	//update our overlays
+	if(QDELING(I))
+		return FALSE
+	if(silent || HAS_TRAIT(I, TRAIT_SILENT_INSERTION))
 		prevent_warning = TRUE
 	I.forceMove(src)
 	if(QDELING(I))
 		return FALSE
 	I.on_enter_storage(src)
-	if(QDELING(I))
-		return FALSE
 
 	for(var/_M in mobs_viewing)
 		var/mob/M = _M
 		if((M.s_active == src) && M.client)
 			M.client.screen += I
+	if(user)
+		if(user.client && user.s_active != src)
+			user.client.screen -= I
+		if(length(user.observers))
+			for(var/mob/observer in user.observers)
+				if(observer.client && observer.s_active != src)
+					observer.client.screen -= I
+		I.dropped(user, TRUE)
+	if(user)
+		add_fingerprint(user)
 
-	if(usr)
-		if(usr.client && usr.s_active != src)
-			usr.client.screen -= I
-		I.dropped(usr, TRUE)
-		add_fingerprint(usr)
+	if(!prevent_warning)
+		// the item's user will always get a notification
+		to_chat(user, "<span class='notice'>You put [I] into [src].</span>")
 
-		if(!prevent_warning && !istype(I, /obj/item/gun/energy/kinetic_accelerator/crossbow))
-			for(var/mob/M in viewers(usr, null))
-				if(M == usr)
-					to_chat(usr, "<span class='notice'>You put [I] into [src].</span>")
-				else if(M in range(1)) //If someone is standing close enough, they can tell what it is...
-					M.show_message("<span class='notice'>[usr] puts [I] into [src].</span>")
-				else if(I && I.w_class >= WEIGHT_CLASS_NORMAL) //Otherwise they can only see large or normal items from a distance...
-					M.show_message("<span class='notice'>[usr] puts [I] into [src].</span>")
+		// if the item less than normal sized, only people within 1 tile get the message, otherwise, everybody in view gets it
+		if(I.w_class < WEIGHT_CLASS_NORMAL)
+			for(var/mob/M in orange(1, user))
+				if(in_range(M, user))
+					M.show_message("<span class='notice'>[user] puts [I] into [src].</span>")
+		else
+			// restrict player list to include only those in view
+			for(var/mob/M in oviewers(7, user))
+				M.show_message("<span class='notice'>[user] puts [I] into [src].</span>")
+	orient2hud(user)
+	if(user)
+		if(user.s_active)
+			user.s_active.show_to(user)
 
-		orient2hud(usr)
-		if(usr.s_active)
-			usr.s_active.show_to(usr)
 	I.mouse_opacity = MOUSE_OPACITY_OPAQUE //So you can click on the area around the item to equip it, instead of having to pixel hunt
 	I.in_inventory = TRUE
 	update_icon()
 	return TRUE
+
+/obj/item/storage/proc/on_atom_exited(datum/source, atom/exited, direction)
+	return remove_from_storage(exited, exited.loc)
 
 /**
   * Handles the removal of an item from a storage container.
@@ -480,10 +508,6 @@
 /obj/item/storage/proc/remove_from_storage(obj/item/I, atom/new_location)
 	if(!istype(I))
 		return FALSE
-
-	if(istype(src, /obj/item/storage/fancy))
-		var/obj/item/storage/fancy/F = src
-		F.update_icon()
 
 	for(var/_M in mobs_viewing)
 		var/mob/M = _M
@@ -510,13 +534,9 @@
 	if(I.maptext)
 		I.maptext = ""
 	I.on_exit_storage(src)
-	update_icon()
 	I.mouse_opacity = initial(I.mouse_opacity)
+	update_icon()
 	return TRUE
-
-/obj/item/storage/Exited(atom/A, loc)
-	remove_from_storage(A, loc) //worry not, comrade; this only gets called once
-	..()
 
 /obj/item/storage/deconstruct(disassembled = TRUE)
 	var/drop_loc = loc
@@ -527,7 +547,7 @@
 	qdel(src)
 
 //This proc is called when you want to place an item into the storage item.
-/obj/item/storage/attackby(obj/item/I, mob/user, params)
+/obj/item/storage/attackby__legacy__attackchain(obj/item/I, mob/user, params)
 	..()
 	if(istype(I, /obj/item/hand_labeler))
 		var/obj/item/hand_labeler/labeler = I
@@ -544,7 +564,7 @@
 			return TRUE
 		return FALSE
 
-	handle_item_insertion(I)
+	handle_item_insertion(I, user)
 
 /obj/item/storage/attack_hand(mob/user)
 	if(ishuman(user))
@@ -592,6 +612,7 @@
 	hide_from(user)
 	for(var/obj/item/I in contents)
 		remove_from_storage(I, T)
+		I.scatter_atom()
 		CHECK_TICK
 
 /**
@@ -618,7 +639,7 @@
 	for(var/obj/O in contents)
 		O.hear_message(M, msg)
 
-/obj/item/storage/attack_self(mob/user)
+/obj/item/storage/attack_self__legacy__attackchain(mob/user)
 	//Clicking on itself will empty it, if allow_quick_empty is TRUE
 	if(allow_quick_empty && user.is_in_active_hand(src))
 		drop_inventory(user)
@@ -703,7 +724,7 @@
 		// But then again a tesseract would destroy the server anyways
 		// Also I wish I could just insert a list instead of it reading it the wrong way
 		content_list.len++
-		content_list[content_list.len] = AM.serialize()
+		content_list[length(content_list)] = AM.serialize()
 	return data
 
 /obj/item/storage/deserialize(list/data)

@@ -1,6 +1,6 @@
 /obj/machinery/abductor/gland_dispenser
 	name = "Replacement Organ Storage"
-	desc = "A tank filled with replacement organs"
+	desc = "A tank filled with replacement organs."
 	icon = 'icons/obj/abductor.dmi'
 	icon_state = "dispenser"
 	density = TRUE
@@ -40,10 +40,13 @@
 		if(!length(colors))
 			colors = shuffle(color_pool)
 
-/obj/machinery/abductor/gland_dispenser/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = FALSE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/machinery/abductor/gland_dispenser/ui_state(mob/user)
+	return GLOB.physical_state
+
+/obj/machinery/abductor/gland_dispenser/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "GlandDispenser", name, 300, 338, master_ui, state)
+		ui = new(user, src, "GlandDispenser", name)
 		ui.open()
 
 /obj/machinery/abductor/gland_dispenser/ui_data(mob/user)
@@ -79,7 +82,7 @@
 		return
 	ui_interact(user)
 
-/obj/machinery/abductor/gland_dispenser/attackby(obj/item/W, mob/user, params)
+/obj/machinery/abductor/gland_dispenser/attackby__legacy__attackchain(obj/item/W, mob/user, params)
 	if(istype(W, /obj/item/organ/internal/heart/gland))
 		if(!user.drop_item())
 			return

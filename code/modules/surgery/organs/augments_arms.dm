@@ -3,7 +3,7 @@
 	desc = "You shouldn't see this! Adminhelp and report this as an issue on github!"
 	parent_organ = "r_arm"
 	slot = "r_arm_device"
-	icon_state = "implant-toolkit"
+	icon_state = "toolkit_generic"
 	w_class = WEIGHT_CLASS_NORMAL
 	actions_types = list(/datum/action/item_action/organ_action/toggle)
 
@@ -31,7 +31,7 @@
 
 /obj/item/organ/internal/cyberimp/arm/examine(mob/user)
 	. = ..()
-	. += "<span class='info'>[src] is assembled in the [parent_organ == "r_arm" ? "right" : "left"] arm configuration. You can use a screwdriver to reassemble it.</span>"
+	. += "<span class='notice'>[src] is assembled in the [parent_organ == "r_arm" ? "right" : "left"] arm configuration. You can use a screwdriver to reassemble it.</span>"
 
 /obj/item/organ/internal/cyberimp/arm/screwdriver_act(mob/user, obj/item/I)
 	. = TRUE
@@ -81,7 +81,9 @@
 		return TRUE
 
 /obj/item/organ/internal/cyberimp/arm/proc/Retract()
-	if(!holder || (holder in src) || check_cuffs())
+	if(!holder || (holder in src))
+		return
+	if(status & ORGAN_DEAD)
 		return
 
 	owner.visible_message("<span class='notice'>[owner] retracts [holder] back into [owner.p_their()] [parent_organ == "r_arm" ? "right" : "left"] arm.</span>",
@@ -92,13 +94,14 @@
 		var/obj/item/flash/F = holder
 		F.set_light(0)
 
-	owner.unEquip(holder, 1)
-	holder.forceMove(src)
+	owner.transfer_item_to(holder, src, force = TRUE)
 	holder = null
 	playsound(get_turf(owner), 'sound/mecha/mechmove03.ogg', 50, 1)
 
 /obj/item/organ/internal/cyberimp/arm/proc/Extend(obj/item/item)
 	if(!(item in src) || check_cuffs())
+		return
+	if(status & ORGAN_DEAD)
 		return
 
 	holder = item
@@ -113,7 +116,7 @@
 		var/obj/item/flash/F = holder
 		F.set_light(7)
 
-	var/arm_slot = (parent_organ == "r_arm" ? SLOT_HUD_RIGHT_HAND : SLOT_HUD_LEFT_HAND)
+	var/arm_slot = (parent_organ == "r_arm" ? ITEM_SLOT_RIGHT_HAND : ITEM_SLOT_LEFT_HAND)
 	var/obj/item/arm_item = owner.get_item_by_slot(arm_slot)
 
 	if(arm_item)
@@ -121,7 +124,7 @@
 			var/obj/item/offhand_arm_item = owner.get_active_hand()
 			to_chat(owner, "<span class='warning'>Your hands are too encumbered wielding [offhand_arm_item] to deploy [src]!</span>")
 			return
-		else if(!owner.unEquip(arm_item))
+		else if(!owner.drop_item_to_ground(arm_item))
 			to_chat(owner, "<span class='warning'>Your [arm_item] interferes with [src]!</span>")
 			return
 		else
@@ -139,20 +142,21 @@
 		"<span class='notice'>You extend [holder] from your [parent_organ == "r_arm" ? "right" : "left"] arm.</span>",
 		"<span class='italics'>You hear a short mechanical noise.</span>")
 	playsound(get_turf(owner), 'sound/mecha/mechmove03.ogg', 50, 1)
+	return TRUE
 
 /obj/item/organ/internal/cyberimp/arm/ui_action_click()
-	if(crit_fail || (!holder && !contents.len))
+	if(crit_fail || (!holder && !length(contents)))
 		to_chat(owner, "<span class='warning'>The implant doesn't respond. It seems to be broken...</span>")
 		return
 
 	// You can emag the arm-mounted implant by activating it while holding emag in it's hand.
-	var/arm_slot = (parent_organ == "r_arm" ? SLOT_HUD_RIGHT_HAND : SLOT_HUD_LEFT_HAND)
+	var/arm_slot = (parent_organ == "r_arm" ? ITEM_SLOT_RIGHT_HAND : ITEM_SLOT_LEFT_HAND)
 	if(istype(owner.get_item_by_slot(arm_slot), /obj/item/card/emag) && emag_act(owner))
 		return
 
 	if(!holder || (holder in src))
 		holder = null
-		if(contents.len == 1)
+		if(length(contents) == 1)
 			Extend(contents[1])
 		else
 			radial_menu(owner)
@@ -218,6 +222,7 @@
 /obj/item/organ/internal/cyberimp/arm/toolset
 	name = "integrated toolset implant"
 	desc = "A stripped-down version of engineering cyborg toolset, designed to be installed on subject's arm. Contains all neccessary tools."
+	icon_state = "toolkit_engineering"
 	origin_tech = "materials=3;engineering=4;biotech=3;powerstorage=4"
 	contents = newlist(/obj/item/screwdriver/cyborg, /obj/item/wrench/cyborg, /obj/item/weldingtool/largetank/cyborg,
 		/obj/item/crowbar/cyborg, /obj/item/wirecutters/cyborg, /obj/item/multitool/cyborg)
@@ -235,14 +240,39 @@
 	return FALSE
 
 /obj/item/organ/internal/cyberimp/arm/toolset_abductor
-	name = "Alien Toolset implant"
+	name = "alien toolset implant"
 	desc = "An alien toolset, designed to be installed on subject's arm."
+	icon_state = "toolkit_engineering"
 	origin_tech = "materials=5;engineering=5;plasmatech=5;powerstorage=4;abductor=3"
 	contents = newlist(/obj/item/screwdriver/abductor, /obj/item/wirecutters/abductor, /obj/item/crowbar/abductor, /obj/item/wrench/abductor, /obj/item/weldingtool/abductor, /obj/item/multitool/abductor)
 	action_icon = list(/datum/action/item_action/organ_action/toggle = 'icons/obj/abductor.dmi')
 	action_icon_state = list(/datum/action/item_action/organ_action/toggle = "belt")
 
 /obj/item/organ/internal/cyberimp/arm/toolset_abductor/l
+	parent_organ = "l_arm"
+
+/obj/item/organ/internal/cyberimp/arm/janitorial_abductor
+	name = "alien janitorial toolset implant"
+	desc = "A set of alien janitorial tools, designed to be installed on subject's arm."
+	icon_state = "toolkit_janitor"
+	origin_tech = "materials=5;engineering=5;biotech=5;powerstorage=4;abductor=2"
+	contents = newlist(/obj/item/mop/advanced/abductor, /obj/item/soap/syndie/abductor, /obj/item/lightreplacer/bluespace/abductor, /obj/item/holosign_creator/janitor, /obj/item/melee/flyswatter/abductor, /obj/item/reagent_containers/spray/cleaner/safety/abductor)
+	action_icon = list(/datum/action/item_action/organ_action/toggle = 'icons/obj/abductor.dmi')
+	action_icon_state = list(/datum/action/item_action/organ_action/toggle = "janibelt_abductor")
+
+/obj/item/organ/internal/cyberimp/arm/janitorial_abductor/l
+	parent_organ = "l_arm"
+
+/obj/item/organ/internal/cyberimp/arm/surgical_abductor
+	name = "alien surgical toolset implant"
+	desc = "An alien surgical toolset, designed to be installed on the subject's arm."
+	icon_state = "toolkit_surgical"
+	origin_tech = "materials=5;engineering=5;plasmatech=5;powerstorage=4;abductor=2"
+	contents = newlist(/obj/item/retractor/alien, /obj/item/hemostat/alien, /obj/item/cautery/alien, /obj/item/bonesetter/alien, /obj/item/scalpel/alien, /obj/item/circular_saw/alien, /obj/item/bonegel/alien, /obj/item/fix_o_vein/alien, /obj/item/surgicaldrill/alien)
+	action_icon = list(/datum/action/item_action/organ_action/toggle = 'icons/obj/abductor.dmi')
+	action_icon_state = list(/datum/action/item_action/organ_action/toggle = "belt")
+
+/obj/item/organ/internal/cyberimp/arm/surgical_abductor/l
 	parent_organ = "l_arm"
 
 /obj/item/organ/internal/cyberimp/arm/esword
@@ -281,9 +311,10 @@
 
 /obj/item/organ/internal/cyberimp/arm/combat
 	name = "combat cybernetics implant"
-	desc = "A powerful cybernetic implant that contains combat modules built into the user's arm"
+	desc = "A powerful cybernetic implant that contains combat modules built into the user's arm."
 	contents = newlist(/obj/item/melee/energy/blade/hardlight, /obj/item/gun/medbeam, /obj/item/borg/stun, /obj/item/flash/armimplant)
 	origin_tech = "materials=5;combat=7;biotech=5;powerstorage=5;syndicate=6;programming=5"
+	stealth_level = 4 //Only surgery or a body scanner with the highest tier of stock parts can detect this.
 
 /obj/item/organ/internal/cyberimp/arm/combat/New()
 	..()
@@ -294,15 +325,16 @@
 /obj/item/organ/internal/cyberimp/arm/combat/centcom
 	name = "NT specops cybernetics implant"
 	desc = "An extremely powerful cybernetic implant that contains combat and utility modules used by NT special forces."
-	contents = newlist(/obj/item/gun/energy/pulse/pistol/m1911, /obj/item/door_remote/omni, /obj/item/melee/energy/blade/hardlight, /obj/item/reagent_containers/hypospray/combat/nanites, /obj/item/gun/medbeam, /obj/item/borg/stun, /obj/item/implanter/mindshield, /obj/item/flash/armimplant)
+	contents = newlist(/obj/item/gun/energy/pulse/pistol/m1911, /obj/item/door_remote/omni, /obj/item/melee/energy/blade/hardlight, /obj/item/reagent_containers/hypospray/combat/nanites, /obj/item/gun/medbeam, /obj/item/borg/stun, /obj/item/bio_chip_implanter/mindshield, /obj/item/flash/armimplant)
 	icon = 'icons/obj/guns/energy.dmi'
 	icon_state = "m1911"
 	emp_proof = 1
 
 /obj/item/organ/internal/cyberimp/arm/surgery
 	name = "surgical toolset implant"
-	desc = "A set of surgical tools hidden behind a concealed panel on the user's arm"
-	contents = newlist(/obj/item/retractor/augment, /obj/item/hemostat/augment, /obj/item/cautery/augment, /obj/item/bonesetter/augment, /obj/item/scalpel/augment, /obj/item/circular_saw/augment, /obj/item/bonegel/augment, /obj/item/FixOVein/augment, /obj/item/surgicaldrill/augment)
+	desc = "A set of surgical tools hidden behind a concealed panel on the user's arm."
+	icon_state = "toolkit_surgical"
+	contents = newlist(/obj/item/retractor/augment, /obj/item/hemostat/augment, /obj/item/cautery/augment, /obj/item/bonesetter/augment, /obj/item/scalpel/augment, /obj/item/circular_saw/augment, /obj/item/bonegel/augment, /obj/item/fix_o_vein/augment, /obj/item/surgicaldrill/augment)
 	origin_tech = "materials=3;engineering=3;biotech=3;programming=2;magnets=3"
 	action_icon = list(/datum/action/item_action/organ_action/toggle = 'icons/obj/storage.dmi')
 	action_icon_state = list(/datum/action/item_action/organ_action/toggle = "duffel-med")
@@ -313,7 +345,8 @@
 
 /obj/item/organ/internal/cyberimp/arm/janitorial
 	name = "janitorial toolset implant"
-	desc = "A set of janitorial tools hidden behind a concealed panel on the user's arm"
+	desc = "A set of janitorial tools hidden behind a concealed panel on the user's arm."
+	icon_state = "toolkit_janitor"
 	contents = newlist(/obj/item/mop/advanced, /obj/item/soap, /obj/item/lightreplacer, /obj/item/holosign_creator/janitor, /obj/item/melee/flyswatter, /obj/item/reagent_containers/spray/cleaner/safety)
 	origin_tech = "materials=3;engineering=4;biotech=3"
 	action_icon = list(/datum/action/item_action/organ_action/toggle = 'icons/obj/clothing/belts.dmi')
@@ -323,7 +356,8 @@
 	parent_organ = "l_arm"
 	slot = "l_arm_device"
 
-/obj/item/organ/internal/cyberimp/arm/janitorial/advanced /// ERT implant, i dont overly expect this to get into the hands of crew
+/// ERT implant, i dont overly expect this to get into the hands of crew
+/obj/item/organ/internal/cyberimp/arm/janitorial/advanced
 	name = "advanced janitorial toolset implant"
 	desc = "A set of advanced janitorial tools hidden behind a concealed panel on the user's arm."
 	contents = newlist(/obj/item/mop/advanced, /obj/item/soap/deluxe, /obj/item/lightreplacer/bluespace, /obj/item/holosign_creator/janitor, /obj/item/melee/flyswatter, /obj/item/reagent_containers/spray/cleaner/advanced)
@@ -332,14 +366,16 @@
 	action_icon_state = list(/datum/action/item_action/organ_action/toggle = "janibelt")
 	emp_proof = TRUE
 
-/obj/item/organ/internal/cyberimp/arm/janitorial/advanced/l /// its for ERT, but still probably a good idea.
+/// its for ERT, but still probably a good idea.
+/obj/item/organ/internal/cyberimp/arm/janitorial/advanced/l
 	parent_organ = "l_arm"
 	slot = "l_arm_device"
 
 /obj/item/organ/internal/cyberimp/arm/botanical
 	name = "botanical toolset implant"
-	desc = "A set of botanical tools hidden behind a concealed panel on the user's arm"
-	contents = newlist(/obj/item/plant_analyzer, /obj/item/cultivator, /obj/item/hatchet, /obj/item/shovel/spade, /obj/item/wirecutters, /obj/item/wrench)
+	desc = "A set of botanical tools hidden behind a concealed panel on the user's arm."
+	icon_state = "toolkit_hydro"
+	contents = newlist(/obj/item/plant_analyzer, /obj/item/cultivator, /obj/item/hatchet, /obj/item/shovel/spade, /obj/item/reagent_containers/spray/weedspray, /obj/item/reagent_containers/spray/pestspray)
 	origin_tech = "materials=3;engineering=4;biotech=3"
 	action_icon = list(/datum/action/item_action/organ_action/toggle = 'icons/obj/clothing/belts.dmi')
 	action_icon_state = list(/datum/action/item_action/organ_action/toggle = "botanybelt")
@@ -351,7 +387,8 @@
 // lets make IPCs even *more* vulnerable to EMPs!
 /obj/item/organ/internal/cyberimp/arm/power_cord
 	name = "APC-compatible power adapter implant"
-	desc = "An implant commonly installed inside IPCs in order to allow them to easily collect energy from their environment"
+	desc = "An implant commonly installed inside IPCs in order to allow them to easily collect energy from their environment."
+	icon_state = "toolkit_ipc"
 	origin_tech = "materials=3;biotech=2;powerstorage=3"
 	contents = newlist(/obj/item/apc_powercord)
 	requires_robotic_bodypart = TRUE
@@ -378,7 +415,7 @@
 	flags = NOBLUDGEON
 	var/drawing_power = FALSE
 
-/obj/item/apc_powercord/afterattack(atom/target, mob/user, proximity_flag, click_parameters)
+/obj/item/apc_powercord/afterattack__legacy__attackchain(atom/target, mob/user, proximity_flag, click_parameters)
 	if(!istype(target, /obj/machinery/power/apc) || !ishuman(user) || !proximity_flag)
 		return ..()
 	if(drawing_power)
@@ -387,7 +424,8 @@
 	user.changeNext_move(CLICK_CD_MELEE)
 	var/obj/machinery/power/apc/A = target
 	var/mob/living/carbon/human/H = user
-	if(H.get_int_organ(/obj/item/organ/internal/cell))
+	var/datum/organ/battery/power_source = H.get_int_organ_datum(ORGAN_DATUM_BATTERY)
+	if(istype(power_source))
 		if(A.emagged || A.stat & BROKEN)
 			do_sparks(3, 1, A)
 			to_chat(H, "<span class='warning'>The APC power currents surge erratically, damaging your chassis!</span>")
@@ -400,7 +438,7 @@
 		else
 			to_chat(user, "<span class='warning'>There is no charge to draw from that APC.</span>")
 	else
-		to_chat(user, "<span class='warning'>You lack a cell in which to store charge!</span>")
+		to_chat(user, "<span class='warning'>You lack a power source in which to store charge!</span>")
 
 /obj/item/apc_powercord/proc/powerdraw_loop(obj/machinery/power/apc/A, mob/living/carbon/human/H)
 	H.visible_message("<span class='notice'>[H] inserts a power connector into \the [A].</span>", "<span class='notice'>You begin to draw power from \the [A].</span>")
@@ -444,6 +482,199 @@
 	action_icon = list(/datum/action/item_action/organ_action/toggle = 'icons/obj/janitor.dmi')
 	action_icon_state = list(/datum/action/item_action/organ_action/toggle = "advmop")
 
+// Razorwire implant, long reach whip made of extremely thin wire, ouch!
+
+/obj/item/melee/razorwire
+	name = "implanted razorwire"
+	desc = "A long length of monomolecular filament, built into the back of your hand. \
+		Impossibly thin and flawlessly sharp, it should slice through organic materials with no trouble; \
+		even from a few steps away. However, results against anything more durable will heavily vary."
+	icon = 'icons/obj/weapons/energy_melee.dmi'
+	righthand_file = 'icons/mob/inhands/implants_righthand.dmi'
+	lefthand_file = 'icons/mob/inhands/implants_lefthand.dmi'
+	icon_state = "razorwire"
+	item_state = "razorwire"
+	w_class = WEIGHT_CLASS_BULKY
+	sharp = TRUE
+	force = 18
+	armour_penetration_percentage = -100 //This means that armor twice as effective against it
+	reach = 2
+	hitsound = 'sound/weapons/whip.ogg'
+	attack_verb = list("slashes", "whips", "lashes", "lacerates")
+	///List of skins for the razorwire.
+	var/list/razorwire_skin_options = list()
+
+/obj/item/melee/razorwire/Initialize(mapload)
+	. = ..()
+	var/random_colour = pick("razorwire", "razorwire_teal", "razorwire_yellow", "razorwire_purple", "razorwire_green")
+	icon_state = random_colour
+	item_state = random_colour
+	update_icon()
+	razorwire_skin_options["Reliable Red"] = "razorwire"
+	razorwire_skin_options["Troubling Teal"] = "razorwire_teal"
+	razorwire_skin_options["Yearning Yellow"] = "razorwire_yellow"
+	razorwire_skin_options["Plasma Purple"] = "razorwire_purple"
+	razorwire_skin_options["Great Green"] = "razorwire_green"
+
+/obj/item/melee/razorwire/examine(mob/user)
+	. = ..()
+	. += "<span class='notice'>Alt-click it to reskin it.</span>"
+
+/obj/item/melee/razorwire/examine_more(mob/user)
+	. = ..()
+	. += "<i>A byproduct of Cybersun Incorporated's mistakes turned concept, the Razorwire Spool is a remarkable accident in itself. \
+	It consists of a fine, thread-like laser capable of being manipulated and swung like a whip. Designed for ease of deployment, the wire originates from the wrist, \
+	allowing users with the implant to perform wide swings and precise cuts against soft targets. It's the same energy found in other common energy weapons, such as swords and daggers.</i>"
+	. += "<i>Cybersun's investment into energy weapon development inadvertently led to the Razorwire Spool. Initially attempting to create an Energy Sword, \
+	they ended up with a material that, while superheated and correctly composed, failed to maintain a solid blade shape. Curious about this error, \
+	Cybersun repeated the process, producing an energy as thin as a wire. After several prototypes, they achieved a long, energy-like thread. \
+	Further innovation allowed them to conceal this in a forearm-sized container, \
+	with a hand and wrist replacement made of the same durable material used to contain energy weapons. They would call it, the Razorwire.</i>"
+	. += "<i>Favored by assassins for their stealth and efficiency, Cybersun exercises discretion in its distribution, favoring clients in their good graces. \
+	It falls behind other energy weapons due to its thinner and more loose pressure, however it is praised more as a side-arm for unarmored soft targets.</i>"
+
+/obj/item/melee/razorwire/AltClick(mob/user)
+	..()
+	if(user.incapacitated())
+		to_chat(user, "<span class='warning'>You can't do that right now!</span>")
+		return
+	if(loc == user)
+		reskin(user)
+
+/obj/item/melee/razorwire/proc/reskin(mob/M)
+	var/list/skins = list()
+	for(var/I in razorwire_skin_options)
+		skins[I] = image(icon, icon_state = razorwire_skin_options[I])
+	var/choice = show_radial_menu(M, src, skins, radius = 40, custom_check = CALLBACK(src, PROC_REF(reskin_radial_check), M), require_near = TRUE)
+
+	if(choice && reskin_radial_check(M))
+		icon_state = razorwire_skin_options[choice]
+		item_state = razorwire_skin_options[choice]
+		update_icon()
+		M.update_inv_r_hand()
+		M.update_inv_l_hand()
+
+/obj/item/melee/razorwire/proc/reskin_radial_check(mob/user)
+	if(!ishuman(user))
+		return FALSE
+	var/mob/living/carbon/human/H = user
+	if(!src || !H.is_in_hands(src) || HAS_TRAIT(H, TRAIT_HANDS_BLOCKED))
+		return FALSE
+	return TRUE
+
+/obj/item/organ/internal/cyberimp/arm/razorwire
+	name = "razorwire spool implant"
+	desc = "An integrated spool of razorwire, capable of being used as a weapon when whipped at your foes. \
+		Built into the back of your hand, try your best to not get it tangled."
+	contents = newlist(/obj/item/melee/razorwire)
+	icon_state = "razorwire"
+	action_icon = list(/datum/action/item_action/organ_action/toggle = 'icons/obj/surgery.dmi')
+	action_icon_state = list(/datum/action/item_action/organ_action/toggle = "razorwire")
+	origin_tech = "combat=5;biotech=5;syndicate=2"
+	stealth_level = 1 // Hidden from health analyzers
+
+/obj/item/organ/internal/cyberimp/arm/razorwire/examine_more(mob/user)
+	. = ..()
+	for(var/obj/I in contents)
+		return I.examine_more()
+
+// Shell launch system, an arm mounted single-shot shotgun that comes out of your arm
+
+/obj/item/gun/projectile/revolver/doublebarrel/shell_launcher
+	name = "shell launch system"
+	desc = "A mounted cannon seated comfortably in a forearm compartment. This humanitarian device is capable of firing essentially any shotgun shell."
+	icon_state = "shell_cannon_weapon"
+	righthand_file = 'icons/mob/inhands/implants_righthand.dmi'
+	lefthand_file = 'icons/mob/inhands/implants_lefthand.dmi'
+	inhand_x_dimension = 32
+	inhand_y_dimension = 32
+	item_state = "shell_cannon"
+	w_class = WEIGHT_CLASS_BULKY
+	weapon_weight = WEAPON_LIGHT
+	force = 10
+	mag_type = /obj/item/ammo_box/magazine/internal/shot/shell_cannon
+	unique_reskin = FALSE
+	can_sawoff = FALSE
+
+/obj/item/gun/projectile/revolver/doublebarrel/shell_launcher/proc/missfire(mob/living/carbon/human/H, our_organ)
+	to_chat(H, "<span class='warning'>Your [name] misfires!</span>")
+	process_fire(H, H, 1, zone_override = our_organ)
+
+/obj/item/gun/projectile/revolver/doublebarrel/shell_launcher/examine_more(mob/user)
+	. = ..()
+	. += "<i>A Shellguard Munitions classic, the Shellguard Launch System (SLS) was originally a MODsuit heavy weapons accessory, \
+	later being developed into a forearm-mounted tactical shotgun implant. Though its compact design precludes the use of large ammunition like rockets or burning plasma, \
+	it excels in firing a variety of smaller shells, both energy and kinetic, thanks to its advanced plasma alloy barrel.<i>"
+	. += "<i>Adapting an accessory intended for a mechanical suit's gauntlet posed significant hurdles, \
+	primarily in miniaturizing the barrel and components without sacrificing performance. The limitations initially damaged its perception of the market. \
+	However, executives would later pivot their niche to concealed carry and versatile shell ammunition, \
+	focusing on deployability and concealment through neural activation. \
+	The shift in approach would lead to the SLS being advertised as a powerful and compact holdout weapon, easily concealable and reliably lethal.<i>"
+	. += "<i>Despite its initial issues, the SLS today holds a strong following in the implant market, being highly sought after among assassins, \
+	mercenaries, and firearm enthusiasts. Its appeal lies not just in its stealth but also in its compatibility with Shellguard's range of modular products, \
+	and the potential beyond its advertised capabilities.</i>"
+
+/obj/item/ammo_box/magazine/internal/shot/shell_cannon
+	name = "shell launch system internal magazine"
+	ammo_type = /obj/item/ammo_casing/shotgun/rubbershot
+	max_ammo = 1
+	multiload = FALSE
+
+/obj/item/organ/internal/cyberimp/arm/shell_launcher
+	name = "shell launch system implant"
+	desc = "A mounted, single-shot housing for a shell launch cannon; capable of firing twelve-gauge shotgun shells."
+	contents = newlist(/obj/item/gun/projectile/revolver/doublebarrel/shell_launcher)
+	icon_state = "shell_cannon"
+	action_icon = list(/datum/action/item_action/organ_action/toggle = 'icons/obj/surgery.dmi')
+	action_icon_state = list(/datum/action/item_action/organ_action/toggle = "shell_cannon")
+
+/obj/item/organ/internal/cyberimp/arm/shell_launcher/emp_act(severity)
+	if(!owner)
+		return
+	if(emp_proof)
+		return
+	Retract()
+	for(var/obj/item/gun/projectile/revolver/doublebarrel/shell_launcher/SL in contents)
+		if(SL.chambered)
+			if(!SL.chambered.BB)//found a spent ammo
+				return
+
+			if(istype(SL.chambered, /obj/item/ammo_casing/shotgun/ion))
+				emp_proof = TRUE //This kills the server without it. Do not remove this.
+				SL.missfire(owner, parent_organ)
+				emp_proof = FALSE
+				to_chat(owner, "<span class='warning'>The misfired [SL.chambered] causes your [name] to break!</span>")
+				necrotize()
+				return
+			if(istype(SL.chambered, /obj/item/ammo_casing/shotgun/frag12))
+				SL.missfire(owner, parent_organ)
+				var/obj/item/organ/external/probable_organ = owner.get_limb_by_name(parent_organ)
+				if(probable_organ) //In case it gets popped off by the damage
+					probable_organ.droplimb(FALSE, DROPLIMB_BLUNT)
+				return
+			if(istype(SL.chambered, /obj/item/ammo_casing/shotgun/pulseslug))
+				SL.missfire(owner, parent_organ)
+				var/obj/item/organ/external/probable_organ = owner.get_limb_by_name(parent_organ)
+				if(probable_organ) //In case it gets popped off by the damage
+					probable_organ.droplimb(FALSE, DROPLIMB_BURN)
+				return
+			SL.chambered.BB.damage *= 2 //Stronger since it is inside you
+			SL.missfire(owner, parent_organ)
+
+/obj/item/organ/internal/cyberimp/arm/shell_launcher/examine_more(mob/user)
+	. = ..()
+	. += "<i>A Shellguard Munitions classic, the Shellguard Launch System (SLS) was originally a MODsuit heavy weapons accessory, \
+	later being developed into a forearm-mounted tactical shotgun implant. Though its compact design precludes the use of large ammunition like rockets or burning plasma, \
+	it excels in firing a variety of smaller shells, both energy and kinetic, thanks to its advanced plasma alloy barrel.<i>"
+	. += "<i>Adapting an accessory intended for a mechanical suit's gauntlet posed significant hurdles, \
+	primarily in miniaturizing the barrel and components without sacrificing performance. The limitations initially damaged its perception of the market. \
+	However, executives would later pivot their niche to concealed carry and versatile shell ammunition, \
+	focusing on deployability and concealment through neural activation. \
+	The shift in approach would lead to the SLS being advertised as a powerful and compact holdout weapon, easily concealable and reliably lethal.<i>"
+	. += "<i>Despite its initial issues, the SLS today holds a strong following in the implant market, being highly sought after among assassins, \
+	mercenaries, and firearm enthusiasts. Its appeal lies not just in its stealth but also in its compatibility with Shellguard's range of modular products, \
+	and the potential beyond its advertised capabilities.</i>"
+
 /obj/item/organ/internal/cyberimp/arm/v1_arm
 	name = "vortex feedback arm implant"
 	desc = "An implant, that when deployed surrounds the users arm in armor and circuitry, allowing them to redirect nearby projectiles with feedback from the vortex anomaly core."
@@ -481,6 +712,7 @@
 	desc = "A modification to a users arm, allowing them to use a vortex core energy feedback, to parry, reflect, and even empower projectile attacks. Rumors that it runs on the user's blood are unconfirmed."
 	icon_state = "v1_arm"
 	item_state = "v1_arm"
+	icon = 'icons/obj/items.dmi'
 	sprite_sheets_inhand = list("Drask" = 'icons/mob/clothing/species/drask/held.dmi', "Vox" = 'icons/mob/clothing/species/vox/held.dmi')
 	force = 20 //bonk, not sharp
 	attack_verb = list("slamed", "punched", "parried", "judged", "styled on", "disrespected", "interrupted", "gored")
@@ -513,7 +745,7 @@
 	force = initial(force)
 
 /obj/item/shield/v1_arm/add_parry_component()
-	AddComponent(/datum/component/parry, _stamina_constant = 2, _stamina_coefficient = 0.35, _parryable_attack_types = ALL_ATTACK_TYPES, _parry_cooldown = (1 / 3) SECONDS, _no_parry_sound = TRUE) // 0.3333 seconds of cooldown for 75% uptime, countered by ions and plasma pistols
+	AddComponent(/datum/component/parry, _stamina_constant = 2, _stamina_coefficient = 0.35, _parryable_attack_types = ALL_ATTACK_TYPES, _parry_cooldown = (4 / 3) SECONDS, _no_parry_sound = TRUE) // 0.3333 seconds of cooldown for 75% uptime, countered by ions and plasma pistols
 
 /obj/item/shield/v1_arm/hit_reaction(mob/living/carbon/human/owner, atom/movable/hitby, attack_text = "the attack", final_block_chance = 0, damage = 0, attack_type = MELEE_ATTACK)
 	if(disabled)
@@ -530,7 +762,7 @@
 	set_light(3)
 	addtimer(CALLBACK(src, TYPE_PROC_REF(/atom, set_light), 0), 0.25 SECONDS)
 
-	if(istype(hitby, /obj/item/projectile))
+	if(isprojectile(hitby))
 		var/obj/item/projectile/P = hitby
 		if(P.shield_buster || istype(P, /obj/item/projectile/ion)) //EMP's and unpariable attacks, after all.
 			return FALSE
@@ -565,10 +797,10 @@
 
 /obj/item/v1_arm_shell
 	name = "vortex feedback arm implant frame"
-	desc = "An implant awaiting installation of a vortex anomaly core"
+	desc = "An implant awaiting installation of a vortex anomaly core."
 	icon_state = "v1_arm"
 
-/obj/item/v1_arm_shell/attackby(obj/item/I, mob/user, params)
+/obj/item/v1_arm_shell/attackby__legacy__attackchain(obj/item/I, mob/user, params)
 	if(istype(I, /obj/item/assembly/signaler/anomaly/vortex))
 		to_chat(user, "<span class='notice'>You insert [I] into the back of the hand, and the implant begins to boot up.</span>")
 		new /obj/item/organ/internal/cyberimp/arm/v1_arm(get_turf(src))
@@ -587,7 +819,7 @@
 	actions_types = list()
 	var/datum/martial_art/muscle_implant/muscle_implant
 
-/obj/item/organ/internal/cyberimp/arm/muscle/Initialize()
+/obj/item/organ/internal/cyberimp/arm/muscle/Initialize(mapload)
 	. = ..()
 	muscle_implant = new()
 

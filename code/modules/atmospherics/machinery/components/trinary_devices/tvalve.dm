@@ -6,7 +6,7 @@
 	icon_state = "map_tvalve0"
 
 	name = "manual switching valve"
-	desc = "A pipe valve"
+	desc = "A pipe valve."
 
 	can_unwrench = TRUE
 
@@ -104,7 +104,8 @@
 	sleep(10)
 	switch_side()
 
-/obj/machinery/atmospherics/trinary/tvalve/digital		// can be controlled by AI
+/// can be controlled by AI
+/obj/machinery/atmospherics/trinary/tvalve/digital
 	name = "digital switching valve"
 	desc = "A digitally controlled valve."
 	icon = 'icons/atmos/digital_tvalve.dmi'

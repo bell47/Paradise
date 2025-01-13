@@ -101,7 +101,7 @@
 	if(was_weakened && !should_attack_weakened)
 		return
 
-	attack(was_weakened)
+	attack__legacy__attackchain(was_weakened)
 
 /**
   * Called every Think when we are attacking the target.
@@ -109,10 +109,10 @@
   * Arguments:
   * * was_weakened - Whether the target was already knocked down prior to this attack.
   */
-/obj/effect/hallucination/chaser/attacker/proc/attack(was_weakened)
+/obj/effect/hallucination/chaser/attacker/proc/attack__legacy__attackchain(was_weakened)
 	dir = get_dir(src, target)
 	attack_effects()
-	target.adjustStaminaLoss(damage)
+	target.apply_damage(damage, STAMINA)
 	if(!was_weakened && target.IsWeakened())
 		on_knockdown()
 

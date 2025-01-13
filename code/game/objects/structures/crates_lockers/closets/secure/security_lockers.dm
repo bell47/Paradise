@@ -2,7 +2,6 @@
 	name = "captain's locker"
 	req_access = list(ACCESS_CAPTAIN)
 	icon_state = "cap"
-	open_door_sprite = "cap_door"
 
 /obj/structure/closet/secure_closet/captains/populate_contents()
 	if(prob(50))
@@ -14,28 +13,27 @@
 	new /obj/item/storage/bag/garment/captain(src)
 	new /obj/item/cartridge/captain(src)
 	new /obj/item/radio/headset/heads/captain/alt(src)
-	new /obj/item/storage/belt/rapier(src)
+	new /obj/item/storage/belt/sheath/saber(src)
 	new /obj/item/gun/energy/gun(src)
 	new /obj/item/flash(src)
 	new /obj/item/door_remote/captain(src)
-	new /obj/item/reagent_containers/food/drinks/mug/cap(src)
+	new /obj/item/reagent_containers/drinks/mug/cap(src)
 	new /obj/item/tank/internals/emergency_oxygen/double(src)
 
 /obj/structure/closet/secure_closet/hop
 	name = "head of personnel's locker"
 	req_access = list(ACCESS_HOP)
 	icon_state = "hop"
-	open_door_sprite = "hop_door"
 
 /obj/structure/closet/secure_closet/hop/populate_contents()
 	new /obj/item/cartridge/hop(src)
 	new /obj/item/radio/headset/heads/hop(src)
 	new /obj/item/storage/box/ids(src)
-	new /obj/item/storage/box/PDAs(src)
+	new /obj/item/storage/box/pdas(src)
 	new /obj/item/gun/energy/gun/mini(src)
 	new /obj/item/flash(src)
 	new /obj/item/door_remote/civillian(src)
-	new /obj/item/reagent_containers/food/drinks/mug/hop(src)
+	new /obj/item/reagent_containers/drinks/mug/hop(src)
 	new /obj/item/clothing/accessory/medal/service(src)
 	new /obj/item/storage/bag/garment/head_of_personnel(src)
 
@@ -43,7 +41,6 @@
 	name = "head of security's locker"
 	req_access = list(ACCESS_HOS)
 	icon_state = "hos"
-	open_door_sprite = "hos_door"
 
 /obj/structure/closet/secure_closet/hos/populate_contents()
 	if(prob(50))
@@ -62,17 +59,17 @@
 	new /obj/item/storage/belt/security/full(src)
 	new /obj/item/gun/energy/gun/hos(src)
 	new /obj/item/door_remote/head_of_security(src)
-	new /obj/item/reagent_containers/food/drinks/mug/hos(src)
+	new /obj/item/reagent_containers/drinks/mug/hos(src)
 	new /obj/item/organ/internal/cyberimp/eyes/hud/security(src)
 	new /obj/item/clothing/accessory/medal/security(src)
-	new /obj/item/reagent_containers/food/drinks/flask/barflask(src)
+	new /obj/item/reagent_containers/drinks/flask/barflask(src)
 	new /obj/item/clothing/mask/gas/sechailer(src)
 
 /obj/structure/closet/secure_closet/warden
 	name = "warden's locker"
 	req_access = list(ACCESS_ARMORY)
 	icon_state = "warden"
-	open_door_sprite = "sec_door"
+	opened_door_sprite = "sec"
 
 /obj/structure/closet/secure_closet/warden/populate_contents()
 	if(prob(50))
@@ -94,7 +91,6 @@
 	name = "security officer's locker"
 	req_access = list(ACCESS_SECURITY)
 	icon_state = "sec"
-	open_door_sprite = "sec_door"
 
 /obj/structure/closet/secure_closet/security/populate_contents()
 	if(prob(50))
@@ -112,12 +108,19 @@
 	new /obj/item/clothing/head/helmet(src)
 	new /obj/item/clothing/suit/armor/secjacket(src)
 
+/obj/structure/closet/secure_closet/evidence
+	name = "evidence locker"
+	req_access = list(ACCESS_SEC_DOORS)
+	anchored = TRUE
+
+/obj/structure/closet/secure_closet/evidence/detective
+	req_access = list(ACCESS_FORENSICS_LOCKERS)
+
 /obj/structure/closet/secure_closet/blueshield
 	name = "blueshield's locker"
 	req_access = list(ACCESS_BLUESHIELD)
-	icon_state = "bs"
-	open_door_sprite = "hop_door"
-	icon_opened = "hop_open"
+	icon_state = "hop"
+	closed_door_sprite = "bs"
 
 /obj/structure/closet/secure_closet/blueshield/populate_contents()
 	new /obj/item/storage/backpack/blueshield(src)
@@ -132,13 +135,13 @@
 	new /obj/item/storage/belt/security/full(src)
 	new /obj/item/clothing/accessory/holster(src)
 	new /obj/item/storage/bag/garment/blueshield(src)
+	new /obj/item/sensor_device(src)
 
 /obj/structure/closet/secure_closet/ntrep
 	name = "\improper Nanotrasen Representative's locker"
 	req_access = list(ACCESS_NTREP)
-	icon_state = "ntr"
-	open_door_sprite = "hop_door"
-	icon_opened = "hop_open"
+	icon_state = "hop"
+	closed_door_sprite = "ntr"
 
 /obj/structure/closet/secure_closet/ntrep/populate_contents()
 	new /obj/item/book/manual/wiki/faxes(src)
@@ -179,7 +182,7 @@
 	name = "detective's cabinet"
 	req_access = list(ACCESS_FORENSICS_LOCKERS)
 	icon_state = "cabinet"
-	open_door_sprite = "cabinet_door"
+	door_anim_time = 0
 	resistance_flags = FLAMMABLE
 	max_integrity = 70
 	open_sound = 'sound/machines/wooden_closet_open.ogg'
@@ -196,7 +199,7 @@
 	new /obj/item/ammo_box/magazine/detective/speedcharger(src)
 	new /obj/effect/spawner/detgun(src)
 	new /obj/item/flashlight/seclite(src)
-	new /obj/item/holosign_creator/security(src)
+	new /obj/item/holosign_creator/detective(src)
 	new /obj/item/taperecorder(src)
 	new /obj/item/storage/box/tapes(src)
 
@@ -216,9 +219,48 @@
 
 /obj/structure/closet/secure_closet/brig/populate_contents()
 	new /obj/item/clothing/under/color/orange/prison(src)
+	new /obj/item/clothing/under/color/jumpskirt/orange/prison(src)
 	new /obj/item/clothing/shoes/orange(src)
 	new /obj/item/card/id/prisoner/random(src)
 	new /obj/item/radio/headset(src)
+
+/obj/structure/closet/secure_closet/brig/temp
+	desc = "A locker connected to the cell's timer system, used to store prisoner belongings. It unlocks automatically once the sentence has been served."
+
+/obj/structure/closet/secure_closet/brig/temp/populate_contents()
+	return
+
+/obj/structure/closet/secure_closet/brig/temp/cell_1
+	name = "Cell 1 Locker"
+	id = "Cell 1"
+
+/obj/structure/closet/secure_closet/brig/temp/cell_2
+	name = "Cell 2 Locker"
+	id = "Cell 2"
+
+/obj/structure/closet/secure_closet/brig/temp/cell_3
+	name = "Cell 3 Locker"
+	id = "Cell 3"
+
+/obj/structure/closet/secure_closet/brig/temp/cell_4
+	name = "Cell 4 Locker"
+	id = "Cell 4"
+
+/obj/structure/closet/secure_closet/brig/temp/cell_5
+	name = "Cell 5 Locker"
+	id = "Cell 5"
+
+/obj/structure/closet/secure_closet/brig/temp/cell_6
+	name = "Cell 6 Locker"
+	id = "Cell 6"
+
+/obj/structure/closet/secure_closet/brig/temp/cell_7
+	name = "Cell 7 Locker"
+	id = "Cell 7"
+
+/obj/structure/closet/secure_closet/brig/temp/cell_8
+	name = "Cell 8 Locker"
+	id = "Cell 8"
 
 /obj/structure/closet/secure_closet/brig/gulag
 	name = "labor camp locker"
@@ -258,7 +300,7 @@
 	name = "\improper Magistrate's locker"
 	req_access = list(ACCESS_MAGISTRATE)
 	icon_state = "magi"
-	open_door_sprite = "chaplain_door"
+	opened_door_sprite = "chaplain"
 
 /obj/structure/closet/secure_closet/magistrate/populate_contents()
 	new /obj/item/book/manual/wiki/faxes(src)
@@ -269,15 +311,15 @@
 	new /obj/item/gavelblock(src)
 	new /obj/item/gavelhammer(src)
 	new /obj/item/clothing/accessory/medal/legal(src)
-	new /obj/item/clothing/accessory/lawyers_badge(src)
+	new /obj/item/clothing/accessory/legal_badge(src)
 	new /obj/item/storage/bag/garment/magistrate(src)
 
 /obj/structure/closet/secure_closet/iaa
 	name = "internal affairs locker"
-	req_access = list(ACCESS_LAWYER)
-	icon_opened = "magi_open"
-	icon_state = "iaa"
-	open_door_sprite = "chaplain_door"
+	req_access = list(ACCESS_INTERNAL_AFFAIRS)
+	icon_state = "magi"
+	opened_door_sprite = "chaplain"
+	closed_door_sprite = "iaa"
 
 /obj/structure/closet/secure_closet/iaa/populate_contents()
 	new /obj/item/book/manual/wiki/faxes(src)
@@ -288,3 +330,4 @@
 	new /obj/item/storage/briefcase(src)
 	new /obj/item/radio/headset/headset_iaa(src)
 	new /obj/item/radio/headset/headset_iaa(src)
+	new /obj/item/clothing/accessory/legal_badge/iaa(src)

@@ -3,6 +3,10 @@
 	desc = "Effectively impervious to conventional methods of destruction."
 	explosion_block = 50
 
+/turf/simulated/wall/indestructible/Initialize(mapload)
+	. = ..()
+	RegisterSignal(src, COMSIG_ATTACK_BY, TYPE_PROC_REF(/datum, signal_cancel_attack_by))
+
 /turf/simulated/wall/indestructible/dismantle_wall(devastated = 0, explode = 0)
 	return
 
@@ -16,6 +20,7 @@
 	return
 
 /turf/simulated/wall/indestructible/ex_act(severity)
+	SEND_SIGNAL(src, COMSIG_ATOM_EX_ACT, severity)
 	return
 
 /turf/simulated/wall/indestructible/blob_act(obj/structure/blob/B)
@@ -31,9 +36,6 @@
 	return
 
 /turf/simulated/wall/indestructible/burn_down()
-	return
-
-/turf/simulated/wall/indestructible/attackby(obj/item/I, mob/user, params)
 	return
 
 /turf/simulated/wall/indestructible/attack_hand(mob/user)
@@ -260,6 +262,38 @@ GLOBAL_DATUM(title_splash, /turf/simulated/wall/indestructible/splashscreen)
 	smoothing_groups = list(SMOOTH_GROUP_SIMULATED_TURFS, SMOOTH_GROUP_WALLS, SMOOTH_GROUP_REINFORCED_WALLS)
 	canSmoothWith = list(SMOOTH_GROUP_WALLS, SMOOTH_GROUP_REGULAR_WALLS, SMOOTH_GROUP_REINFORCED_WALLS)
 
+/turf/simulated/wall/indestructible/titanium
+	icon = 'icons/turf/walls/plastinum_wall.dmi'
+	icon_state = "plastinum_wall-0"
+	base_icon_state = "plastinum_wall"
+	flags_ricochet = RICOCHET_SHINY | RICOCHET_HARD
+	smoothing_flags = SMOOTH_BITMASK | SMOOTH_DIAGONAL_CORNERS
+	smoothing_groups = list(SMOOTH_GROUP_TITANIUM_WALLS, SMOOTH_GROUP_WINDOW_FULLTILE_SHUTTLE)
+	canSmoothWith = list(SMOOTH_GROUP_TITANIUM_WALLS, SMOOTH_GROUP_AIRLOCK, SMOOTH_GROUP_SHUTTLE_PARTS, SMOOTH_GROUP_WINDOW_FULLTILE_SHUTTLE)
+
+/turf/simulated/wall/indestructible/titanium/nodiagonal
+	icon_state = "map-shuttle_nd"
+	smoothing_flags = SMOOTH_BITMASK
+
+/turf/simulated/wall/indestructible/titanium/nosmooth
+	icon_state = "plastinum_wall"
+	smoothing_flags = NONE
+
+/turf/simulated/wall/indestructible/titanium/tileblend
+	fixed_underlay = list("icon" = 'icons/turf/floors.dmi', "icon_state" = "darkredfull")
+
+/turf/simulated/wall/indestructible/titanium/soviet
+	name = "\improper USSP wall"
+	desc = "Like regular titanium, but able to deflect capitalist aggressors!"
+
+/turf/simulated/wall/indestructible/titanium/soviet/nodiagonal
+	icon_state = "map-shuttle_nd"
+	smoothing_flags = SMOOTH_BITMASK
+
+/turf/simulated/wall/indestructible/titanium/soviet/nosmooth
+	icon_state = "plastinum_wall"
+	smoothing_flags = NONE
+
 /turf/simulated/wall/indestructible/syndicate
 	icon = 'icons/turf/walls/plastitanium_wall.dmi'
 	icon_state = "plastitanium_wall-0"
@@ -267,3 +301,4 @@ GLOBAL_DATUM(title_splash, /turf/simulated/wall/indestructible/splashscreen)
 	smoothing_flags = SMOOTH_BITMASK | SMOOTH_DIAGONAL_CORNERS
 	smoothing_groups = list(SMOOTH_GROUP_SIMULATED_TURFS, SMOOTH_GROUP_WALLS, SMOOTH_GROUP_SYNDICATE_WALLS)
 	canSmoothWith = list(SMOOTH_GROUP_SYNDICATE_WALLS, SMOOTH_GROUP_AIRLOCK, SMOOTH_GROUP_SHUTTLE_PARTS)
+

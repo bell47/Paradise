@@ -1,7 +1,4 @@
-#define STARTUP_STAGE 1
-#define MAIN_STAGE 2
-#define WIND_DOWN_STAGE 3
-#define END_STAGE 4
+
 
 //Used for all kinds of weather, ex. lavaland ash storms.
 SUBSYSTEM_DEF(weather)
@@ -25,7 +22,7 @@ SUBSYSTEM_DEF(weather)
 	// process active weather
 	for(var/V in processing)
 		var/datum/weather/W = V
-		if(W.aesthetic || W.stage != MAIN_STAGE)
+		if(W.aesthetic || W.stage != WEATHER_MAIN_STAGE)
 			continue
 		for(var/i in GLOB.mob_living_list)
 			var/mob/living/L = i
@@ -43,6 +40,10 @@ SUBSYSTEM_DEF(weather)
 		next_hit_by_zlevel["[z]"] = world.time + randTime + initial(W.telegraph_duration)
 
 /datum/controller/subsystem/weather/Initialize()
+	if(!GLOB.configuration.general.enable_default_weather_events)
+		log_debug("disabling default weather events due to configuration")
+		return
+
 	for(var/V in subtypesof(/datum/weather))
 		var/datum/weather/W = V
 		var/probability = initial(W.probability)

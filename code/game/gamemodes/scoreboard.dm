@@ -31,6 +31,8 @@ GLOBAL_VAR(scoreboard) // Variable to save the scoreboard string once it's been 
 	var/score_events_endured = 0
 	/// How many APCs have poor charge?
 	var/score_power_loss = 0
+	/// How many GigaJoules of power did we export?
+	var/score_gigajoules_exported = 0
 	/// How many people got out alive?
 	var/score_escapees = 0
 	/// How many people /didn't/ get out alive?
@@ -100,6 +102,8 @@ GLOBAL_VAR(scoreboard) // Variable to save the scoreboard string once it's been 
 		var/mob/M = _I
 		if(is_station_level(M.z))
 			check_station_player(M)
+		else if(!M.loc)
+			stack_trace("[M] ended up without a location!")
 		else if(SSshuttle.emergency.mode >= SHUTTLE_ENDGAME && istype(get_area(M), SSshuttle.emergency.areaInstance))
 			check_shuttle_player(M)
 
@@ -129,7 +133,7 @@ GLOBAL_VAR(scoreboard) // Variable to save the scoreboard string once it's been 
 
 
 /datum/scoreboard/proc/check_station_player(mob/M)
-	if(!is_station_level(M.z) || M.stat < DEAD)
+	if(!is_station_level(M.z) || M.stat != DEAD)
 		return
 	if(isAI(M))
 		dead_ai = TRUE
@@ -241,7 +245,7 @@ GLOBAL_VAR(scoreboard) // Variable to save the scoreboard string once it's been 
 
 
 	// Generate the score panel
-	var/list/dat = list("<b>Round Statistics and Score</b><br><hr>")
+	var/list/dat = list("<!DOCTYPE html><meta charset='UTF-8'><b>Round Statistics and Score</b><br><hr>")
 	if(SSticker.mode)
 		dat += SSticker.mode.get_scoreboard_stats()
 
@@ -251,6 +255,7 @@ GLOBAL_VAR(scoreboard) // Variable to save the scoreboard string once it's been 
 	<b>Ore Mined:</b> [score_ore_mined] ([points_ore_mined] Points)<br>"}
 	if(score_escapees)
 		dat += "<b>Shuttle Escapees:</b> [score_escapees] ([points_escapees] Points)<br>"
+	dat += "<b>Energy Exported:</b> [score_gigajoules_exported] GigaJoules<br>"
 	dat += "<b>Whole Station Powered:</b> [power_bonus ? "Yes" : "No"] ([power_bonus * 2500] Points)<br>"
 	dat += "<b>Whole Station Cleaned:</b> [mess_bonus ? "Yes" : "No"] ([mess_bonus * 1500] Points)<br><br>"
 
@@ -307,7 +312,7 @@ GLOBAL_VAR(scoreboard) // Variable to save the scoreboard string once it's been 
 	for(var/mob/E in GLOB.player_list)
 		if(E.client)
 			to_chat(E, "<b>The crew's final score is:</b>")
-			to_chat(E, "<b><font size='4'><a href='?src=[E.UID()];scoreboard=1'>[crewscore]</a></font></b>")
+			to_chat(E, "<b><font size='4'><a href='byond://?src=[E.UID()];scoreboard=1'>[crewscore]</a></font></b>")
 			if(!E.get_preference(PREFTOGGLE_DISABLE_SCOREBOARD))
 				E << browse(GLOB.scoreboard, "window=roundstats;size=500x600")
 

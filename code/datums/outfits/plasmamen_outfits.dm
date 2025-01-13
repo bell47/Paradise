@@ -70,6 +70,12 @@
 	head = /obj/item/clothing/head/helmet/space/plasmaman/cargo
 	uniform = /obj/item/clothing/under/plasmaman/cargo
 
+/datum/outfit/plasmaman/expedition
+	name = "Plasmaman Expedition"
+
+	head = /obj/item/clothing/head/helmet/space/plasmaman/expedition
+	uniform = /obj/item/clothing/under/plasmaman/expedition
+
 /datum/outfit/plasmaman/mining
 	name = "Plasmaman Mining"
 
@@ -182,5 +188,12 @@
 
 /datum/outfit/plasmaman/assistant
 	name = "Assistant Plasmaman"
+
 	head = /obj/item/clothing/head/helmet/space/plasmaman/assistant
 	uniform = /obj/item/clothing/under/plasmaman/assistant
+
+/datum/outfit/plasmaman/trainer
+	name = "Plasmaman Career Trainer"
+
+	head = /obj/item/clothing/head/helmet/space/plasmaman/trainer
+	uniform = /obj/item/clothing/under/plasmaman/trainer

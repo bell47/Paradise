@@ -1,5 +1,5 @@
 // This could probably be an aoe spell but it's a little cursed, so I'm not touching it
-/obj/effect/proc_holder/spell/spacetime_dist
+/datum/spell/spacetime_dist
 	name = "Spacetime Distortion"
 	desc = "Entangle the strings of space-time in an area around you, \
 		randomizing the layout and making proper movement impossible. The strings vibrate... \
@@ -7,7 +7,6 @@
 	sound = 'sound/magic/strings.ogg'
 	action_icon_state = "spacetime"
 
-	school = "transmutation"
 	base_cooldown = 30 SECONDS
 	clothes_req = TRUE
 	invocation = "none"
@@ -25,23 +24,23 @@
 	/// A lazylist of all scramble effects this spell has created.
 	var/list/effects
 
-/obj/effect/proc_holder/spell/spacetime_dist/Destroy()
+/datum/spell/spacetime_dist/Destroy()
 	QDEL_LIST_CONTENTS(effects)
 	return ..()
 
-/obj/effect/proc_holder/spell/spacetime_dist/create_new_targeting()
+/datum/spell/spacetime_dist/create_new_targeting()
 	var/datum/spell_targeting/spiral/targeting = new()
 	targeting.range = scramble_radius + 3 * spell_level
 	return targeting
 
-/obj/effect/proc_holder/spell/spacetime_dist/on_purchase_upgrade()
+/datum/spell/spacetime_dist/on_purchase_upgrade()
 	. = ..()
 	targeting = create_new_targeting()
 
-/obj/effect/proc_holder/spell/spacetime_dist/cast_check(charge_check = TRUE, start_recharge = TRUE, mob/user = usr)
+/datum/spell/spacetime_dist/cast_check(charge_check = TRUE, start_recharge = TRUE, mob/user = usr)
 	return ..() && ready
 
-/obj/effect/proc_holder/spell/spacetime_dist/cast(list/targets, mob/user = usr)
+/datum/spell/spacetime_dist/cast(list/targets, mob/user = usr)
 	. = ..()
 	var/list/turf/to_switcharoo = targets
 	if(!length(to_switcharoo))
@@ -64,24 +63,26 @@
 		effects += effect_b
 
 
-/obj/effect/proc_holder/spell/spacetime_dist/after_cast(list/targets, mob/user)
+/datum/spell/spacetime_dist/after_cast(list/targets, mob/user)
 	. = ..()
 	addtimer(CALLBACK(src, PROC_REF(clean_turfs)), duration)
 
 /// Callback which cleans up our effects list after the duration expires.
-/obj/effect/proc_holder/spell/spacetime_dist/proc/clean_turfs()
+/datum/spell/spacetime_dist/proc/clean_turfs()
 	QDEL_LIST_CONTENTS(effects)
 	ready = TRUE
 
 /obj/effect/cross_action
 	name = "cross me"
-	desc = "for crossing"
+	desc = "for crossing."
 	anchored = TRUE
 
 /obj/effect/cross_action/spacetime_dist
 	name = "spacetime distortion"
 	desc = "A distortion in spacetime. You can hear faint music..."
 	icon_state = "nothing"
+	/// A flags which save people from being thrown about
+	var/antimagic_flags = MAGIC_RESISTANCE
 	/// A flags which save people from being thrown about
 	var/obj/effect/cross_action/spacetime_dist/linked_dist
 	/// Used to prevent an infinite loop in the space tiime continuum
@@ -94,7 +95,18 @@
 /obj/effect/cross_action/singularity_pull()
 	return
 
+/obj/effect/cross_action/spacetime_dist/Initialize(mapload)
+	. = ..()
+	var/static/list/loc_connections = list(
+		COMSIG_ATOM_ENTERED = PROC_REF(on_atom_entered),
+	)
+	AddElement(/datum/element/connect_loc, loc_connections)
+
 /obj/effect/cross_action/spacetime_dist/proc/walk_link(atom/movable/AM)
+	if(ismob(AM))
+		var/mob/M = AM
+		if(M.can_block_magic(antimagic_flags, charge_cost = 0))
+			return
 	if(linked_dist && walks_left > 0)
 		flick("purplesparkles", src)
 		linked_dist.get_walker(AM)
@@ -106,11 +118,11 @@
 	AM.forceMove(get_turf(src))
 	cant_teleport = FALSE
 
-/obj/effect/cross_action/spacetime_dist/Crossed(atom/movable/AM, oldloc)
+/obj/effect/cross_action/spacetime_dist/proc/on_atom_entered(atom/source, atom/movable/entered, turf/old_loc)
 	if(!cant_teleport)
-		walk_link(AM)
+		walk_link(entered)
 
-/obj/effect/cross_action/spacetime_dist/attackby(obj/item/W, mob/user, params)
+/obj/effect/cross_action/spacetime_dist/attackby__legacy__attackchain(obj/item/W, mob/user, params)
 	if(user.drop_item(W))
 		walk_link(W)
 	else
@@ -123,4 +135,5 @@
 /obj/effect/cross_action/spacetime_dist/Destroy()
 	cant_teleport = TRUE
 	linked_dist = null
+	RemoveElement(/datum/element/connect_loc)
 	return ..()

@@ -11,6 +11,8 @@
 	var/remaining_contam
 	/// Higher than 1 makes it drop off faster, 0.5 makes it drop off half etc
 	var/range_modifier
+	/// The distance from the source point the wave can cover without losing any strength.
+	var/source_radius
 	/// The direction of movement
 	var/move_dir
 	/// The directions to the side of the wave, stored for easy looping
@@ -18,7 +20,7 @@
 	/// Whether or not this radiation wave can create contaminated objects
 	var/can_contaminate
 
-/datum/radiation_wave/New(atom/_source, dir, _intensity = 0, _range_modifier = RAD_DISTANCE_COEFFICIENT, _can_contaminate = TRUE)
+/datum/radiation_wave/New(atom/_source, dir, _intensity = 0, _range_modifier = RAD_DISTANCE_COEFFICIENT, _can_contaminate = TRUE, _source_radius = 0)
 
 	source = "[_source] \[[_source.UID()]\]"
 
@@ -33,7 +35,7 @@
 	remaining_contam = intensity
 	range_modifier = _range_modifier
 	can_contaminate = _can_contaminate
-
+	source_radius = _source_radius
 	START_PROCESSING(SSradiation, src)
 
 /datum/radiation_wave/Destroy()
@@ -50,8 +52,8 @@
 	var/list/atoms = get_rad_atoms()
 
 	var/strength
-	if(steps > 1)
-		strength = INVERSE_SQUARE(intensity, max(range_modifier * steps, 1), 1)
+	if(steps > source_radius + 1)
+		strength = INVERSE_SQUARE(intensity, max(range_modifier * (steps - source_radius), 1), 1)
 	else
 		strength = intensity
 
@@ -90,7 +92,7 @@
 		width--
 	width = 1 + (2 * width)
 
-	for(var/k in 1 to atoms.len)
+	for(var/k in 1 to length(atoms))
 		var/atom/thing = atoms[k]
 		if(!thing)
 			continue
@@ -119,7 +121,7 @@
 			/obj/structure/cable,
 			/obj/machinery/atmospherics,
 			/obj/item/ammo_casing,
-			/obj/item/implant,
+			/obj/item/bio_chip,
 			/obj/singularity,
 			))
 		if(!can_contaminate || !can_contam || blacklisted[thing.type])

@@ -1,5 +1,6 @@
 /obj/machinery/chem_dispenser
 	name = "chem dispenser"
+	desc = "For making chemicals, medicine, and explosions."
 	density = TRUE
 	anchored = TRUE
 	icon = 'icons/obj/chemical.dmi'
@@ -60,9 +61,10 @@
 	dispensable_reagents = list(
 		"mutagen",
 		"saltpetre",
-		"eznutriment",
-		"left4zednutriment",
-		"robustharvestnutriment",
+		"eznutrient",
+		"mutrient",
+		"left4zednutrient",
+		"robustharvestnutrient",
 		"water",
 		"atrazine",
 		"pestkiller",
@@ -132,7 +134,7 @@
 	icon_state = "[initial(icon_state)][beaker ? "_working" : ""]"
 
 /obj/machinery/chem_dispenser/ex_act(severity)
-	if(severity < 3)
+	if(severity < EXPLODE_LIGHT)
 		if(beaker)
 			beaker.ex_act(severity)
 		..()
@@ -142,11 +144,14 @@
 	if(A == beaker)
 		beaker = null
 
-/obj/machinery/chem_dispenser/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = FALSE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
+/obj/machinery/chem_dispenser/ui_state(mob/user)
+	return GLOB.default_state
+
+/obj/machinery/chem_dispenser/ui_interact(mob/user, datum/tgui/ui = null)
 	// update the ui if it exists, returns null if no ui is passed/found
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "ChemDispenser", ui_title, 390, 655)
+		ui = new(user, src, "ChemDispenser", ui_title)
 		ui.open()
 
 /obj/machinery/chem_dispenser/ui_data(mob/user)
@@ -160,7 +165,7 @@
 
 	var/beakerContents[0]
 	var/beakerCurrentVolume = 0
-	if(beaker && beaker.reagents && beaker.reagents.reagent_list.len)
+	if(beaker && beaker.reagents && length(beaker.reagents.reagent_list))
 		for(var/datum/reagent/R in beaker.reagents.reagent_list)
 			beakerContents.Add(list(list("name" = R.name, "id"=R.id, "volume" = R.volume))) // list in a list because Byond merges the first list...
 			beakerCurrentVolume += R.volume
@@ -229,25 +234,28 @@
 
 	add_fingerprint(usr)
 
-/obj/machinery/chem_dispenser/attackby(obj/item/I, mob/user, params)
-	if(exchange_parts(user, I))
+/obj/machinery/chem_dispenser/attackby__legacy__attackchain(obj/item/I, mob/user, params)
+	if(istype(I, /obj/item/storage/part_replacer))
+		. = ..()
 		SStgui.update_uis(src)
 		return
 
-	if(isrobot(user))
-		return
-
-	if((istype(I, /obj/item/reagent_containers/glass) || istype(I, /obj/item/reagent_containers/food/drinks)) && user.a_intent != INTENT_HARM)
+	if((istype(I, /obj/item/reagent_containers/glass) || istype(I, /obj/item/reagent_containers/drinks)) && user.a_intent != INTENT_HARM)
 		if(panel_open)
 			to_chat(user, "<span class='notice'>Close the maintenance panel first.</span>")
 			return
+
 		if(!user.drop_item())
 			to_chat(user, "<span class='warning'>[I] is stuck to you!</span>")
 			return
+
 		I.forceMove(src)
 		if(beaker)
-			user.put_in_hands(beaker)
-			to_chat(user, "<span class='notice'>You swap [I] with [beaker].</span>")
+			to_chat(usr, "<span class='notice'>You swap [I] with [beaker].</span>")
+			if(Adjacent(usr) && !issilicon(usr)) //Prevents telekinesis from putting in hand
+				user.put_in_hands(beaker)
+			else
+				beaker.forceMove(loc)
 		else
 			to_chat(user, "<span class='notice'>You set [I] on the machine.</span>")
 		beaker = I
@@ -297,6 +305,12 @@
 	default_unfasten_wrench(user, I, 4 SECONDS)
 
 /obj/machinery/chem_dispenser/attack_ai(mob/user)
+	if(isdrone(user))
+		var/mob/living/silicon/robot/drone/drone = user
+		if(!drone.emagged)
+			// There's nothing a drone can do here that wouldn't violate their laws and/or the rules.
+			to_chat(user, "<span class='warning'>Your safety protocols refuse to connect to [src].</span>")
+			return
 	return attack_hand(user)
 
 /obj/machinery/chem_dispenser/attack_ghost(mob/user)
@@ -332,7 +346,7 @@
 	ui_title = "Soda Dispens-o-matic"
 	dispensable_reagents = list("water", "ice", "milk", "soymilk", "coffee", "tea", "hot_coco", "cola", "spacemountainwind", "dr_gibb", "space_up",
 	"tonic", "sodawater", "lemon_lime", "grapejuice", "sugar", "orangejuice", "lemonjuice", "limejuice", "tomatojuice", "banana",
-	"watermelonjuice", "carrotjuice", "potato", "berryjuice")
+	"watermelonjuice", "pineapplejuice", "cream", "berryjuice")
 	upgrade_reagents = list("bananahonk", "milkshake", "cafe_latte", "cafe_mocha", "triple_citrus", "icecoffe","icetea")
 	hacked_reagents = list("thirteenloko")
 	hack_message = "You change the mode from 'McNano' to 'Pizza King'."
@@ -368,7 +382,7 @@
 	name = "booze dispenser"
 	ui_title = "Booze Portal 9001"
 	desc = "A technological marvel, supposedly able to mix just the mixture you'd like to drink the moment you ask for one."
-	dispensable_reagents = list("ice", "cream", "cider", "beer", "kahlua", "whiskey", "wine", "vodka", "gin", "rum", "tequila", "vermouth", "cognac", "ale", "mead", "synthanol")
+	dispensable_reagents = list("ice", "cream", "cider", "beer", "kahlua", "whiskey", "wine", "vodka", "gin", "rum", "tequila", "vermouth", "cognac", "ale", "mead", "synthanol", "lager", "stout")
 	upgrade_reagents = list("iced_beer", "irishcream", "manhattan", "antihol", "synthignon", "bravebull")
 	hacked_reagents = list("goldschlager", "patron", "absinthe", "ethanol", "nothing", "sake")
 	hack_message = "You disable the 'nanotrasen-are-cheap-bastards' lock, enabling hidden and very expensive boozes."
@@ -417,8 +431,8 @@
 	var/efficiency = 0.2
 	var/recharge_rate = 1 // Keep this as an integer
 
-/obj/item/handheld_chem_dispenser/Initialize()
-	..()
+/obj/item/handheld_chem_dispenser/Initialize(mapload)
+	. = ..()
 	cell = new(src)
 	dispensable_reagents = sortList(dispensable_reagents)
 	current_reagent = pick(dispensable_reagents)
@@ -432,7 +446,7 @@
 /obj/item/handheld_chem_dispenser/get_cell()
 	return cell
 
-/obj/item/handheld_chem_dispenser/afterattack(obj/target, mob/user, proximity)
+/obj/item/handheld_chem_dispenser/afterattack__legacy__attackchain(obj/target, mob/user, proximity)
 	if(!proximity || !current_reagent || !amount)
 		return
 
@@ -456,17 +470,20 @@
 			if(!target.reagents.isolate_reagent(current_reagent))
 				to_chat(user, "<span class='notice'>You remove all but [current_reagent] from [target].</span>")
 
-/obj/item/handheld_chem_dispenser/attack_self(mob/user)
+/obj/item/handheld_chem_dispenser/attack_self__legacy__attackchain(mob/user)
 	if(cell)
 		ui_interact(user)
 	else
 		to_chat(user, "<span class='warning'>[src] lacks a power cell!</span>")
 
 
-/obj/item/handheld_chem_dispenser/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = FALSE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.inventory_state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/item/handheld_chem_dispenser/ui_state(mob/user)
+	return GLOB.inventory_state
+
+/obj/item/handheld_chem_dispenser/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "HandheldChemDispenser", name, 390, 500)
+		ui = new(user, src, "HandheldChemDispenser", name)
 		ui.open()
 
 /obj/item/handheld_chem_dispenser/ui_data(mob/user)
@@ -553,7 +570,7 @@
 	update_icon(UPDATE_OVERLAYS)
 	return TRUE
 
-/obj/item/handheld_chem_dispenser/attackby(obj/item/W, mob/user, params)
+/obj/item/handheld_chem_dispenser/attackby__legacy__attackchain(obj/item/W, mob/user, params)
 	if(istype(W, /obj/item/stock_parts/cell))
 		var/obj/item/stock_parts/cell/C = W
 		if(cell)
@@ -562,9 +579,8 @@
 			if(C.maxcharge < 100)
 				to_chat(user, "<span class='notice'>[src] requires a higher capacity cell.</span>")
 				return
-			if(!user.unEquip(W))
+			if(!user.transfer_item_to(W, src))
 				return
-			W.loc = src
 			cell = W
 			to_chat(user, "<span class='notice'>You install a cell in [src].</span>")
 			update_icon(UPDATE_OVERLAYS)
@@ -594,16 +610,17 @@
 	is_drink = TRUE
 	dispensable_reagents = list("water", "ice", "milk", "soymilk", "coffee", "tea", "hot_coco", "cola", "spacemountainwind", "dr_gibb", "space_up",
 	"tonic", "sodawater", "lemon_lime", "grapejuice", "sugar", "orangejuice", "lemonjuice", "limejuice", "tomatojuice", "banana",
-	"watermelonjuice", "carrotjuice", "potato", "berryjuice")
+	"watermelonjuice", "pineapplejuice", "cream", "berryjuice")
 
 /obj/item/handheld_chem_dispenser/botanical
 	name = "handheld botanical chemical dispenser"
 	dispensable_reagents = list(
 		"mutagen",
 		"saltpetre",
-		"eznutriment",
-		"left4zednutriment",
-		"robustharvestnutriment",
+		"eznutrient",
+		"mutrient",
+		"left4zednutrient",
+		"robustharvestnutrient",
 		"water",
 		"atrazine",
 		"pestkiller",

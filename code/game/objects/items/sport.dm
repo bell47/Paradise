@@ -15,12 +15,12 @@
 	/// Whether `attack_self` will move ("dribble") it to the other hand
 	var/dribbleable = FALSE // Most balls do not have a dribble animation
 
-/obj/item/beach_ball/attack_self(mob/user)
+/obj/item/beach_ball/attack_self__legacy__attackchain(mob/user)
 	if(!dribbleable)
 		return
 
 	if(!user.get_inactive_hand()) // We ballin
-		user.unEquip(src)
+		user.unequip(src)
 		user.put_in_inactive_hand(src)
 	else
 		to_chat(user, "<span class='warning'>You can't dribble to an occupied hand!</span>")
@@ -46,7 +46,7 @@
 	. = ..()
 	var/mob/living/carbon/human/M = hit_atom
 	if(ishuman(hit_atom) && (M.wear_suit?.type in suit_types))
-		if(M.r_hand == src || M.l_hand == src)
+		if(M.is_holding(src))
 			return
 		playsound(src, 'sound/items/dodgeball.ogg', 50, 1)
 		M.KnockDown(6 SECONDS)
@@ -67,9 +67,9 @@
 	icon_state = "hoop"
 	anchored = TRUE
 	density = TRUE
-	pass_flags = LETPASSTHROW
+	pass_flags_self = LETPASSTHROW | PASSTAKE
 
-/obj/structure/holohoop/attackby(obj/item/W, mob/user, params)
+/obj/structure/holohoop/attackby__legacy__attackchain(obj/item/W, mob/user, params)
 	if(istype(W, /obj/item/grab) && get_dist(src, user) <= 1)
 		var/obj/item/grab/G = W
 		if(G.state < GRAB_AGGRESSIVE)
@@ -86,8 +86,9 @@
 		return
 
 /obj/structure/holohoop/hitby(atom/movable/AM, skipcatch, hitpush, blocked, datum/thrownthing/throwingdatum)
-	if(isitem(AM) && !istype(AM, /obj/item/projectile))
-		if(prob(50) || HAS_TRAIT(throwingdatum.thrower, TRAIT_BADASS))
+	if(isitem(AM) && !isprojectile(AM))
+		var/atom/movable/thrower = throwingdatum?.get_thrower()
+		if(prob(50) || HAS_TRAIT(thrower, TRAIT_BADASS))
 			AM.forceMove(get_turf(src))
 			visible_message("<span class='notice'>Swish! [AM] lands in [src].</span>")
 		else

@@ -11,7 +11,7 @@
  */
 /obj/structure/filingcabinet
 	name = "filing cabinet"
-	desc = "A large cabinet with drawers."
+	desc = "A large cabinet with drawers for holding only the finest papers, photos, and folders."
 	icon = 'icons/obj/bureaucracy.dmi'
 	icon_state = "filingcabinet"
 	density = TRUE
@@ -32,18 +32,19 @@
 	name = "autopsy reports drawer"
 	desc = "A large drawer for holding autopsy reports."
 
-/obj/structure/filingcabinet/filingcabinet	//not changing the path to avoid unecessary map issues, but please don't name stuff like this in the future -Pete
+/// not changing the path to avoid unecessary map issues, but please don't name stuff like this in the future -Pete
+/obj/structure/filingcabinet/filingcabinet
 	icon_state = "tallcabinet"
 
 
 /obj/structure/filingcabinet/Initialize(mapload)
-	..()
+	. = ..()
 	for(var/obj/item/I in loc)
 		if(istype(I, /obj/item/paper) || istype(I, /obj/item/folder) || istype(I, /obj/item/photo))
 			I.loc = src
 
 
-/obj/structure/filingcabinet/attackby(obj/item/O, mob/user, params)
+/obj/structure/filingcabinet/attackby__legacy__attackchain(obj/item/O, mob/user, params)
 	if(insert(O, user))
 		return
 	if(user.a_intent != INTENT_HARM)
@@ -83,10 +84,13 @@
 			return
 	to_chat(user, "<span class='notice'>You find nothing in [src].</span>")
 
-/obj/structure/filingcabinet/ui_interact(mob/user, ui_key, datum/tgui/ui, force_open, datum/tgui/master_ui, datum/ui_state/state)
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/structure/filingcabinet/ui_state(mob/user)
+	return GLOB.default_state
+
+/obj/structure/filingcabinet/ui_interact(mob/user, datum/tgui/ui)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "FilingCabinet",  name, 400, 300, master_ui, state)
+		ui = new(user, src, "FilingCabinet",  name)
 		ui.open()
 
 /obj/structure/filingcabinet/ui_data(mob/user)
@@ -122,7 +126,7 @@
 /obj/structure/filingcabinet/proc/insert(obj/item/O, mob/user)
 	if(!is_type_in_list(O, accepted_items))
 		return
-	if(!user.unEquip(O))
+	if(!user.unequip(O))
 		return
 	to_chat(user, "<span class='notice'>You put [O.name] in [src].</span>")
 	O.loc = src

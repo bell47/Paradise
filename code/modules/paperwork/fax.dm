@@ -18,7 +18,7 @@ GLOBAL_LIST_EMPTY(adminfaxes)
 	var/list/reply_to = null
 
 /datum/fax/admin/New()
-	GLOB.adminfaxes += src
+	return
 
 // Fax panel - lets admins check all faxes sent during the round
 /client/proc/fax_panel()
@@ -30,13 +30,13 @@ GLOBAL_LIST_EMPTY(adminfaxes)
 	return
 
 /datum/admins/proc/fax_panel(mob/living/user)
-	var/html = "<A align='right' href='?src=[UID()];refreshfaxpanel=1'>Refresh</A>"
-	html += "<A align='right' href='?src=[UID()];AdminFaxCreate=1;faxtype=Administrator'>Create Fax</A>"
+	var/html = "<A align='right' href='byond://?src=[UID()];refreshfaxpanel=1'>Refresh</A>"
+	html += "<A align='right' href='byond://?src=[UID()];AdminFaxCreate=1;faxtype=Administrator'>Create Fax</A>"
 
 	html += "<div class='block'>"
 	html += "<h2>Admin Faxes</h2>"
 	html += "<table>"
-	html += "<tr style='font-weight:bold;'><td width='150px'>Name</td><td width='150px'>From Department</td><td width='150px'>To Department</td><td width='75px'>Sent At</td><td width='150px'>Sent By</td><td width='50px'>View</td><td width='50px'>Reply</td><td width='75px'>Replied To</td></td></tr>"
+	html += "<tr style='font-weight:bold;'><td width='150px'>Name</td><td width='150px'>From Department</td><td width='150px'>To Department</td><td width='75px'>Sent At</td><td width='150px'>Sent By</td><td width='50px'>View</td><td width='50px'>Reply</td><td width='75px'>Replied To</td></tr>"
 	for(var/datum/fax/admin/A in GLOB.adminfaxes)
 		html += "<tr>"
 		html += "<td>[A.name]</td>"
@@ -48,16 +48,16 @@ GLOBAL_LIST_EMPTY(adminfaxes)
 			html += "<td>[ADMIN_PP(S,"[S.name]")]</td>"
 		else
 			html += "<td>Unknown</td>"
-		html += "<td><A align='right' href='?src=[UID()];AdminFaxView=\ref[A.message]'>View</A></td>"
+		html += "<td><A align='right' href='byond://?src=[UID()];AdminFaxView=\ref[A.message]'>View</A></td>"
 		if(!A.reply_to)
 			if(A.from_department == "Administrator")
 				html += "<td>N/A</td>"
 			else
-				html += "<td><A align='right' href='?src=[UID()];AdminFaxCreate=\ref[A.sent_by];originfax=\ref[A.origin];faxtype=[A.to_department];replyto=\ref[A.message]'>Reply</A></td>"
+				html += "<td><A align='right' href='byond://?src=[UID()];AdminFaxCreate=\ref[A.sent_by];originfax=\ref[A.origin];faxtype=[A.to_department];replyto=\ref[A.message]'>Reply</A></td>"
 			html += "<td>N/A</td>"
 		else
 			html += "<td>N/A</td>"
-			html += "<td><A align='right' href='?src=[UID()];AdminFaxView=\ref[A.reply_to]'>Original</A></td>"
+			html += "<td><A align='right' href='byond://?src=[UID()];AdminFaxView=\ref[A.reply_to]'>Original</A></td>"
 		html += "</tr>"
 	html += "</table>"
 	html += "</div>"
@@ -65,7 +65,7 @@ GLOBAL_LIST_EMPTY(adminfaxes)
 	html += "<div class='block'>"
 	html += "<h2>Departmental Faxes</h2>"
 	html += "<table>"
-	html += "<tr style='font-weight:bold;'><td width='150px'>Name</td><td width='150px'>From Department</td><td width='150px'>To Department</td><td width='75px'>Sent At</td><td width='150px'>Sent By</td><td width='175px'>View</td></td></tr>"
+	html += "<tr style='font-weight:bold;'><td width='150px'>Name</td><td width='150px'>From Department</td><td width='150px'>To Department</td><td width='75px'>Sent At</td><td width='150px'>Sent By</td><td width='175px'>View</td></tr>"
 	for(var/datum/fax/F in GLOB.faxes)
 		html += "<tr>"
 		html += "<td>[F.name]</td>"
@@ -77,7 +77,7 @@ GLOBAL_LIST_EMPTY(adminfaxes)
 			html += "<td>[ADMIN_PP(S,"[S.name]")]</td>"
 		else
 			html += "<td>Unknown</td>"
-		html += "<td><A align='right' href='?src=[UID()];AdminFaxView=\ref[F.message]'>View</A></td>"
+		html += "<td><A align='right' href='byond://?src=[UID()];AdminFaxView=\ref[F.message]'>View</A></td>"
 		html += "</tr>"
 	html += "</table>"
 	html += "</div>"

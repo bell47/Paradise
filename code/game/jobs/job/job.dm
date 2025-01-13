@@ -3,9 +3,8 @@
 	//The name of the job
 	var/title = "NOPE"
 
-	//Job access. The use of minimal_access or access is determined by a config setting: config.jobs_have_minimal_access
-	var/list/minimal_access = list()		//Useful for servers which prefer to only have access given to the places a job absolutely needs (Larger server population)
-	var/list/access = list()				//Useful for servers which either have fewer players, so each person needs to fill more than one role, or servers which like to give more access, so players can't hide forever in their super secure departments (I'm looking at you, chemistry!)
+	/// Job access. A list of constants from access_defines.dm.
+	var/list/access = list()
 
 	///Job Bitflag, used for Database entries - DO NOT JUST EDIT THESE
 	var/flag = 0
@@ -61,6 +60,7 @@
 	var/hidden_from_job_prefs = FALSE // if true, job preferences screen never shows this job.
 
 	var/admin_only = 0
+	var/mentor_only = 0
 	var/spawn_ert = 0
 	var/syndicate_command = 0
 
@@ -74,8 +74,11 @@
 
 //Only override this proc
 /datum/job/proc/after_spawn(mob/living/carbon/human/H)
+	SEND_GLOBAL_SIGNAL(COMSIG_GLOB_JOB_AFTER_SPAWN, src, H)
+
 
 /datum/job/proc/announce(mob/living/carbon/human/H)
+	return
 
 /datum/job/proc/equip(mob/living/carbon/human/H, visualsOnly = FALSE, announce = TRUE)
 	if(!H)
@@ -92,10 +95,7 @@
 		announce(H)
 
 /datum/job/proc/get_access()
-	if(GLOB.configuration.jobs.jobs_have_minimal_access)
-		return minimal_access.Copy()
-	else
-		return access.Copy()
+	return access.Copy()
 
 //If the configuration option is set to require players to be logged as old enough to play certain jobs, then this proc checks that they are, otherwise it just returns 1
 /datum/job/proc/player_old_enough(client/C)
@@ -209,7 +209,7 @@
 					continue
 
 				if(G.slot)
-					if(H.equip_to_slot_or_del(G.spawn_item(H), G.slot, TRUE))
+					if(H.equip_to_slot_or_del(G.spawn_item(H, H.client.prefs.active_character.get_gear_metadata(G)), G.slot, TRUE))
 						to_chat(H, "<span class='notice'>Equipping you with [G.display_name]!</span>")
 					else
 						gear_leftovers += G
@@ -217,6 +217,7 @@
 					gear_leftovers += G
 
 /datum/outfit/job/post_equip(mob/living/carbon/human/H, visualsOnly = FALSE)
+	. = ..()
 	if(visualsOnly)
 		return
 
@@ -226,9 +227,9 @@
 
 	imprint_pda(H)
 
-	if(gear_leftovers.len)
+	if(length(gear_leftovers))
 		for(var/datum/gear/G in gear_leftovers)
-			var/atom/placed_in = H.equip_or_collect(G.spawn_item(null, H.client.prefs.active_character.loadout_gear[G.display_name]))
+			var/atom/placed_in = H.equip_or_collect(G.spawn_item(null, H.client.prefs.active_character.get_gear_metadata(G)))
 			if(istype(placed_in))
 				if(isturf(placed_in))
 					to_chat(H, "<span class='notice'>Placing [G.display_name] on [placed_in]!</span>")
@@ -281,3 +282,18 @@
 		PDA.ownjob = C.assignment
 		PDA.ownrank = C.rank
 		PDA.name = "PDA-[H.real_name] ([PDA.ownjob])"
+		if(H.client?.prefs.active_character.pda_ringtone)
+			PDA.ttone = H.client.prefs.active_character.pda_ringtone
+
+/datum/outfit/job/on_mind_initialize(mob/living/carbon/human/H)
+	. = ..()
+	var/obj/item/card/id/id = H.wear_id
+	if(!id)
+		return
+	var/datum/job/J = SSjobs.GetJobType(jobtype)
+	if(!J)
+		J = SSjobs.GetJob(H.job)
+	id.assignment = H.mind.role_alt_title ? H.mind.role_alt_title : J.title
+	if(!H.mind.initial_account)
+		return
+	id.associated_account_number = H.mind.initial_account.account_number

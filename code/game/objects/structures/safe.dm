@@ -71,10 +71,16 @@ GLOBAL_LIST_EMPTY(safes)
 	// Combination generation
 	for(var/i in 1 to number_of_tumblers)
 		tumblers.Add(rand(0, 99))
+	if(mapload)
+		addtimer(CALLBACK(src, PROC_REF(take_contents)), 0)
+
+/obj/structure/safe/proc/take_contents()
 	// Put as many items on our turf inside as possible
 	for(var/obj/item/I in loc)
+		if(I.density || I.anchored)
+			continue
 		if(space >= maxspace)
-			return
+			break
 		if(I.w_class + space <= maxspace)
 			space += I.w_class
 			I.forceMove(src)
@@ -147,7 +153,7 @@ GLOBAL_LIST_EMPTY(safes)
 		return TRUE
 
 	if(drill && !broken)
-		switch(alert("What would you like to do?", "Thermal Drill", "Turn [drill_timer ? "Off" : "On"]", "Remove Drill", "Cancel"))
+		switch(tgui_alert(user, "What would you like to do?", "Thermal Drill", list("Turn [drill_timer ? "Off" : "On"]", "Remove Drill", "Cancel")))
 			if("Turn On")
 				if(do_after(user, 2 SECONDS, target = src))
 					drill_timer = addtimer(CALLBACK(src, PROC_REF(drill_open)), time_to_drill, TIMER_STOPPABLE)
@@ -182,7 +188,7 @@ GLOBAL_LIST_EMPTY(safes)
 	else
 		ui_interact(user)
 
-/obj/structure/safe/attackby(obj/item/I, mob/user, params)
+/obj/structure/safe/attackby__legacy__attackchain(obj/item/I, mob/user, params)
 	if(open)
 		if(I.flags && ABSTRACT)
 			return
@@ -203,7 +209,7 @@ GLOBAL_LIST_EMPTY(safes)
 		else
 			to_chat(user, "<span class='warning'>[I] won't fit in [src].</span>")
 	else
-		if(istype(I, /obj/item/clothing/accessory/stethoscope))
+		if(istype(I, /obj/item/clothing/neck/stethoscope))
 			attack_hand(user)
 			return
 		else if(istype(I, /obj/item/thermal_drill))
@@ -221,15 +227,20 @@ GLOBAL_LIST_EMPTY(safes)
 			to_chat(user, "<span class='warning'>You can't put [I] into the safe while it is closed!</span>")
 			return
 
-/obj/structure/safe/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = TRUE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.physical_state)
-	var/datum/asset/safe_assets = get_asset_datum(/datum/asset/simple/safe)
-	safe_assets.send(user)
+/obj/structure/safe/ui_state(mob/user)
+	return GLOB.physical_state
 
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/structure/safe/ui_interact(mob/user, datum/tgui/ui = null)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "Safe", name, 600, 750)
+		ui = new(user, src, "Safe", name)
 		ui.open()
 		ui.set_autoupdate(FALSE)
+
+/obj/structure/safe/ui_assets(mob/user)
+	return list(
+		get_asset_datum(/datum/asset/simple/safe)
+	)
 
 /obj/structure/safe/ui_data(mob/user)
 	var/list/data = list()
@@ -257,14 +268,11 @@ GLOBAL_LIST_EMPTY(safes)
 	var/canhear = FALSE
 	if(ishuman(usr))
 		var/mob/living/carbon/human/H = usr
-		var/list/accessories = H.w_uniform?.accessories
 		if(H.can_hear()) // This is cursed but is_type_in_list somehow fails
-			if(H.is_in_hands(/obj/item/clothing/accessory/stethoscope))
+			if(H.is_in_hands(/obj/item/clothing/neck/stethoscope))
 				canhear = TRUE
-			else
-				for(var/obj/item/clothing/accessory/stethoscope/S in accessories)
-					canhear = TRUE
-					break
+			if(istype(H.neck, /obj/item/clothing/neck/stethoscope))
+				canhear = TRUE
 
 	. = TRUE
 	switch(action)
@@ -334,14 +342,14 @@ GLOBAL_LIST_EMPTY(safes)
 	if(get_dist(src, driller) >= 9)
 		return //You need to be near the drill if you want to get the buff.
 	for(var/mob/living/carbon/human/H in view(9, src))
-		if(H.job in list("Security Officer", "Detective", "Warden", "Head of Security", "Captain", "Clown") || H.mind.special_role == SPECIAL_ROLE_ERT)
+		if((H.job in list("Security Officer", "Detective", "Warden", "Head of Security", "Captain", "Clown")) || H.mind.special_role == SPECIAL_ROLE_ERT)
 			if(H.mind && H.mind.special_role && H.mind.special_role != SPECIAL_ROLE_ERT)
 				continue
 			drill.spotted = TRUE
 			security_assualt_in_progress()
 			return
 	for(var/mob/living/carbon/human/H in view(9, driller))
-		if(H.job in list("Security Officer", "Detective", "Warden", "Head of Security", "Captain", "Clown") || H.mind.special_role == SPECIAL_ROLE_ERT)
+		if((H.job in list("Security Officer", "Detective", "Warden", "Head of Security", "Captain", "Clown")) || H.mind.special_role == SPECIAL_ROLE_ERT)
 			if(H.mind && H.mind.special_role && H.mind.special_role != SPECIAL_ROLE_ERT)
 				continue
 			drill.spotted = TRUE
@@ -352,15 +360,15 @@ GLOBAL_LIST_EMPTY(safes)
 	drill.atom_say("Security spotted. Nanites deployed. Give them <b>hell.</b>")
 	driller.apply_status_effect(STATUS_EFFECT_DRILL_PAYBACK, src)
 	drill.song.start_playing(driller)
-	notify_ghosts("Security assault in progress in [get_area(src)]!", enter_link="<a href=?src=[UID()];follow=1>(Click to jump to!)</a>", source = src, action = NOTIFY_FOLLOW)
+	notify_ghosts("Security assault in progress in [get_area(src)]!", enter_link="<a href=byond://?src=[UID()];follow=1>(Click to jump to!)</a>", source = src, action = NOTIFY_FOLLOW)
 	for(var/mob/dead/observer/O in GLOB.player_list)
-		O.overlay_fullscreen("payback", /obj/screen/fullscreen/payback, 0)
+		O.overlay_fullscreen("payback", /atom/movable/screen/fullscreen/stretch/payback, 0)
 	addtimer(CALLBACK(src, PROC_REF(ghost_payback_phase_2)), 2.7 SECONDS)
 
 /obj/structure/safe/proc/ghost_payback_phase_2()
 	for(var/mob/dead/observer/O in GLOB.player_list)
 		O.clear_fullscreen("payback")
-		O.overlay_fullscreen("payback", /obj/screen/fullscreen/payback, 1)
+		O.overlay_fullscreen("payback", /atom/movable/screen/fullscreen/stretch/payback, 1)
 	addtimer(CALLBACK(src, PROC_REF(clear_payback)), 2 MINUTES)
 
 /obj/structure/safe/proc/clear_payback()
@@ -430,7 +438,7 @@ GLOBAL_LIST_EMPTY(safes)
 	drill_x_offset = -1
 	drill_y_offset = 20
 
-/obj/structure/safe/floor/Initialize()
+/obj/structure/safe/floor/Initialize(mapload)
 	. = ..()
 	var/turf/T = loc
 	if(!T.transparent_floor)

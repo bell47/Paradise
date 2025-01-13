@@ -23,7 +23,7 @@
 #define WIRE_BOLT_LIGHT "Bolt Lights"
 
 // Air alarm
-#define WIRE_SYPHON "Siphon"
+#define WIRE_SIPHON "Siphon"
 #define WIRE_AALARM "Atmospherics Alarm"
 
 // Camera
@@ -46,9 +46,11 @@
 #define WIRE_BOMB_ACTIVATE "Activate" // Will start a bombs timer if pulsed, will hint if pulsed while already active, will stop a timer a bomb on cut.
 
 // Nuclear bomb
-#define WIRE_BOMB_LIGHT "Bomb Light"
-#define WIRE_BOMB_TIMING "Bomb Timing"
-#define WIRE_BOMB_SAFETY "Bomb Safety"
+#define WIRE_NUKE_SAFETY "Safety"
+#define WIRE_NUKE_DETONATOR "Detonator"
+#define WIRE_NUKE_DISARM "Disarm"
+#define WIRE_NUKE_LIGHT "Lights"
+#define WIRE_NUKE_CONTROL "Control Panel"
 
 // Particle accelerator
 #define WIRE_PARTICLE_POWER "Power Toggle" // Toggles whether the PA is on or not.

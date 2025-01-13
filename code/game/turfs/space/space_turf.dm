@@ -16,7 +16,8 @@
 	var/destination_z
 	var/destination_x
 	var/destination_y
-	plane = PLANE_SPACE
+
+	atmos_mode = ATMOS_MODE_SPACE
 
 /turf/space/Initialize(mapload)
 	SHOULD_CALL_PARENT(FALSE)
@@ -73,62 +74,89 @@
 			return
 		set_light(0)
 
-/turf/space/attackby(obj/item/C as obj, mob/user as mob, params)
-	..()
-	if(istype(C, /obj/item/stack/rods))
-		var/obj/item/stack/rods/R = C
+/turf/space/item_interaction(mob/living/user, obj/item/used, list/modifiers)
+	if(istype(used, /obj/item/stack/rods))
+		var/obj/item/stack/rods/R = used
 		var/obj/structure/lattice/L = locate(/obj/structure/lattice, src)
 		var/obj/structure/lattice/catwalk/W = locate(/obj/structure/lattice/catwalk, src)
 		if(W)
 			to_chat(user, "<span class='warning'>There is already a catwalk here!</span>")
-			return
+			return ITEM_INTERACT_COMPLETE
 		if(L)
 			if(R.use(1))
 				to_chat(user, "<span class='notice'>You construct a catwalk.</span>")
 				playsound(src, 'sound/weapons/genhit.ogg', 50, 1)
 				new/obj/structure/lattice/catwalk(src)
+				return ITEM_INTERACT_COMPLETE
 			else
 				to_chat(user, "<span class='warning'>You need two rods to build a catwalk!</span>")
-			return
+				return ITEM_INTERACT_COMPLETE
 		if(R.use(1))
 			to_chat(user, "<span class='notice'>Constructing support lattice...</span>")
 			playsound(src, 'sound/weapons/genhit.ogg', 50, 1)
 			ReplaceWithLattice()
+			return ITEM_INTERACT_COMPLETE
 		else
 			to_chat(user, "<span class='warning'>You need one rod to build a lattice.</span>")
-		return
+			return ITEM_INTERACT_COMPLETE
 
-	if(istype(C, /obj/item/stack/tile/plasteel))
+	if(istype(used, /obj/item/stack/tile/plasteel))
 		var/obj/structure/lattice/L = locate(/obj/structure/lattice, src)
 		if(L)
-			var/obj/item/stack/tile/plasteel/S = C
+			var/obj/item/stack/tile/plasteel/S = used
 			if(S.use(1))
 				qdel(L)
 				playsound(src, 'sound/weapons/genhit.ogg', 50, 1)
 				to_chat(user, "<span class='notice'>You build a floor.</span>")
 				ChangeTurf(/turf/simulated/floor/plating)
+				return ITEM_INTERACT_COMPLETE
 			else
 				to_chat(user, "<span class='warning'>You need one floor tile to build a floor!</span>")
+				return ITEM_INTERACT_COMPLETE
 		else
 			to_chat(user, "<span class='warning'>The plating is going to need some support! Place metal rods first.</span>")
+			return ITEM_INTERACT_COMPLETE
 
 /turf/space/Entered(atom/movable/A as mob|obj, atom/OL, ignoreRest = 0)
 	..()
 	if((!(A) || !(src in A.locs)))
 		return
 
-	if(destination_z && destination_x && destination_y)
-		A.forceMove(locate(destination_x, destination_y, destination_z))
+	if(destination_z && destination_x && destination_y && !A.pulledby && !HAS_TRAIT(A, TRAIT_CURRENTLY_Z_MOVING))
+		var/tx = destination_x
+		var/ty = destination_y
+		var/turf/DT = locate(tx, ty, destination_z)
+		var/itercount = 0
+		while(DT.density || istype(DT.loc, /area/shuttle)) // Extend towards the center of the map, trying to look for a better place to arrive
+			if(itercount++ >= 100)
+				stack_trace("SPACE Z-TRANSIT ERROR: Could not find a safe place to land [A] within 100 iterations.")
+				break
+			if(tx < 128)
+				tx++
+			else
+				tx--
+			if(ty < 128)
+				ty++
+			else
+				ty--
+			DT = locate(tx, ty, destination_z)
 
-		if(isliving(A))
-			var/mob/living/L = A
-			if(L.pulling)
-				var/turf/T = get_step(L.loc,turn(A.dir, 180))
-				L.pulling.forceMove(T)
+		ADD_TRAIT(A, TRAIT_CURRENTLY_Z_MOVING, ROUNDSTART_TRAIT) // roundstart because its robust and won't be removed by someone being an idiot
+		A.forceMove(DT)
+		REMOVE_TRAIT(A, TRAIT_CURRENTLY_Z_MOVING, ROUNDSTART_TRAIT)
 
-		//now we're on the new z_level, proceed the space drifting
-		sleep(0)//Let a diagonal move finish, if necessary
-		A.newtonian_move(A.inertia_dir)
+		itercount = 0
+		var/atom/movable/current_pull = A.pulling
+		while(current_pull)
+			if(itercount > 100)
+				stack_trace("SPACE Z-TRANSIT ERROR: [A] encountered a possible infinite loop while traveling through z-levels.")
+				break
+			var/turf/target_turf = get_step(current_pull.pulledby.loc, REVERSE_DIR(current_pull.pulledby.dir)) || current_pull.pulledby.loc
+			ADD_TRAIT(current_pull, TRAIT_CURRENTLY_Z_MOVING, ROUNDSTART_TRAIT)
+			current_pull.forceMove(target_turf)
+			REMOVE_TRAIT(current_pull, TRAIT_CURRENTLY_Z_MOVING, ROUNDSTART_TRAIT)
+			current_pull = current_pull.pulling
+			itercount++
 
 /turf/space/proc/Sandbox_Spacemove(atom/movable/A as mob|obj)
 	var/cur_x
@@ -147,7 +175,7 @@
 		if(!cur_pos) return
 		cur_x = cur_pos["x"]
 		cur_y = cur_pos["y"]
-		next_x = (--cur_x||GLOB.global_map.len)
+		next_x = (--cur_x||length(GLOB.global_map))
 		y_arr = GLOB.global_map[next_x]
 		target_z = y_arr[cur_y]
 /*
@@ -161,7 +189,7 @@
 			A.z = target_z
 			A.x = world.maxx - 2
 			spawn (0)
-				if((A && A.loc))
+				if(A && A.loc)
 					A.loc.Entered(A)
 	else if(src.x >= world.maxx)
 		if(istype(A, /obj/effect/meteor))
@@ -172,7 +200,7 @@
 		if(!cur_pos) return
 		cur_x = cur_pos["x"]
 		cur_y = cur_pos["y"]
-		next_x = (++cur_x > GLOB.global_map.len ? 1 : cur_x)
+		next_x = (++cur_x > length(GLOB.global_map) ? 1 : cur_x)
 		y_arr = GLOB.global_map[next_x]
 		target_z = y_arr[cur_y]
 /*
@@ -186,7 +214,7 @@
 			A.z = target_z
 			A.x = 3
 			spawn (0)
-				if((A && A.loc))
+				if(A && A.loc)
 					A.loc.Entered(A)
 	else if(src.y <= 1)
 		if(istype(A, /obj/effect/meteor))
@@ -197,7 +225,7 @@
 		cur_x = cur_pos["x"]
 		cur_y = cur_pos["y"]
 		y_arr = GLOB.global_map[cur_x]
-		next_y = (--cur_y||y_arr.len)
+		next_y = (--cur_y||length(y_arr))
 		target_z = y_arr[next_y]
 /*
 		//debug
@@ -210,7 +238,7 @@
 			A.z = target_z
 			A.y = world.maxy - 2
 			spawn (0)
-				if((A && A.loc))
+				if(A && A.loc)
 					A.loc.Entered(A)
 
 	else if(src.y >= world.maxy)
@@ -222,7 +250,7 @@
 		cur_x = cur_pos["x"]
 		cur_y = cur_pos["y"]
 		y_arr = GLOB.global_map[cur_x]
-		next_y = (++cur_y > y_arr.len ? 1 : cur_y)
+		next_y = (++cur_y > length(y_arr) ? 1 : cur_y)
 		target_z = y_arr[next_y]
 /*
 		//debug
@@ -235,7 +263,7 @@
 			A.z = target_z
 			A.y = 3
 			spawn (0)
-				if((A && A.loc))
+				if(A && A.loc)
 					A.loc.Entered(A)
 	return
 

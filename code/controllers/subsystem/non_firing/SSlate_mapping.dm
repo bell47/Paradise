@@ -10,8 +10,21 @@ SUBSYSTEM_DEF(late_mapping)
 	var/list/obj/effect/mazegen/generator/maze_generators = list()
 
 /datum/controller/subsystem/late_mapping/Initialize()
+	// Sort all the air machines we initialized during mapload by name all at once
+	GLOB.air_alarms = sortAtom(GLOB.air_alarms)
+	GLOB.apcs = sortAtom(GLOB.apcs)
+
 	if(length(maze_generators))
+		var/watch = start_watch()
 		log_startup_progress("Generating mazes...")
+
 		for(var/i in maze_generators)
 			var/obj/effect/mazegen/generator/MG = i
 			MG.run_generator()
+
+		var/list/mgcount = length(maze_generators) // Keeping track of this here because we wipe it next line down
+		QDEL_LIST_CONTENTS(maze_generators)
+		var/duration = stop_watch(watch)
+		log_startup_progress("Generated [mgcount] mazes in [duration]s")
+
+	GLOB.spawn_pool_manager.process_pools()

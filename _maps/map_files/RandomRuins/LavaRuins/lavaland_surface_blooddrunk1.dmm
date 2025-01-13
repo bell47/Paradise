@@ -2,56 +2,63 @@
 "a" = (
 /turf/template_noop,
 /area/template_noop)
-"b" = (
-/turf/simulated/mineral/random/volcanic,
-/area/lavaland/surface/outdoors)
 "c" = (
+/obj/effect/mapping_helpers/no_lava,
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "d" = (
 /obj/structure/stone_tile/block{
 	dir = 8
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "e" = (
 /obj/structure/stone_tile{
 	dir = 8
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "f" = (
 /obj/structure/stone_tile/cracked{
 	dir = 1
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "g" = (
 /obj/structure/stone_tile/cracked{
 	dir = 8
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "h" = (
 /obj/structure/stone_tile/block{
 	dir = 4
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "i" = (
 /obj/structure/stone_tile{
 	dir = 4
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "j" = (
 /obj/structure/stone_tile,
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "k" = (
 /obj/structure/stone_tile/cracked{
 	dir = 4
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "l" = (
@@ -59,6 +66,7 @@
 /obj/structure/stone_tile{
 	dir = 4
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "m" = (
@@ -68,22 +76,26 @@
 /obj/structure/stone_tile{
 	dir = 1
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "n" = (
 /obj/structure/stone_tile/block/cracked{
 	dir = 4
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "o" = (
 /obj/structure/stone_tile/block,
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "p" = (
 /obj/structure/stone_tile/block/cracked{
 	dir = 1
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "q" = (
@@ -93,12 +105,13 @@
 /obj/structure/stone_tile{
 	dir = 1
 	},
-/turf/simulated/floor/plating/lava/smooth/mapping_lava,
+/turf/simulated/floor/lava/mapping_lava,
 /area/lavaland/surface/outdoors)
 "r" = (
 /obj/structure/stone_tile/block{
 	dir = 1
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "s" = (
@@ -106,7 +119,7 @@
 /obj/structure/stone_tile/cracked{
 	dir = 4
 	},
-/turf/simulated/floor/plating/lava/smooth/mapping_lava,
+/turf/simulated/floor/lava/mapping_lava,
 /area/lavaland/surface/outdoors)
 "t" = (
 /obj/structure/stone_tile/surrounding/cracked{
@@ -115,20 +128,21 @@
 /mob/living/simple_animal/hostile/megafauna/blood_drunk_miner{
 	dir = 1
 	},
-/turf/simulated/floor/plating/lava/smooth/mapping_lava,
+/turf/simulated/floor/lava/mapping_lava,
 /area/lavaland/surface/outdoors)
 "u" = (
 /obj/structure/stone_tile{
 	dir = 1
 	},
 /obj/structure/stone_tile/block/cracked,
-/turf/simulated/floor/plating/lava/smooth/mapping_lava,
+/turf/simulated/floor/lava/mapping_lava,
 /area/lavaland/surface/outdoors)
 "v" = (
 /obj/structure/stone_tile{
 	dir = 4
 	},
 /obj/structure/stone_tile/cracked,
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "w" = (
@@ -136,7 +150,7 @@
 /obj/structure/stone_tile/block/cracked{
 	dir = 8
 	},
-/turf/simulated/floor/plating/lava/smooth/mapping_lava,
+/turf/simulated/floor/lava/mapping_lava,
 /area/lavaland/surface/outdoors)
 "x" = (
 /obj/structure/stone_tile{
@@ -145,10 +159,16 @@
 /obj/structure/stone_tile/block{
 	dir = 1
 	},
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 "y" = (
 /obj/structure/stone_tile/cracked,
+/obj/effect/mapping_helpers/no_lava,
+/turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
+/area/lavaland/surface/outdoors)
+"J" = (
+/obj/effect/mapping_helpers/no_lava,
 /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface,
 /area/lavaland/surface/outdoors)
 
@@ -156,104 +176,64 @@
 a
 a
 a
-b
-b
-b
-b
-b
-b
-a
-a
-a
+J
+d
+J
+J
+J
+J
+J
 a
 a
 "}
 (2,1,1) = {"
 a
-a
-b
-b
+J
+J
+J
+k
+o
+J
+J
 c
-c
-b
-b
-b
-b
-b
-b
-a
+J
+J
 a
 "}
 (3,1,1) = {"
-b
-b
-b
-c
-d
-c
-c
-b
-b
-b
-b
-b
-b
-a
-"}
-(4,1,1) = {"
-b
-b
-c
-c
-k
-o
-c
-c
-c
-c
-b
-b
-b
-b
-"}
-(5,1,1) = {"
-b
-c
+J
+J
 d
 g
-c
+J
 p
-c
+J
 v
-c
-c
-c
-c
-b
-b
+J
+J
+J
+J
 "}
-(6,1,1) = {"
-b
-c
-c
+(4,1,1) = {"
+J
+J
+J
 h
 l
 e
 s
 j
-c
+J
 d
 e
-c
-c
-b
+J
 "}
-(7,1,1) = {"
-b
-c
-c
-c
-c
+(5,1,1) = {"
+J
+J
+J
+J
+J
 q
 t
 w
@@ -261,102 +241,60 @@ x
 y
 p
 e
-c
-b
 "}
-(8,1,1) = {"
-b
-c
+(6,1,1) = {"
+J
+J
 e
 i
 m
 j
 u
 e
-c
+J
 f
 d
 y
-c
-b
 "}
-(9,1,1) = {"
-b
-c
+(7,1,1) = {"
+J
+J
 f
 j
-c
+J
 r
-c
+J
 o
-c
-c
-c
-c
-b
-b
+J
+J
+J
+J
 "}
-(10,1,1) = {"
-b
-b
-c
-c
-c
+(8,1,1) = {"
+a
+J
+J
+J
+k
 o
-c
-c
-b
-b
-c
-b
-b
-b
+J
+J
+J
+J
+J
+a
 "}
-(11,1,1) = {"
-b
-b
-b
-c
+(9,1,1) = {"
+a
+a
+a
+J
 n
-c
-c
-b
-b
-b
-b
-b
-b
-a
-"}
-(12,1,1) = {"
-a
-b
-b
-c
-c
-c
-b
-b
-b
-b
-b
-a
-a
-a
-"}
-(13,1,1) = {"
-a
-a
-b
-b
-b
-b
-b
-a
-a
-a
-a
-a
+J
+J
+J
+J
+J
 a
 a
 "}

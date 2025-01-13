@@ -1,8 +1,5 @@
 #define NUKESCALINGMODIFIER 6
 
-/datum/game_mode
-	var/list/datum/mind/syndicates = list()
-
 /proc/issyndicate(mob/living/M as mob)
 	return istype(M) && M.mind && SSticker && SSticker.mode && (M.mind in SSticker.mode.syndicates)
 
@@ -13,6 +10,7 @@
 	required_players = 30	// 30 players - 5 players to be the nuke ops = 25 players remaining
 	required_enemies = 5
 	recommended_enemies = 5
+	single_antag_positions = list()
 
 	var/const/agents_possible = 5 //If we ever need more syndicate agents.
 
@@ -33,13 +31,13 @@
 	var/list/possible_syndicates = get_players_for_role(ROLE_OPERATIVE)
 	var/agent_number = 0
 
-	if(possible_syndicates.len < 1)
+	if(length(possible_syndicates) < 1)
 		return 0
 
 	if(LAZYLEN(possible_syndicates) > agents_possible)
 		agent_number = agents_possible
 	else
-		agent_number = possible_syndicates.len
+		agent_number = length(possible_syndicates)
 
 	var/n_players = num_players()
 	if(agent_number > n_players)
@@ -114,7 +112,7 @@
 		break
 
 	for(var/datum/mind/synd_mind in syndicates)
-		if(spawnpos > synd_spawn.len)
+		if(spawnpos > length(synd_spawn))
 			spawnpos = 2
 		synd_mind.current.loc = synd_spawn[spawnpos]
 		synd_mind.offstation_role = TRUE
@@ -150,8 +148,8 @@
 	var/player_tc
 	var/remainder
 
-	player_tc = round(total_tc / GLOB.nuclear_uplink_list.len) //round to get an integer and not floating point
-	remainder = total_tc % GLOB.nuclear_uplink_list.len
+	player_tc = round(total_tc / length(GLOB.nuclear_uplink_list)) //round to get an integer and not floating point
+	remainder = total_tc % length(GLOB.nuclear_uplink_list)
 
 	for(var/obj/item/radio/uplink/nuclear/U in GLOB.nuclear_uplink_list)
 		U.hidden_uplink.uses += player_tc
@@ -166,11 +164,12 @@
 	var/mob/living/carbon/human/M = synd_mind.current
 
 	M.set_species(/datum/species/human, TRUE)
+	M.dna.flavor_text = null
+	M.flavor_text = null
 	M.dna.ready_dna(M) // Quadriplegic Nuke Ops won't be participating in the paralympics
 	M.dna.species.create_organs(M)
 	M.cleanSE() //No fat/blind/colourblind/epileptic/whatever ops.
 	M.overeatduration = 0
-	M.flavor_text = null
 
 	var/obj/item/organ/external/head/head_organ = M.get_organ("head")
 	var/hair_c = pick("#8B4513","#000000","#FF4500","#FFD700") // Brown, black, red, blonde
@@ -203,7 +202,7 @@
 	to_chat(synd_mind.current, "<B>In your hand you will find a special item capable of triggering a greater challenge for your team. Examine it carefully and consult with your fellow operatives before activating it.</B>")
 
 	var/obj/item/nuclear_challenge/challenge = new /obj/item/nuclear_challenge
-	synd_mind.current.equip_to_slot_or_del(challenge, SLOT_HUD_RIGHT_HAND)
+	synd_mind.current.equip_to_slot_or_del(challenge, ITEM_SLOT_RIGHT_HAND)
 
 	update_syndicate_id(synd_mind, leader_title, TRUE)
 
@@ -220,7 +219,7 @@
 		else
 			var/mob/living/carbon/human/H = synd_mind.current
 			P.loc = H.loc
-			H.equip_to_slot_or_del(P, SLOT_HUD_RIGHT_STORE, 0)
+			H.equip_to_slot_or_del(P, ITEM_SLOT_RIGHT_POCKET, 0)
 			H.update_icons()
 
 
@@ -260,7 +259,7 @@
 
 	var/obj/item/radio/R = new /obj/item/radio/headset/syndicate/alt(synd_mob)
 	R.set_frequency(radio_freq)
-	synd_mob.equip_to_slot_or_del(R, SLOT_HUD_LEFT_EAR)
+	synd_mob.equip_to_slot_or_del(R, ITEM_SLOT_LEFT_EAR)
 
 	var/back
 
@@ -276,18 +275,18 @@
 		else
 			back = /obj/item/storage/backpack
 
-	synd_mob.equip_to_slot_or_del(new /obj/item/clothing/under/syndicate(synd_mob), SLOT_HUD_JUMPSUIT)
-	synd_mob.equip_to_slot_or_del(new /obj/item/clothing/shoes/combat(synd_mob), SLOT_HUD_SHOES)
-	synd_mob.equip_or_collect(new /obj/item/clothing/gloves/combat(synd_mob), SLOT_HUD_GLOVES)
-	synd_mob.equip_to_slot_or_del(new /obj/item/card/id/syndicate(synd_mob), SLOT_HUD_WEAR_ID)
-	synd_mob.equip_to_slot_or_del(new back(synd_mob), SLOT_HUD_BACK)
-	synd_mob.equip_to_slot_or_del(new /obj/item/gun/projectile/automatic/pistol(synd_mob), SLOT_HUD_BELT)
-	synd_mob.equip_to_slot_or_del(new /obj/item/storage/box/survival_syndi(synd_mob.back), SLOT_HUD_IN_BACKPACK)
-	synd_mob.equip_to_slot_or_del(new /obj/item/pinpointer/nukeop(synd_mob), SLOT_HUD_WEAR_PDA)
+	synd_mob.equip_to_slot_or_del(new /obj/item/clothing/under/syndicate(synd_mob), ITEM_SLOT_JUMPSUIT)
+	synd_mob.equip_to_slot_or_del(new /obj/item/clothing/shoes/combat(synd_mob), ITEM_SLOT_SHOES)
+	synd_mob.equip_or_collect(new /obj/item/clothing/gloves/combat(synd_mob), ITEM_SLOT_GLOVES)
+	synd_mob.equip_to_slot_or_del(new /obj/item/card/id/syndicate(synd_mob), ITEM_SLOT_ID)
+	synd_mob.equip_to_slot_or_del(new back(synd_mob), ITEM_SLOT_BACK)
+	synd_mob.equip_to_slot_or_del(new /obj/item/gun/projectile/automatic/pistol(synd_mob), ITEM_SLOT_BELT)
+	synd_mob.equip_to_slot_or_del(new /obj/item/storage/box/survival_syndi(synd_mob.back), ITEM_SLOT_IN_BACKPACK)
+	synd_mob.equip_to_slot_or_del(new /obj/item/pinpointer/nukeop(synd_mob), ITEM_SLOT_PDA)
 	var/obj/item/radio/uplink/nuclear/U = new /obj/item/radio/uplink/nuclear(synd_mob)
 	U.hidden_uplink.uplink_owner="[synd_mob.key]"
 	U.hidden_uplink.uses = uplink_uses
-	synd_mob.equip_to_slot_or_del(U, SLOT_HUD_IN_BACKPACK)
+	synd_mob.equip_to_slot_or_del(U, ITEM_SLOT_IN_BACKPACK)
 	synd_mob.mind.offstation_role = TRUE
 
 	if(synd_mob.dna.species)
@@ -295,21 +294,21 @@
 
 		switch(race)
 			if("Vox")
-				synd_mob.equip_to_slot_or_del(new /obj/item/clothing/mask/gas/syndicate(synd_mob), SLOT_HUD_WEAR_MASK)
-				synd_mob.equip_to_slot_or_del(new /obj/item/tank/internals/emergency_oxygen/double/vox(synd_mob), SLOT_HUD_LEFT_HAND)
+				synd_mob.equip_to_slot_or_del(new /obj/item/clothing/mask/gas/syndicate(synd_mob), ITEM_SLOT_MASK)
+				synd_mob.equip_to_slot_or_del(new /obj/item/tank/internals/emergency_oxygen/double/vox(synd_mob), ITEM_SLOT_LEFT_HAND)
 				synd_mob.internal = synd_mob.l_hand
 				synd_mob.update_action_buttons_icon()
 
 			if("Plasmaman")
-				synd_mob.equip_to_slot_or_del(new /obj/item/clothing/mask/gas/syndicate(synd_mob), SLOT_HUD_WEAR_MASK)
-				synd_mob.equip_or_collect(new /obj/item/tank/internals/plasmaman(synd_mob), SLOT_HUD_SUIT_STORE)
-				synd_mob.equip_or_collect(new /obj/item/extinguisher_refill(synd_mob), SLOT_HUD_IN_BACKPACK)
-				synd_mob.equip_or_collect(new /obj/item/extinguisher_refill(synd_mob), SLOT_HUD_IN_BACKPACK)
-				synd_mob.internal = synd_mob.get_item_by_slot(SLOT_HUD_SUIT_STORE)
+				synd_mob.equip_to_slot_or_del(new /obj/item/clothing/mask/gas/syndicate(synd_mob), ITEM_SLOT_MASK)
+				synd_mob.equip_or_collect(new /obj/item/tank/internals/plasmaman(synd_mob), ITEM_SLOT_SUIT_STORE)
+				synd_mob.equip_or_collect(new /obj/item/extinguisher_refill(synd_mob), ITEM_SLOT_IN_BACKPACK)
+				synd_mob.equip_or_collect(new /obj/item/extinguisher_refill(synd_mob), ITEM_SLOT_IN_BACKPACK)
+				synd_mob.internal = synd_mob.get_item_by_slot(ITEM_SLOT_SUIT_STORE)
 				synd_mob.update_action_buttons_icon()
 
 	synd_mob.rejuvenate() //fix any damage taken by naked vox/plasmamen/etc while round setups
-	var/obj/item/implant/explosive/E = new/obj/item/implant/explosive(synd_mob)
+	var/obj/item/bio_chip/explosive/E = new/obj/item/bio_chip/explosive(synd_mob)
 	E.implant(synd_mob)
 	synd_mob.faction |= "syndicate"
 	synd_mob.update_icons()
@@ -424,7 +423,7 @@
 
 /proc/nukelastname(mob/M as mob) //--All praise goes to NEO|Phyte, all blame goes to DH, and it was Cindi-Kate's idea. Also praise Urist for copypasta ho.
 	var/randomname = pick(GLOB.last_names)
-	var/newname = sanitize(copytext(input(M,"You are the nuke operative [pick("Czar", "Boss", "Commander", "Chief", "Kingpin", "Director", "Overlord")]. Please choose a last name for your family.", "Name change",randomname),1,MAX_NAME_LEN))
+	var/newname = sanitize(copytext_char(input(M,"You are the nuke operative [pick("Czar", "Boss", "Commander", "Chief", "Kingpin", "Director", "Overlord")]. Please choose a last name for your family.", "Name change", randomname), 1, MAX_NAME_LEN))
 
 	if(!newname)
 		newname = randomname

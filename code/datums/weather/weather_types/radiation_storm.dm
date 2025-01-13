@@ -27,6 +27,7 @@
 		/area/station/security/brig,
 		/area/shuttle,
 		/area/survivalpod, //although survivalpods are off-station, creating one on station no longer protects pods on station from the rad storm
+		/area/syndicate_depot/core, // exterior of depot still dangerous, gotta be inside
 		/area/ruin, //Let us not completely kill space explorers.
 		/area/station/command/server
 	)
@@ -37,9 +38,9 @@
 /datum/weather/rad_storm/telegraph()
 	..()
 	status_alarm(TRUE)
-	pre_maint_all_access = GLOB.maint_all_access
-	if(!GLOB.maint_all_access)
-		make_maint_all_access()
+	pre_maint_all_access = SSmapping.maint_all_access
+	if(!SSmapping.maint_all_access)
+		SSmapping.make_maint_all_access()
 
 /datum/weather/rad_storm/weather_act(mob/living/L)
 	if(!prob(60))
@@ -73,7 +74,7 @@
 	status_alarm(FALSE)
 	if(!pre_maint_all_access)
 		GLOB.minor_announcement.Announce("The radiation threat has passed. Please return to your workplaces. Door access resetting momentarily.", "Anomaly Alert")
-		addtimer(CALLBACK(SSweather, GLOBAL_PROC_REF(revoke_maint_all_access)), 10 SECONDS) // Bit of time to get out / break into somewhere.
+		addtimer(CALLBACK(SSmapping, TYPE_PROC_REF(/datum/controller/subsystem/mapping, revoke_maint_all_access)), 10 SECONDS) // Bit of time to get out / break into somewhere.
 	else
 		GLOB.minor_announcement.Announce("The radiation threat has passed. Please return to your workplaces.", "Anomaly Alert")
 

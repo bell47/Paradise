@@ -15,10 +15,10 @@
 	// Stuff needed to render the map
 	var/map_name
 	var/const/default_map_size = 15
-	var/obj/screen/map_view/cam_screen
+	var/atom/movable/screen/map_view/cam_screen
 	/// All the plane masters that need to be applied.
 	var/list/cam_plane_masters
-	var/obj/screen/background/cam_background
+	var/atom/movable/screen/background/cam_background
 
 	// Parent object this camera is assigned to. Used for camera bugs
 	var/atom/movable/parent
@@ -29,7 +29,7 @@
 /obj/machinery/computer/security/ui_host()
 	return parent ? parent : src
 
-/obj/machinery/computer/security/Initialize()
+/obj/machinery/computer/security/Initialize(mapload)
 	. = ..()
 	// Initialize map objects
 	map_name = "camera_console_[UID()]_map"
@@ -39,25 +39,23 @@
 	cam_screen.del_on_map_removal = FALSE
 	cam_screen.screen_loc = "[map_name]:1,1"
 	cam_plane_masters = list()
-	for(var/plane in subtypesof(/obj/screen/plane_master))
-		var/obj/screen/instance = new plane()
-		instance.assigned_map = map_name
-		instance.del_on_map_removal = FALSE
-		instance.screen_loc = "[map_name]:CENTER"
-		cam_plane_masters += instance
+	for(var/plane in subtypesof(/atom/movable/screen/plane_master))
+		cam_plane_masters += plane
 	cam_background = new
 	cam_background.assigned_map = map_name
 	cam_background.del_on_map_removal = FALSE
 
 /obj/machinery/computer/security/Destroy()
 	qdel(cam_screen)
-	QDEL_LIST_CONTENTS(cam_plane_masters)
 	qdel(cam_background)
 	return ..()
 
-/obj/machinery/computer/security/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = FALSE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
+/obj/machinery/computer/security/ui_state(mob/user)
+	return GLOB.default_state
+
+/obj/machinery/computer/security/ui_interact(mob/user, datum/tgui/ui = null)
 	// Update UI
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+	ui = SStgui.try_update_ui(user, src, ui)
 	// Show static if can't use the camera
 	if(!active_camera?.can_use())
 		show_camera_static()
@@ -76,10 +74,16 @@
 		// Register map objects
 		user.client.register_map_obj(cam_screen)
 		for(var/plane in cam_plane_masters)
-			user.client.register_map_obj(plane)
+			var/atom/movable/screen/plane_master/instance = new plane()
+			instance.assigned_map = map_name
+			instance.del_on_map_removal = FALSE
+			instance.screen_loc = "[map_name]:CENTER"
+			instance.backdrop(user)
+
+			user.client.register_map_obj(instance)
 		user.client.register_map_obj(cam_background)
 		// Open UI
-		ui = new(user, src, ui_key, "CameraConsole", name, 870, 708, master_ui, state)
+		ui = new(user, src, "CameraConsole", name)
 		ui.open()
 
 /obj/machinery/computer/security/ui_close(mob/user)
@@ -158,7 +162,7 @@
 			stack_trace("Camera in a cameranet has a non-list camera network")
 			continue
 		var/list/tempnetwork = C.network & network
-		if(tempnetwork.len)
+		if(length(tempnetwork))
 			D["[C.c_tag]"] = C
 	return D
 
@@ -226,7 +230,7 @@
 	/// Used to detect how many video cameras are active
 	var/feeds_on = 0
 
-/obj/machinery/computer/security/telescreen/entertainment/Initialize()
+/obj/machinery/computer/security/telescreen/entertainment/Initialize(mapload)
 	. = ..()
 	set_light(1, LIGHTING_MINIMUM_POWER) //so byond doesnt cull, and we get an emissive appearance
 
@@ -269,6 +273,9 @@
 	if(default_unfasten_wrench(user, I, time = 4 SECONDS))
 		return TRUE
 
+/obj/machinery/computer/security/telescreen/entertainment/television/multitool_act(mob/user, obj/item/I)
+	return
+
 /obj/machinery/computer/security/telescreen/entertainment/television/on_deconstruction()
 	return
 
@@ -298,8 +305,16 @@
 	icon_keyboard = "power_key"
 	icon_screen = "engie_cams"
 	light_color = "#FAC54B"
-	network = list("Power Alarms","Atmosphere Alarms","Fire Alarms")
+	network = list()
 	circuit = /obj/item/circuitboard/camera/engineering
+
+/obj/machinery/computer/security/engineering/Initialize(mapload)
+	. = ..()
+	network = list()
+	var/area/console_area = get_area(src)
+	network += console_area.fire_cam_network
+	network += console_area.power_cam_network
+	network += console_area.atmos_cam_network
 
 /obj/machinery/computer/security/telescreen/engine
 	name = "engine monitor"

@@ -7,7 +7,7 @@
 	belt_icon = "crowbar"
 	usesound = 'sound/items/crowbar.ogg'
 	flags = CONDUCT
-	slot_flags = SLOT_FLAG_BELT
+	slot_flags = ITEM_SLOT_BELT
 	force = 5
 	throwforce = 7
 	w_class = WEIGHT_CLASS_NORMAL
@@ -32,18 +32,9 @@
 	desc = "A brass crowbar. It feels faintly warm to the touch."
 	icon_state = "crowbar_brass"
 	item_state = "crowbar_brass"
+	belt_icon = "crowbar_brass"
 	toolspeed = 0.5
 	resistance_flags = FIRE_PROOF | ACID_PROOF
-
-/obj/item/crowbar/abductor
-	name = "alien crowbar"
-	desc = "A hard-light crowbar. It appears to pry by itself, without any effort required."
-	icon = 'icons/obj/abductor.dmi'
-	usesound = 'sound/weapons/sonic_jackhammer.ogg'
-	icon_state = "crowbar"
-	toolspeed = 0.1
-	w_class = WEIGHT_CLASS_SMALL
-	origin_tech = "combat=4;engineering=4;abductor=3"
 
 /obj/item/crowbar/small
 	name = "miniature titanium crowbar"
@@ -100,7 +91,7 @@
 	animate_fading_leap_up(user)
 
 	for(var/obj/item/W in user)
-		user.unEquip(W)
+		user.drop_item_to_ground(W)
 
 	user.dust()
 	return OBLITERATION
@@ -111,6 +102,11 @@
 	usesound = 'sound/items/jaws_pry.ogg'
 	force = 10
 	toolspeed = 0.5
+
+/obj/item/crowbar/cyborg/red
+	name = "emergency hydraulic crowbar"
+	desc = "A hydraulic prying tool, compact but powerful. Supplied to non-construction cyborgs primarily to allow them to pry open airlocks during power outages."
+	icon_state = "crowbar_red"
 
 /obj/item/crowbar/power
 	name = "jaws of life"
@@ -133,10 +129,10 @@
 
 /obj/item/crowbar/power/suicide_act(mob/user)
 	user.visible_message("<span class='suicide'>[user] is putting [user.p_their()] head in [src]. It looks like [user.p_theyre()] trying to commit suicide!</span>")
-	playsound(loc, 'sound/items/jaws_pry.ogg', 50, 1, -1)
+	playsound(loc, 'sound/items/jaws_pry.ogg', 50, TRUE, -1)
 	return BRUTELOSS
 
-/obj/item/crowbar/power/attack_self(mob/user)
+/obj/item/crowbar/power/attack_self__legacy__attackchain(mob/user)
 	playsound(get_turf(user), 'sound/items/change_jaws.ogg', 50, 1)
 	var/obj/item/wirecutters/power/cutjaws = new /obj/item/wirecutters/power
 	to_chat(user, "<span class='notice'>You attach the cutting jaws to [src].</span>")

@@ -313,7 +313,7 @@
 /area/shuttle/escape)
 "by" = (
 /obj/structure/table/wood,
-/obj/item/storage/firstaid,
+/obj/item/storage/firstaid/regular,
 /turf/simulated/floor/grass,
 /area/shuttle/escape)
 "bz" = (
@@ -607,7 +607,7 @@
 /obj/machinery/light/small{
 	dir = 8
 	},
-/obj/item/reagent_containers/food/drinks/mug/med,
+/obj/item/reagent_containers/drinks/mug/med,
 /mob/living/carbon/human/monkey,
 /turf/simulated/floor/grass,
 /area/shuttle/escape)

@@ -21,7 +21,7 @@
 	. = ..()
 	if(parts)
 		for(var/i in 1 to 2)
-			if(!parts.len)
+			if(!length(parts))
 				break
 			if(prob(60))
 				continue
@@ -53,7 +53,7 @@
 	. = TRUE
 	if(!I.use_tool(src, user, 0, volume = I.tool_volume))
 		return
-	if(crowbar_salvage.len)
+	if(length(crowbar_salvage))
 		var/obj/S = pick(crowbar_salvage)
 		S.forceMove(user.drop_location())
 		user.visible_message("<span class='notice'>[user] pries [S] from [src].</span>", "<span class='notice'>You pry [S] from [src].</span>")
@@ -144,7 +144,7 @@
 
 /obj/structure/mecha_wreckage/reticence
 	name = "\improper Reticence wreckage"
-	icon_state = "reticence-broken"
+	icon_state = "mime-broken"
 	color = "#87878715"
 	desc = "..."
 
@@ -156,10 +156,6 @@
 				/obj/item/mecha_parts/part/ripley_right_arm,
 				/obj/item/mecha_parts/part/ripley_left_leg,
 				/obj/item/mecha_parts/part/ripley_right_leg)
-
-/obj/structure/mecha_wreckage/ripley/mkii
-	name = "\improper Ripley MK-II wreckage"
-	icon_state = "ripleymkii-broken"
 
 /obj/structure/mecha_wreckage/ripley/firefighter
 	name = "\improper Firefighter wreckage"
@@ -218,3 +214,15 @@
 			/obj/item/mecha_parts/part/odysseus_right_arm,
 			/obj/item/mecha_parts/part/odysseus_left_leg,
 			/obj/item/mecha_parts/part/odysseus_right_leg)
+
+/obj/structure/mecha_wreckage/nkarrdem
+	name = "\improper Nkarrdem wreckage"
+	icon_state = "nkarrdem-broken"
+	parts = list(
+			/obj/item/mecha_parts/part/nkarrdem_torso,
+			/obj/item/mecha_parts/part/nkarrdem_head,
+			/obj/item/mecha_parts/part/nkarrdem_left_arm,
+			/obj/item/mecha_parts/part/nkarrdem_right_arm,
+			/obj/item/mecha_parts/part/nkarrdem_left_leg,
+			/obj/item/mecha_parts/part/nkarrdem_right_leg
+	)

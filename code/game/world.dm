@@ -1,6 +1,6 @@
 GLOBAL_LIST_INIT(map_transition_config, list(CC_TRANSITION_CONFIG))
 
-#ifdef UNIT_TESTS
+#ifdef GAME_TESTS
 GLOBAL_DATUM(test_runner, /datum/test_runner)
 #endif
 
@@ -31,7 +31,9 @@ GLOBAL_DATUM(test_runner, /datum/test_runner)
 	// Right off the bat, load up the DB
 	SSdbcore.CheckSchemaVersion() // This doesnt just check the schema version, it also connects to the db! This needs to happen super early! I cannot stress this enough!
 	SSdbcore.SetRoundID() // Set the round ID here
+	#ifdef MULTIINSTANCE
 	SSinstancing.seed_data() // Set us up in the DB
+	#endif
 
 	// Setup all log paths and stamp them with startups, including round IDs
 	SetupLogs()
@@ -49,14 +51,14 @@ GLOBAL_DATUM(test_runner, /datum/test_runner)
 	if(TgsAvailable())
 		world.log = file("[GLOB.log_directory]/dd.log") //not all runtimes trigger world/Error, so this is the only way to ensure we can see all of them.
 
-	#ifdef UNIT_TESTS
+	#ifdef GAME_TESTS
 	log_world("Unit Tests Are Enabled!")
 	#endif
 
 	if(byond_version < MIN_COMPILER_VERSION || byond_build < MIN_COMPILER_BUILD)
 		log_world("Your server's byond version does not meet the recommended requirements for this code. Please update BYOND")
 
-	GLOB.timezoneOffset = text2num(time2text(0, "hh")) * 36000
+	GLOB.timezoneOffset = world.timezone * 36000
 
 	update_status()
 
@@ -67,7 +69,7 @@ GLOBAL_DATUM(test_runner, /datum/test_runner)
 	Master.Initialize(10, FALSE, TRUE)
 
 
-	#ifdef UNIT_TESTS
+	#ifdef GAME_TESTS
 	GLOB.test_runner = new
 	GLOB.test_runner.Start()
 	#endif
@@ -124,7 +126,7 @@ GLOBAL_LIST_EMPTY(world_topic_handlers)
 				return
 			message_admins("[key_name_admin(usr)] has requested an immediate world restart via client side debugging tools")
 			log_admin("[key_name(usr)] has requested an immediate world restart via client side debugging tools")
-			to_chat(world, "<span class='boldannounce'>Rebooting world immediately due to host request</span>")
+			to_chat(world, "<span class='boldannounceooc'>Rebooting world immediately due to host request</span>")
 		rustg_log_close_all() // Past this point, no logging procs can be used, at risk of data loss.
 		// Now handle a reboot
 		if(GLOB.configuration.system.shutdown_on_reboot)
@@ -142,7 +144,7 @@ GLOBAL_LIST_EMPTY(world_topic_handlers)
 	Master.Shutdown() // Shutdown subsystems
 
 	// If we were running unit tests, finish that run
-	#ifdef UNIT_TESTS
+	#ifdef GAME_TESTS
 	GLOB.test_runner.Finalize()
 	return
 	#endif
@@ -153,15 +155,12 @@ GLOBAL_LIST_EMPTY(world_topic_handlers)
 		to_chat(world, "<span class='notice'>Stats for this round can be viewed at <a href=\"[stats_link]\">[stats_link]</a></span>")
 
 	// If the server has been gracefully shutdown in TGS, have a 60 seconds grace period for SQL updates and stuff
-	var/secs_before_auto_reconnect = 10
 	if(GLOB.slower_restart)
-		secs_before_auto_reconnect = 60
 		server_announce_global("Reboot will take a little longer due to pending backend changes.")
-
 
 	// Send the reboot banner to all players
 	for(var/client/C in GLOB.clients)
-		C << output(list2params(list(secs_before_auto_reconnect)), "browseroutput:reboot")
+		C?.tgui_panel?.send_roundrestart()
 		if(C.prefs.server_region)
 			// Keep them on the same relay
 			C << link(GLOB.configuration.system.region_map[C.prefs.server_region])
@@ -186,7 +185,7 @@ GLOBAL_LIST_EMPTY(world_topic_handlers)
 
 /world/proc/load_mode()
 	var/list/Lines = file2list("data/mode.txt")
-	if(Lines.len)
+	if(length(Lines))
 		if(Lines[1])
 			GLOB.master_mode = Lines[1]
 			log_game("Saved mode is '[GLOB.master_mode]'")
